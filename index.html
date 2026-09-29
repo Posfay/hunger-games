@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>The Game Master's Arena</title>
+  <!-- FONTS:BEGIN (owned by the UI module) -->
+  <!-- Barlow Semi Condensed (UI), JetBrains Mono (data), Cinzel (Capitol brand).
+       Google Fonts serves latin + latin-ext subsets, so Hungarian ő ű render. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Cinzel:wght@600;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#04070d">
+  <!-- FONTS:END -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- One full-window WebGL canvas. Cameras render the main view and the live
+       feeds into the screen rectangles of #viewport and .feed-slot elements. -->
+  <canvas id="gl"></canvas>
+  <!-- All interface markup is built by js/ui.js inside #ui-root. -->
+  <div id="ui-root"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js"></script>
+  <!-- Load order matters: core first, main last. Do not reorder. -->
+  <script src="js/core.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/terrain.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/env.js"></script>
+  <script src="js/items.js"></script>
+  <script src="js/tributes.js"></script>
+  <script src="js/combat.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/hazards.js"></script>
+  <script src="js/mutts.js"></script>
+  <script src="js/powers.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/minimap.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
