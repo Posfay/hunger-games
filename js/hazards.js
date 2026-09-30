@@ -361,38 +361,49 @@
     'varying vec2 vUv;',
     'varying float vInt;',
     'varying float vSeed;',
+    'varying float vKind;',
     'void main() {',
     '  vUv = uv;',
     '  vInt = aData.y;',
     '  vSeed = aData.z;',
+    '  vKind = aData.w;',
     '  float s = aData.x;',
-    '  float flick = 1.0 + 0.16 * sin(uTime * (6.0 + aData.z * 6.0) + aData.z * 40.0) + 0.08 * sin(uTime * 15.0 + aData.z * 11.0);',
+    '  float flick = 1.0 + 0.1 * sin(uTime * (5.0 + aData.z * 5.0) + aData.z * 40.0) + 0.05 * sin(uTime * 13.0 + aData.z * 11.0);',
     '  vec4 mv = modelViewMatrix * vec4(aOffset, 1.0);',
-    '  mv.x += position.x * s * 0.66;',
-    '  mv.y += position.y * s * flick - s * 0.06;',
+    '  mv.x += position.x * s * (0.72 + 0.25 * aData.w);',
+    '  mv.y += position.y * s * flick - s * 0.08;',
     '  gl_Position = projectionMatrix * mv;',
     '}',
   ].join('\n');
+  // Noise-driven flame: rising, licking tongues; black-body style colour ramp (HDR).
   const FLAME_FS = [
     'uniform float uTime;',
+    'uniform sampler2D gmNoise;',
+    'uniform vec4 gmPost;',
     'varying vec2 vUv;',
     'varying float vInt;',
     'varying float vSeed;',
+    'varying float vKind;',
     'void main() {',
     '  float y = vUv.y;',
     '  float x = vUv.x * 2.0 - 1.0;',
-    '  x += (sin(uTime * 7.0 + vSeed * 31.0 + y * 6.0) * 0.16 + sin(uTime * 13.0 + vSeed * 17.0 + y * 11.0) * 0.07) * y;',
-    '  float w = (1.0 - pow(y, 0.9)) * 0.9 + 0.04;',
-    '  float body = 1.0 - smoothstep(w * 0.45, w, abs(x));',
-    '  float tongues = 0.72 + 0.28 * sin(x * 7.0 + uTime * 9.0 + vSeed * 23.0);',
-    '  float top = 1.0 - smoothstep(0.35 * tongues + 0.25, 0.98, y);',
-    '  float bottom = smoothstep(0.0, 0.1, y);',
-    '  float a = body * top * bottom * vInt;',
-    '  if (a < 0.004) discard;',
-    '  float core = (1.0 - smoothstep(0.0, w * 0.7, abs(x))) * (1.0 - smoothstep(0.1, 0.7, y));',
-    '  vec3 col = mix(vec3(0.95, 0.22, 0.03), vec3(1.0, 0.62, 0.12), 1.0 - y);',
-    '  col = mix(col, vec3(1.0, 0.95, 0.72), core);',
-    '  gl_FragColor = vec4(col, a);',
+    '  float t = uTime * (0.9 + vSeed * 0.3);',
+    '  float n1 = texture2D(gmNoise, vec2(vUv.x * 0.45 + vSeed * 7.0, y * 0.5 - t * 0.75)).g;',
+    '  float n2 = texture2D(gmNoise, vec2(vUv.x * 1.05 - vSeed * 3.0, y * 1.1 - t * 1.6)).b;',
+    '  float n = n1 * 0.62 + n2 * 0.38;',
+    '  float w = mix(0.86, 0.62, vKind) * pow(1.0 - y, 0.72) * (0.5 + 0.5 * smoothstep(0.0, 0.32, y)) + 0.035;',
+    '  float xd = x + (n - 0.5) * (0.8 + 0.5 * vKind) * y;',
+    '  float body = 1.0 - smoothstep(w * 0.3, w, abs(xd));',
+    '  float heat = body * smoothstep(0.0, 0.14, y) * (1.0 - smoothstep(0.18, 0.95, y + (n - 0.5) * 0.75));',
+    '  heat = clamp(heat * 1.55 - (1.0 - n) * 0.62 * y - (1.0 - n2) * 0.2 * y * y, 0.0, 1.0);',
+    '  float a = heat * vInt;',
+    '  if (a < 0.01) discard;',
+    '  float core = (1.0 - smoothstep(0.0, w * 0.5, abs(xd))) * (1.0 - smoothstep(0.04, 0.45, y));',
+    '  vec3 c1 = vec3(0.5, 0.045, 0.01), c2 = vec3(1.0, 0.28, 0.03), c3 = vec3(1.0, 0.62, 0.16), c4 = vec3(1.0, 0.88, 0.58);',
+    '  vec3 col = mix(c1, c2, smoothstep(0.0, 0.4, heat));',
+    '  col = mix(col, c3, smoothstep(0.45, 0.85, heat) * (0.35 + 0.65 * core));',
+    '  col = mix(col, c4, core * smoothstep(0.55, 1.0, heat));',
+    '  gl_FragColor = vec4(col * (0.55 + 1.3 * heat * heat + 1.6 * core) * gmPost.y, a * 0.85);',
     '}',
   ].join('\n');
 
@@ -445,6 +456,7 @@
     '}',
   ].join('\n');
   const WALL_FS = [
+    'uniform vec4 gmPost;',
     'uniform float uTime;',
     'uniform vec3 uColor;',
     'uniform float uAlpha;',
@@ -470,7 +482,7 @@
     '  float band = 1.0 - smoothstep(0.0, 0.035, abs(y - ground - 0.012));',
     '  float scan = pow(0.5 + 0.5 * sin(y * 40.0 - uTime * 4.0), 14.0);',
     '  float al = (0.08 + lines * 0.5 * (0.55 + 0.45 * flick) + scan * 0.22) * fade * (0.8 + 0.4 * uPulse) + band * 0.95;',
-    '  gl_FragColor = vec4(uColor * (0.7 + 0.7 * lines + band), al * uAlpha);',
+    '  gl_FragColor = vec4(uColor * (0.7 + 0.7 * lines + band) * 2.2 * gmPost.y, al * uAlpha);',
     '}',
   ].join('\n');
 
@@ -486,7 +498,7 @@
     'varying vec2 vUv;',
     'void main() {',
     '  float a = pow(1.0 - vUv.y, 1.6) * 0.85;',
-    '  gl_FragColor = vec4(mix(uColor, vec3(1.0, 0.95, 0.7), 1.0 - vUv.y), a);',
+    '  gl_FragColor = vec4(mix(uColor, vec3(1.0, 0.95, 0.7), 1.0 - vUv.y) * (2.5 + 3.0 * (1.0 - vUv.y)), a);',
     '}',
   ].join('\n');
 
@@ -596,7 +608,7 @@
     flameGeo.setAttribute('aData', flameData);
     flameGeo.instanceCount = 0;
     flameMat = new THREE.ShaderMaterial({
-      uniforms: { uTime: { value: 0 } },
+      uniforms: { uTime: { value: 0 }, gmNoise: GM.Gfx ? GM.Gfx.uniforms.gmNoise : { value: null }, gmPost: GM.Gfx ? GM.Gfx.uniforms.gmPost : { value: [1, 1, 0, 0] } },
       vertexShader: FLAME_VS,
       fragmentShader: FLAME_FS,
       transparent: true,
@@ -641,10 +653,13 @@
     sc.add(noPick(gasMesh));
 
     // --- scorch marks (instanced splats that follow the ground)
-    const scMat = new THREE.MeshBasicMaterial({
+    // lit (not basic): scorch marks must darken with the scene at night
+    const scMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
+      roughness: 1,
+      metalness: 0,
       transparent: true,
-      opacity: 0.62,
+      opacity: 0.7,
       depthWrite: false,
       side: THREE.DoubleSide,
       polygonOffset: true,
@@ -653,7 +668,7 @@
     });
     scorchMesh = new THREE.InstancedMesh(splatGeometry(), scMat, SCORCH_MAX);
     scorchMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    _c.setRGB(0.1, 0.08, 0.06);
+    _c.setRGB(0.018, 0.015, 0.012);
     for (let i = 0; i < SCORCH_MAX; i++) scorchMesh.setColorAt(i, _c);
     scorchMesh.count = 0;
     scorchMesh.frustumCulled = false;
@@ -685,6 +700,7 @@
         uAlpha: { value: 0 },
         uCirc: { value: TAU * CFG.ARENA_RADIUS },
         uPulse: { value: 0 },
+        gmPost: GM.Gfx ? GM.Gfx.uniforms.gmPost : { value: [1, 1, 0, 0] },
       },
       vertexShader: WALL_VS,
       fragmentShader: WALL_FS,
@@ -710,7 +726,9 @@
     // --- fireballs
     fbCoreGeo = new THREE.SphereGeometry(1, 12, 8);
     fbCoreMat = new THREE.MeshBasicMaterial({ color: 0xfff1c4, fog: false });
+    fbCoreMat.color.multiplyScalar(9);
     fbGlowMat = new THREE.SpriteMaterial({ map: glowTex, color: 0xff8a2a, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+    fbGlowMat.color.multiplyScalar(3.5);
     fbTrailGeo = new THREE.CylinderGeometry(0, 1, 1, 10, 1, true);
     fbTrailGeo.translate(0, 0.5, 0);
     fbTrailMat = new THREE.ShaderMaterial({
@@ -749,6 +767,8 @@
     for (let i = 0; i < BOLT_MAX; i++) {
       const coreMat = new THREE.MeshBasicMaterial({ color: 0xeef3ff, transparent: true, opacity: 1, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, fog: false });
       const glowMat = new THREE.MeshBasicMaterial({ color: 0x6f8cff, transparent: true, opacity: 0.4, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, fog: false });
+      coreMat.color.multiplyScalar(10);
+      glowMat.color.multiplyScalar(4);
       const core = new THREE.Mesh(ribbonGeometry(BOLT_SEGS), coreMat);
       const glow = new THREE.Mesh(ribbonGeometry(BOLT_SEGS), glowMat);
       core.frustumCulled = glow.frustumCulled = false;
@@ -1191,7 +1211,7 @@
     for (let i = 0; i < BOLT_MAIN; i++) {
       SA[ns * 3] = MP[i * 3]; SA[ns * 3 + 1] = MP[i * 3 + 1]; SA[ns * 3 + 2] = MP[i * 3 + 2];
       SB[ns * 3] = MP[i * 3 + 3]; SB[ns * 3 + 1] = MP[i * 3 + 4]; SB[ns * 3 + 2] = MP[i * 3 + 5];
-      SW0[ns] = 0.42; SW1[ns] = 0.42;
+      SW0[ns] = 0.2; SW1[ns] = 0.2;
       ns++;
     }
     // two forks
@@ -1208,8 +1228,8 @@
         const nz = pz + dzs * len * 0.7 + (Math.random() - 0.5) * 4;
         SA[ns * 3] = px; SA[ns * 3 + 1] = py; SA[ns * 3 + 2] = pz;
         SB[ns * 3] = nx; SB[ns * 3 + 1] = ny; SB[ns * 3 + 2] = nz;
-        SW0[ns] = 0.26 * (1 - k / steps) + 0.04;
-        SW1[ns] = 0.26 * (1 - (k + 1) / steps) + 0.03;
+        SW0[ns] = 0.14 * (1 - k / steps) + 0.03;
+        SW1[ns] = 0.14 * (1 - (k + 1) / steps) + 0.02;
         ns++;
         px = nx; py = ny; pz = nz;
       }
@@ -1217,7 +1237,7 @@
     const cp = cameraPos();
     const cx = cp ? cp.x : x + 60, cy = cp ? cp.y : y + 40, cz = cp ? cp.z : z + 60;
     fillRibbon(b.core.geometry, ns, 1, cx, cy, cz);
-    fillRibbon(b.glow.geometry, ns, 5.5, cx, cy, cz);
+    fillRibbon(b.glow.geometry, ns, 3.2, cx, cy, cz);
     b.active = true;
     b.age = 0;
     b.core.visible = b.glow.visible = true;

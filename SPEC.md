@@ -53,9 +53,29 @@ Creative pillars:
     **not** available (examples folder not loaded) — write what you need.
   - `InstancedMesh` with `setMatrixAt`, `setColorAt` (+ `instanceMatrix.needsUpdate`,
     `instanceColor.needsUpdate`).
-  - **Do not change colour management**: leave `renderer.outputEncoding` at the
-    default (linear) and `THREE.ColorManagement.legacyMode` at default. Use hex
-    colours as-is. No tone mapping. Lights use legacy (non-physical) intensities.
+  - **Colour pipeline (see `js/gfx.js`, `js/post.js`)**: linear working space,
+    `THREE.ColorManagement.legacyMode = false`. Every view renders into an HDR
+    target and `GM.Post` applies bloom, SSAO, sun shafts, depth of field, ACES
+    tone mapping and the colour grade, then writes sRGB.
+    - Hex colours (`new THREE.Color(0x...)`, material `color`, `.set(hex)`) are
+      sRGB and are converted automatically: author them as before.
+    - Raw numbers (`setRGB`, `setHSL`, vertex-colour arrays, `DataTexture`
+      bytes) are **linear**. Convert authored sRGB values with
+      `GM.Gfx.lin()` / `GM.Gfx.LIN8[byte]` / `GM.Gfx.toLinear(color)`.
+    - Canvas textures that hold colours need `texture.encoding = THREE.sRGBEncoding`.
+    - Use `MeshStandardMaterial` for lit objects: ambient light comes from the
+      sky environment map (`scene.environment`), the sun is a
+      `DirectionalLight` with HDR intensity (~3). Lambert/Phong look flat.
+    - Glowing things are HDR: multiply emissive/basic colours above 1 (fire,
+      beacons, eyes ~3-10x) so they bloom. Multiply by the shared
+      `gmPost.y` uniform to stay balanced when the exposure rises at night.
+    - Crisp overlays (name tags, selection ring, targeting reticle) go on
+      layer `GM.Post.OVERLAY`: drawn after the composite, depth tested, no
+      tone mapping or bloom (set `toneMapped: false`).
+    - Custom shaders can share sun, sky, wind, wetness, snow, time and a noise
+      texture: `GM.Gfx.patch(material, {...})` for built-in materials,
+      `GM.Gfx.uniformsWith(own, withFog)` + `#include <gm_common>` for
+      `ShaderMaterial`s. `fog: true` gets the height fog automatically.
 - **Units:** 1 unit = 1 metre. Y is up. The arena is centred at (0,0).
 - **Heading convention:** models face **+Z** at `rotation.y = 0`;
   `heading = Math.atan2(dx, dz)`; use `GM.U.headingTo(from, to)`.
@@ -91,6 +111,7 @@ Creative pillars:
 |---|---|---|
 | `index.html` | core (UI may edit only between `FONTS:BEGIN/END`) | – |
 | `js/core.js`, `js/i18n.js`, `js/main.js`, `SPEC.md` | core | `GM`, `GM.i18n`, `GM.Game` |
+| `js/gfx.js`, `js/post.js` | **WORLD** | `GM.Gfx` (colour, shared uniforms, height fog, material patching), `GM.Post` (HDR pipeline) |
 | `js/terrain.js` | **WORLD** | `GM.Terrain` |
 | `js/world.js` | **WORLD** | `GM.World`, `GM.FX` |
 | `js/env.js` | **WORLD** | `GM.Env` |
@@ -415,10 +436,15 @@ World.trees                          [{x, z, scale, type, burnt}] (instanced)
 World.burnTreesInArea(x, z, r)       char/shrink trees (called on 'forest:burnt')
 World.add(obj) / World.remove(obj)   scene helpers (dispose geometry/material on remove if asked)
 ```
-Visuals: stylised low-poly, flat shading. Golden cornucopia horn (swept
-tube geometry), metal pedestals, instanced pine + broadleaf trees and rocks,
-grass tufts near centre, animated water, subtle hexagon force-field dome at
-`ARENA_RADIUS` (transparent, additive, shimmering).
+Visuals: stylised but physically lit. Smooth terrain with procedural detail
+(plaza stonework, layered cliffs, wet shores, lake-bed caustics, puddles and
+snow cover driven by the weather), baked + screen-space ambient occlusion,
+drifting cloud shadows. Polished hammered-gold cornucopia, brushed-metal
+pedestals. Trees in culled spatial chunks with a near/far LOD, wind sway and
+translucent leaves (`World.prepareView(camera)` picks the LOD per view). A GPU
+grass field (instanced blade patches around each camera, pushed aside by
+tributes). Depth-aware water (absorption, Fresnel sky reflection, sun glitter,
+shore foam). Faint hexagon force-field dome at `ARENA_RADIUS`.
 
 `GM.FX` — shared pooled effects (everyone uses these instead of writing their own):
 ```
@@ -696,11 +722,13 @@ pickTribute(clientX, clientY) → tribute | null
 ```
 Rendering: canvas `#gl` is fixed full-window. Read `#viewport` and
 `.feed-slot[data-feed="0|1|2"]` rectangles each frame (`getBoundingClientRect`),
-render with `setViewport` + `setScissor` + `setScissorTest(true)` (convert to
-bottom-left origin, account for `devicePixelRatio`). Skip feeds when
+and draw each view with `GM.Post.renderView(scene, camera, x, y, w, h, slot,
+isMain, refresh)` (bottom-left origin, CSS px). Feeds re-render their scene
+round-robin (one per frame) and re-use the last image otherwise. Skip feeds when
 `settings.feeds` is false or the slot is hidden/zero-size. Update the shadow
 map once per frame (`shadowMap.autoUpdate=false`, set `needsUpdate` before the
-main render). Call `GM.World.setShadowFocus` with the main camera focus.
+main render). Call `GM.World.setShadowFocus` with the main camera focus. The
+main camera sets `GM.Post.settings.dof*` for close shots (depth of field).
 
 Modes:
 - `showcase` (setup screen): slow cinematic orbit over the arena.

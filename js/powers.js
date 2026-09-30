@@ -539,6 +539,7 @@
   ].join('\n');
   const BEAM_FS = [
     'uniform vec3 uColor;',
+    'uniform vec4 gmPost;',
     'uniform float uAlpha;',
     'uniform float uTime;',
     'varying vec2 vUv;',
@@ -549,7 +550,7 @@
     '  float foot = smoothstep(0.0, 0.015, h);',
     '  float band = 0.7 + 0.3 * sin(uTime * 5.0 - h * 34.0);',
     '  float a = uAlpha * fade * foot * band;',
-    '  gl_FragColor = vec4(uColor * vCol * (0.65 + 0.9 * fade), clamp(a, 0.0, 1.0));',
+    '  gl_FragColor = vec4(uColor * vCol * (0.65 + 0.9 * fade) * 2.4 * gmPost.y, clamp(a, 0.0, 1.0));',
     '}',
   ].join('\n');
 
@@ -566,7 +567,7 @@
 
   function makeBeamMat(color, alpha) {
     return new THREE.ShaderMaterial({
-      uniforms: { uColor: { value: new THREE.Color(color) }, uAlpha: { value: alpha == null ? 1 : alpha }, uTime: { value: 0 } },
+      uniforms: { uColor: { value: new THREE.Color(color) }, uAlpha: { value: alpha == null ? 1 : alpha }, uTime: { value: 0 }, gmPost: GM.Gfx ? GM.Gfx.uniforms.gmPost : { value: [1, 1, 0, 0] } },
       vertexShader: BEAM_VS,
       fragmentShader: BEAM_FS,
       transparent: true,
@@ -664,8 +665,9 @@
       lureHornGeo.translate(0, 2.55, 0.25);
       const lureLampGeo = new THREE.SphereGeometry(0.28, 12, 8);
       lureLampGeo.translate(0, 3.25, 0);
-      const lureMetal = new THREE.MeshLambertMaterial({ color: 0x3b4049 });
+      const lureMetal = new THREE.MeshStandardMaterial({ color: 0x3b4049, roughness: 0.4, metalness: 0.8 });
       const lureLampMat = new THREE.MeshBasicMaterial({ color: 0xff3030 });
+      lureLampMat.color.multiplyScalar(6);
       const lureHaloMat = makeBeamMat(0xff3a2a, 0.8);
 
       // --- feast beacon (golden column over the table during the countdown)

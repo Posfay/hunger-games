@@ -319,6 +319,7 @@
     });
     hitMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xff3322, emissiveIntensity: 0.7, roughness: 0.8, flatShading: true });
     eyeMat = new THREE.MeshBasicMaterial({ color: 0xff2a10, fog: false });
+    eyeMat.color.multiplyScalar(6);           // HDR: glowing eyes bloom
 
     // --- wasps: one instanced mesh for every swarm
     const waspGeo = mergeParts([

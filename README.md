@@ -62,7 +62,8 @@ emotions (fear, rage, confidence, sanity). Every tribute shows what it is thinki
 |---|---|
 | `SPEC.md` | Architecture and module contract |
 | `js/core.js`, `js/i18n.js`, `js/main.js` | Runtime, localisation, game loop |
-| `js/terrain.js`, `js/world.js`, `js/env.js` | Terrain + pathfinding, 3D world + effects, sky/day/night/weather |
+| `js/gfx.js`, `js/post.js` | Rendering foundation (linear colour, height fog, shared shader uniforms) and the HDR post-processing pipeline (bloom, SSAO, sun shafts, depth of field, ACES tone mapping, colour grade) |
+| `js/terrain.js`, `js/world.js`, `js/env.js` | Terrain + pathfinding, 3D world + effects, sky/day/night/weather/lighting |
 | `js/tributes.js`, `js/items.js`, `js/combat.js` | Tributes, loot, fighting |
 | `js/ai.js` | Psychology and decisions |
 | `js/hazards.js`, `js/mutts.js`, `js/powers.js` | Fire, gas, zone, mutts, Game Master powers, audience |
@@ -70,5 +71,6 @@ emotions (fear, rage, confidence, sanity). Every tribute shows what it is thinki
 | `js/ui.js`, `js/minimap.js`, `css/style.css` | Control-room interface |
 | `tools/smoke.js` | Headless end-to-end test (runs a whole Games in headless Chrome) |
 | `tools/build.js` | Bundles everything into `dist/arena.html` |
+| `tools/serve.js` | Static dev server with caching disabled (`node tools/serve.js . 8766`) |
 
 Test: `node tools/smoke.js --norender` (add `--powers`, `--lang hu`, `--shots <dir>`).

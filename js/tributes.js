@@ -11,10 +11,14 @@
  *   extras: flash, playAttack, gesture, refreshGear, statusList, speedOf,
  *           headPos, canAct, list
  *
- * Tribute rig (<= 10 meshes): torso (+ vest, backpack, back weapon), head
- * (skin + hair baked in one vertex-coloured geometry), 2 arms, 2 legs and a
- * held weapon. Name tag + status icon are sprites whose size is adjusted per
- * camera in onBeforeRender so they stay readable at any distance.
+ * Tribute rig (5 meshes): one skinned body per tribute (clothes, face, hair
+ * and skin in a vertex-coloured geometry on a 17-bone skeleton with knees,
+ * elbows, feet, spine and neck) plus rigid gear (vest, backpack, back weapon,
+ * held weapon). Procedural animation: walk/run cycle with knee flex, pelvis
+ * twist and arm counter-swing, idle weight shift, guard stance, crouch,
+ * attacks, gestures, swimming, sleeping and a buckling death fall; footfall
+ * dust / splashes. Name tag + status icon are sprites (overlay layer) whose
+ * size is adjusted per camera in onBeforeRender so they stay readable.
  *
  * Owner: TRIBUTES.
  * ========================================================================== */
@@ -513,15 +517,15 @@
   function now() { return GM.state.time; }
 
   // ================================================== geometry + materials
-  let _m4, _q, _e, _p, _s, _c, _v1, _v2;
+  let _m4, _q, _e, _p, _s, _c, _v1, _v2, _n3;
   function initTemps() {
     if (_m4) return;
     _m4 = new THREE.Matrix4(); _q = new THREE.Quaternion(); _e = new THREE.Euler();
     _p = new THREE.Vector3(); _s = new THREE.Vector3(); _c = new THREE.Color();
-    _v1 = new THREE.Vector3(); _v2 = new THREE.Vector3();
+    _v1 = new THREE.Vector3(); _v2 = new THREE.Vector3(); _n3 = new THREE.Matrix3();
   }
 
-  /** Merge parts [{g, c, p, r, s}] into one non-indexed geometry with vertex colours. */
+  /** Merge parts [{g, c, p, r, s}] into one non-indexed geometry with vertex colours (gear, hovercraft). */
   function mergeParts(parts) {
     initTemps();
     const list = [];
@@ -551,7 +555,7 @@
         if (na) { nor[o * 3] = na.getX(v); nor[o * 3 + 1] = na.getY(v); nor[o * 3 + 2] = na.getZ(v); }
         if (list[i].fn) {
           const k = list[i].fn(x, y, z);
-          col[o * 3] = k; col[o * 3 + 1] = k; col[o * 3 + 2] = k;
+          col[o * 3] = _c.r * k; col[o * 3 + 1] = _c.g * k; col[o * 3 + 2] = _c.b * k;
         } else {
           col[o * 3] = _c.r; col[o * 3 + 1] = _c.g; col[o * 3 + 2] = _c.b;
         }
@@ -576,112 +580,369 @@
     if (!K.mat[key]) K.mat[key] = build();
     return K.mat[key];
   }
-  function lambert(color, vc) {
-    return new THREE.MeshLambertMaterial({ color: color, flatShading: true, vertexColors: !!vc });
-  }
-  /** District shirt material (vertex colours darken the belt/collar). */
-  function shirtMat(district) {
-    return kitMat('shirt' + district, function () { return lambert(GM.districtColor(district), true); });
-  }
-  function skinMat(i) { return kitMat('skin' + i, function () { return lambert(SKIN[i % SKIN.length], false); }); }
-  function pantsMat(i) { return kitMat('pants' + i, function () { return lambert(PANTS[i % PANTS.length], true); }); }
-  function vcMat() { return kitMat('vc', function () { return lambert(0xffffff, true); }); }
   function gearMat() {
     if (GM.Items && typeof GM.Items.material === 'function') {
       const m = GM.Items.material();
       if (m) return m;
     }
-    return vcMat();
+    return kitMat('gear', function () { return new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.1 }); });
   }
-  function flashMat() {
-    return kitMat('flash', function () { return new THREE.MeshBasicMaterial({ color: 0xff8a7a }); });
-  }
-
-  function torsoGeo(female) {
-    return kitGeo(female ? 'torsoF' : 'torsoM', function () {
-      const w = female ? 0.185 : 0.2;
-      return mergeParts([
-        { g: new THREE.CylinderGeometry(w, female ? 0.165 : 0.17, 0.5, 7), c: 0xffffff, p: [0, 0.29, 0], s: [1, 1, 0.62] },
-        { g: new THREE.CylinderGeometry(0.172, 0.172, 0.075, 7), c: 0x444444, p: [0, 0.04, 0], s: [1, 1, 0.66] },
-        { g: new THREE.CylinderGeometry(0.075, 0.1, 0.06, 7), c: 0xd8d8d8, p: [0, 0.55, 0], s: [1, 1, 0.8] },
-        { g: new THREE.SphereGeometry(0.085, 6, 4), c: 0xffffff, p: [w + 0.005, 0.47, 0] },
-        { g: new THREE.SphereGeometry(0.085, 6, 4), c: 0xffffff, p: [-w - 0.005, 0.47, 0] },
-      ]);
+  /** Painted metal for the hovercraft. */
+  function craftMat() {
+    return kitMat('craft', function () {
+      return new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.38, metalness: 0.75 });
     });
   }
+  function glowMat(key, r, g, b) {
+    return kitMat('glow' + key, function () {
+      return new THREE.MeshBasicMaterial({ color: new THREE.Color(r, g, b), toneMapped: false });
+    });
+  }
+
+  /**
+   * Per-tribute body material (skinned). Per-vertex roughness, wet sheen
+   * after swimming, hit flash (emissive), grey-out after death.
+   * uBody: x wet 0..1, y dead 0..1, z flash 0..1
+   */
+  function bodyMaterial() {
+    const Gfx = GM.Gfx;
+    const u = { uBody: { value: new THREE.Vector4(0, 0, 0, 0) } };
+    const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 });
+    if (Gfx && Gfx.patch) {
+      Gfx.patch(m, {
+        key: 'tribute',
+        uniforms: u,
+        vertexPre: 'attribute float aRough;\nvarying float vRough;\n',
+        fragmentPre: 'uniform vec4 uBody;\nvarying float vRough;\n',
+        vertex: { begin_vertex: '$\nvRough = aRough;' },
+        fragment: {
+          color_fragment: [
+            '$',
+            'float gmL = dot( diffuseColor.rgb, vec3( 0.2126, 0.7152, 0.0722 ) );',
+            'diffuseColor.rgb = mix( diffuseColor.rgb, vec3( gmL ) * 0.8, uBody.y * 0.55 );',
+            'diffuseColor.rgb *= 1.0 - uBody.x * 0.3;',
+          ].join('\n'),
+          roughnessmap_fragment: '$\nroughnessFactor = mix( vRough, 0.3, uBody.x );',
+          emissivemap_fragment: '$\ntotalEmissiveRadiance += vec3( 2.6, 0.35, 0.22 ) * uBody.z;',
+        },
+      });
+    }
+    m.userData.u = u.uBody.value;
+    return m;
+  }
+
+  // ------------------------------------------------------------ skeleton
+  const B_HIPS = 0, B_TORSO = 1, B_CHEST = 2, B_NECK = 3, B_HEAD = 4;
+  const B_SHL = 5, B_ELL = 6, B_HANDL = 7, B_SHR = 8, B_ELR = 9, B_HANDR = 10;
+  const B_HIPL = 11, B_KNEEL = 12, B_FOOTL = 13, B_HIPR = 14, B_KNEER = 15, B_FOOTR = 16;
+  const BONE_PARENT = [-1, 0, 1, 2, 3, 2, 5, 6, 2, 8, 9, 0, 11, 12, 0, 14, 15];
+  const BONE_NAMES = ['hips', 'torso', 'chest', 'neck', 'head', 'shL', 'elL', 'handL', 'shR', 'elR', 'handR', 'hipL', 'kneeL', 'footL', 'hipR', 'kneeR', 'footR'];
+  function shoulderW(female) { return female ? 0.228 : 0.245; }
+  /** Rest offsets relative to the parent bone (arms hang down, facing +Z). */
+  function boneRest(female) {
+    const sw = shoulderW(female);
+    return [
+      [0, LEG, 0], [0, 0.06, 0], [0, 0.24, 0], [0, 0.3, 0], [0, 0.08, 0],
+      [sw, 0.18, 0], [0, -0.29, 0], [0, -0.29, 0.02],
+      [-sw, 0.18, 0], [0, -0.29, 0], [0, -0.29, 0.02],
+      [0.1, 0, 0], [0, -0.43, 0], [0, -0.4, 0],
+      [-0.1, 0, 0], [0, -0.43, 0], [0, -0.4, 0],
+    ];
+  }
+
+  // ------------------------------------------------------ body geometry
+  // Everything is built in character space (feet at y = 0, rest pose) with
+  // skin weights; joints blend two bones so knees and elbows bend smoothly.
+  function CharGeo() { this.pos = []; this.nrm = []; this.col = []; this.si = []; this.sw = []; this.rg = []; this.idx = []; }
+  const WTMP = [0, 0, 1];
+  const CTMP = [0xffffff, 0.8];
+  /**
+   * Add a part. col: hex or fn(x, y, z, out[hex, rough]); weigh: fn(x, y, z, out[boneA, boneB, wA]).
+   * Normals of coincident vertices (cylinder seams, poles) are averaged.
+   */
+  CharGeo.prototype.add = function (g, m, col, rough, weigh) {
+    initTemps();
+    if (!g.attributes.normal) g.computeVertexNormals();
+    const pa = g.attributes.position, na = g.attributes.normal;
+    const n = pa.count;
+    const base = this.pos.length / 3;
+    _n3.getNormalMatrix(m);
+    const P = new Float32Array(n * 3), N = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      _v1.fromBufferAttribute(pa, i).applyMatrix4(m);
+      _v2.fromBufferAttribute(na, i).applyMatrix3(_n3).normalize();
+      P[i * 3] = _v1.x; P[i * 3 + 1] = _v1.y; P[i * 3 + 2] = _v1.z;
+      N[i * 3] = _v2.x; N[i * 3 + 1] = _v2.y; N[i * 3 + 2] = _v2.z;
+    }
+    // weld normals along seams
+    const map = new Map();
+    for (let i = 0; i < n; i++) {
+      const key = Math.round(P[i * 3] * 2e4) + '_' + Math.round(P[i * 3 + 1] * 2e4) + '_' + Math.round(P[i * 3 + 2] * 2e4);
+      const l = map.get(key);
+      if (l) l.push(i); else map.set(key, [i]);
+    }
+    map.forEach(function (l) {
+      if (l.length < 2) return;
+      let x = 0, y = 0, z = 0;
+      for (const i of l) { x += N[i * 3]; y += N[i * 3 + 1]; z += N[i * 3 + 2]; }
+      const d = Math.sqrt(x * x + y * y + z * z) || 1;
+      for (const i of l) { N[i * 3] = x / d; N[i * 3 + 1] = y / d; N[i * 3 + 2] = z / d; }
+    });
+    const colFn = typeof col === 'function' ? col : null;
+    if (!colFn) _c.set(col);
+    for (let i = 0; i < n; i++) {
+      const x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2];
+      this.pos.push(x, y, z);
+      this.nrm.push(N[i * 3], N[i * 3 + 1], N[i * 3 + 2]);
+      let r = rough;
+      if (colFn) { colFn(x, y, z, CTMP); _c.set(CTMP[0]); r = CTMP[1]; }
+      this.col.push(_c.r, _c.g, _c.b);
+      this.rg.push(r);
+      weigh(x, y, z, WTMP);
+      this.si.push(WTMP[0], WTMP[1], 0, 0);
+      this.sw.push(WTMP[2], 1 - WTMP[2], 0, 0);
+    }
+    if (g.index) { const ia = g.index.array; for (let k = 0; k < ia.length; k++) this.idx.push(base + ia[k]); }
+    else for (let k = 0; k < n; k++) this.idx.push(base + k);
+    g.dispose();
+  };
+  CharGeo.prototype.build = function () {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(this.pos, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(this.nrm, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(this.col, 3));
+    g.setAttribute('aRough', new THREE.Float32BufferAttribute(this.rg, 1));
+    g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(this.si, 4));
+    g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(this.sw, 4));
+    g.setIndex(this.idx);
+    g.computeBoundingSphere();
+    g.boundingSphere.radius += 1.5;      // animation reach
+    return g;
+  };
+
+  function rigid(b) { return function (x, y, z, w) { w[0] = b; w[1] = b; w[2] = 1; }; }
+  /** bUp above y0, bDown below, smooth blend over +-half. */
+  function blendY(bUp, bDown, y0, half) {
+    return function (x, y, z, w) { w[0] = bUp; w[1] = bDown; w[2] = U.smoothstep(y0 - half, y0 + half, y); };
+  }
+  function mtx(x, y, z, sx, sy, sz, rx, ry, rz) {
+    initTemps();
+    _e.set(rx || 0, ry || 0, rz || 0);
+    _q.setFromEuler(_e);
+    return new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), _q.clone(), new THREE.Vector3(sx, sy == null ? sx : sy, sz == null ? sx : sz));
+  }
+  /** Interpolate a profile [[y, a, b], ...] (sorted by y) at y -> [a, b]. */
+  const PRO = [0, 0];
+  function profile(tab, y) {
+    if (y <= tab[0][0]) { PRO[0] = tab[0][1]; PRO[1] = tab[0][2]; return PRO; }
+    for (let i = 1; i < tab.length; i++) {
+      if (y <= tab[i][0]) {
+        const a = tab[i - 1], b = tab[i];
+        let t = (y - a[0]) / (b[0] - a[0]);
+        t = t * t * (3 - 2 * t);
+        PRO[0] = a[1] + (b[1] - a[1]) * t; PRO[1] = a[2] + (b[2] - a[2]) * t;
+        return PRO;
+      }
+    }
+    const l = tab[tab.length - 1];
+    PRO[0] = l[1]; PRO[1] = l[2];
+    return PRO;
+  }
+  /** Open cylinder from y0 to y1 with an elliptical profile fn(y) -> [rx, rz] (character space). */
+  function tube(y0, y1, radial, rings, prof, cx, cz, zoff, th0, thLen) {
+    const g = new THREE.CylinderGeometry(1, 1, 1, radial, rings, true, th0 || 0, thLen || TAU);
+    const pa = g.attributes.position;
+    for (let i = 0; i < pa.count; i++) {
+      const t = pa.getY(i) + 0.5;
+      const y = y0 + (y1 - y0) * t;
+      const r = prof(y);
+      pa.setXYZ(i, cx + pa.getX(i) * r[0], y, cz + pa.getZ(i) * r[1] + (zoff ? zoff(y) : 0));
+    }
+    g.computeVertexNormals();
+    return g;
+  }
+
+  const TORSO_M = [[0.83, 0.12, 0.095], [0.9, 0.162, 0.113], [0.97, 0.168, 0.117], [1.04, 0.156, 0.109], [1.12, 0.16, 0.112],
+    [1.22, 0.18, 0.123], [1.32, 0.198, 0.128], [1.39, 0.212, 0.122], [1.44, 0.196, 0.108], [1.485, 0.13, 0.08], [1.52, 0.058, 0.052]];
+  const TORSO_F = [[0.83, 0.12, 0.095], [0.9, 0.172, 0.116], [0.97, 0.176, 0.117], [1.05, 0.138, 0.099], [1.12, 0.14, 0.1],
+    [1.21, 0.16, 0.126], [1.29, 0.172, 0.132], [1.36, 0.188, 0.114], [1.42, 0.176, 0.102], [1.475, 0.118, 0.074], [1.52, 0.052, 0.048]];
+  const ARM = [[0.8, 0.032, 0.029], [0.86, 0.035, 0.031], [0.98, 0.045, 0.04], [1.08, 0.041, 0.038], [1.18, 0.052, 0.049], [1.3, 0.057, 0.054], [1.4, 0.06, 0.056]];
+  const LEGP = [[0.06, 0.042, 0.045], [0.12, 0.046, 0.048], [0.26, 0.058, 0.06], [0.36, 0.064, 0.064], [0.47, 0.056, 0.058], [0.62, 0.074, 0.076], [0.8, 0.086, 0.088], [0.96, 0.094, 0.094]];
+  const IRIS = [0x3b2a1e, 0x4a6a8c, 0x3f5e3a, 0x2a1d14, 0x6b5a3a];
+
+  function shade(hex, k) {
+    initTemps();
+    _c.set(hex).multiplyScalar(k);
+    return _c.getHex();
+  }
+
+  /** The whole body (skin, clothes, face, hair) as one skinned geometry. */
+  function buildBodyGeometry(t) {
+    const look = t.look, female = t.gender === 'f';
+    const G = new CharGeo();
+    const sw = shoulderW(female);
+    const shirt = GM.districtColor(t.district);
+    const shirtD = shade(shirt, 0.62), shirtL = shade(shirt, 1.12);
+    const skin = SKIN[look.skin % SKIN.length], skinD = shade(skin, 0.82);
+    const pants = PANTS[look.pants % PANTS.length];
+    const hair = HAIR[look.hair % HAIR.length];
+    const boot = 0x2b221c, sole = 0x151210, belt = 0x1d1916, buckle = 0xc9a24a;
+    const TP = female ? TORSO_F : TORSO_M;
+    const chestZ = function (y) { return (female ? 0.012 : 0.006) * U.smoothstep(1.12, 1.26, y) * (1 - U.smoothstep(1.34, 1.45, y)); };
+
+    // --- torso: pants / belt / jacket (district colour) with darker side panels and collar
+    const torsoCol = function (x, y, z, o) {
+      const pr = profile(TP, y);
+      const side = Math.abs(x) / Math.max(0.01, pr[0]);
+      if (y < 0.955) { o[0] = pants; o[1] = 0.88; return; }
+      if (y < 1.0) {
+        const front = z > pr[1] * 0.8 && Math.abs(x) < 0.03;
+        o[0] = front ? buckle : belt; o[1] = front ? 0.35 : 0.55; return;
+      }
+      if (y > 1.465) { o[0] = shirtD; o[1] = 0.85; return; }
+      if (y > 1.28 && y < 1.305) { o[0] = shirtL; o[1] = 0.7; return; }
+      o[0] = side > 0.82 ? shirtD : shirt;
+      o[1] = 0.8;
+    };
+    const torsoW = function (x, y, z, w) {
+      if (y < 1.02) { w[0] = B_TORSO; w[1] = B_HIPS; w[2] = U.smoothstep(0.94, 1.02, y); return; }
+      if (y < 1.26) { w[0] = B_CHEST; w[1] = B_TORSO; w[2] = U.smoothstep(1.13, 1.26, y); return; }
+      w[0] = B_NECK; w[1] = B_CHEST; w[2] = U.smoothstep(1.47, 1.53, y);
+    };
+    G.add(tube(0.83, 1.52, 28, 22, function (y) { return profile(TP, y); }, 0, 0, chestZ), new THREE.Matrix4(), torsoCol, 0.8, torsoW);
+    // pelvis cap
+    const pel = new THREE.SphereGeometry(1, 20, 10, 0, TAU, Math.PI / 2, Math.PI / 2);
+    G.add(pel, mtx(0, 0.835, 0, 0.12, 0.07, 0.095), pants, 0.9, rigid(B_HIPS));
+    // shoulders (deltoids, sleeve colour)
+    for (let s = -1; s <= 1; s += 2) {
+      const sh = new THREE.SphereGeometry(1, 16, 12);
+      G.add(sh, mtx(s * (sw - 0.012), 1.378, 0, 0.058, 0.062, 0.056), shirt, 0.8, rigid(s > 0 ? B_SHL : B_SHR));
+    }
+    // --- neck
+    G.add(tube(1.46, 1.62, 14, 4, function () { PRO[0] = 0.05; PRO[1] = 0.047; return PRO; }, 0, -0.005), new THREE.Matrix4(), skin, 0.55, blendY(B_HEAD, B_NECK, 1.585, 0.02));
+
+    // --- arms: short sleeve, skin below, hands
+    for (let s = -1; s <= 1; s += 2) {
+      const bs = s > 0 ? B_SHL : B_SHR, be = s > 0 ? B_ELL : B_ELR, bh = s > 0 ? B_HANDL : B_HANDR;
+      const ax = s * sw;
+      const armCol = function (x, y, z, o) {
+        if (y > 1.215) { o[0] = shirt; o[1] = 0.8; } else if (y > 1.195) { o[0] = shirtD; o[1] = 0.8; } else { o[0] = skin; o[1] = 0.55; }
+      };
+      G.add(tube(0.8, 1.4, 14, 16, function (y) { return profile(ARM, y); }, ax, 0), new THREE.Matrix4(), armCol, 0.6, blendY(bs, be, 1.09, 0.035));
+      // hand: palm + fingers block + thumb
+      G.add(new THREE.SphereGeometry(1, 12, 10), mtx(ax, 0.77, 0.008, 0.028, 0.052, 0.042), skin, 0.55, rigid(bh));
+      G.add(new THREE.CapsuleGeometry(0.012, 0.03, 3, 6), mtx(ax - s * 0.012, 0.785, 0.035, 1, 1, 1, 0.5, 0, s * 0.35), skinD, 0.55, rigid(bh));
+    }
+
+    // --- legs: trousers, boots with a cuff, feet
+    for (let s = -1; s <= 1; s += 2) {
+      const bh = s > 0 ? B_HIPL : B_HIPR, bk = s > 0 ? B_KNEEL : B_KNEER, bf = s > 0 ? B_FOOTL : B_FOOTR;
+      const lx = s * 0.1;
+      const legCol = function (x, y, z, o) {
+        if (y < 0.245) { o[0] = boot; o[1] = 0.55; } else if (y < 0.275) { o[0] = shade(boot, 1.35); o[1] = 0.6; } else { o[0] = pants; o[1] = 0.88; }
+      };
+      const legW = function (x, y, z, w) {
+        if (y > 0.3) { w[0] = bh; w[1] = bk; w[2] = U.smoothstep(0.43, 0.51, y); return; }
+        w[0] = bk; w[1] = bf; w[2] = U.smoothstep(0.07, 0.13, y);
+      };
+      G.add(tube(0.06, 0.96, 14, 20, function (y) { return profile(LEGP, y); }, lx, 0), new THREE.Matrix4(), legCol, 0.85, legW);
+      // boot foot + sole
+      const ft = new THREE.SphereGeometry(1, 14, 10);
+      const fpa = ft.attributes.position;
+      for (let i = 0; i < fpa.count; i++) { if (fpa.getY(i) < -0.35) fpa.setY(i, -0.35 + (fpa.getY(i) + 0.35) * 0.2); }
+      ft.computeVertexNormals();
+      G.add(ft, mtx(lx, 0.058, 0.05, 0.056, 0.058, 0.128), boot, 0.55, rigid(bf));
+      G.add(new THREE.BoxGeometry(0.108, 0.022, 0.265, 1, 1, 2), mtx(lx, 0.011, 0.048, 1), sole, 0.7, rigid(bf));
+    }
+
+    // --- head
+    const hc = [0, 1.655, 0.005];
+    const head = new THREE.SphereGeometry(1, 26, 20);
+    const hpa = head.attributes.position;
+    for (let i = 0; i < hpa.count; i++) {
+      let x = hpa.getX(i), y = hpa.getY(i), z = hpa.getZ(i);
+      if (y < 0) {                           // jaw and chin
+        const k = -y;
+        x *= 1 - 0.24 * Math.pow(k, 1.4);
+        z = z * (1 - 0.1 * k) + (z > 0 ? 0.08 * k * k : 0);
+      }
+      if (z < 0) z *= 1.04;                  // fuller back of the head
+      hpa.setXYZ(i, x, y, z);
+    }
+    head.computeVertexNormals();
+    G.add(head, mtx(hc[0], hc[1], hc[2], 0.098, 0.122, 0.112), skin, 0.52, rigid(B_HEAD));
+    // nose, ears
+    G.add(new THREE.ConeGeometry(0.017, 0.044, 6), mtx(0, 1.643, 0.113, 1, 1, 1, Math.PI / 2 + 0.25, 0, 0), skinD, 0.5, rigid(B_HEAD));
+    for (let s = -1; s <= 1; s += 2) {
+      G.add(new THREE.SphereGeometry(1, 10, 8), mtx(s * 0.098, 1.655, -0.004, 0.013, 0.026, 0.02), skinD, 0.55, rigid(B_HEAD));
+      // eyes: white, iris, brow
+      G.add(new THREE.SphereGeometry(1, 10, 8), mtx(s * 0.037, 1.668, 0.094, 0.0145, 0.0115, 0.009), 0xece6dc, 0.2, rigid(B_HEAD));
+      G.add(new THREE.SphereGeometry(1, 8, 6), mtx(s * 0.037, 1.667, 0.1015, 0.0078, 0.0078, 0.004), IRIS[(look.skin + look.hair) % IRIS.length], 0.15, rigid(B_HEAD));
+      G.add(new THREE.BoxGeometry(0.036, 0.008, 0.012), mtx(s * 0.038, 1.69, 0.1, 1, 1, 1, 0.15, 0, s * -0.12), hair, 0.7, rigid(B_HEAD));
+    }
+    G.add(new THREE.BoxGeometry(0.032, 0.0055, 0.008), mtx(0, 1.607, 0.1, 1), 0x7a3d34, 0.5, rigid(B_HEAD));
+
+    // --- hair
+    // hair cap: a sphere section around the crown, tilted back so the hairline sits
+    // on the forehead (front edge = cover - tilt, back edge = cover + tilt, degrees from the top)
+    const cap = function (coverDeg, tiltDeg, sc) {
+      const g = new THREE.SphereGeometry(1, 24, 14, 0, TAU, 0, coverDeg * Math.PI / 180);
+      G.add(g, mtx(hc[0], hc[1] + 0.003, hc[2] - 0.004, 0.103 * sc, 0.127 * sc, 0.117 * sc, -tiltDeg * Math.PI / 180, 0, 0), hair, 0.5, rigid(B_HEAD));
+    };
+    switch (look.style) {
+      case 'buzz': cap(88, 28, 1.012); break;
+      case 'short':
+        cap(96, 33, 1.045);
+        G.add(new THREE.SphereGeometry(1, 12, 8), mtx(0.025, 1.748, 0.066, 0.06, 0.026, 0.04, 0.35, 0, 0.25), hair, 0.5, rigid(B_HEAD));
+        break;
+      case 'mop':
+        cap(102, 36, 1.07);
+        for (let k = -1; k <= 1; k++) G.add(new THREE.SphereGeometry(1, 10, 8), mtx(k * 0.042, 1.74 - Math.abs(k) * 0.008, 0.086, 0.034, 0.026, 0.03), hair, 0.5, rigid(B_HEAD));
+        break;
+      case 'long': {
+        cap(104, 32, 1.06);
+        const back = tube(1.42, 1.69, 18, 6, function (y) { const k = U.smoothstep(1.42, 1.69, y); PRO[0] = 0.1 + 0.012 * k; PRO[1] = 0.085 + 0.035 * k; return PRO; }, 0, -0.02, null, Math.PI * 0.36, Math.PI * 1.28);
+        G.add(back, new THREE.Matrix4(), hair, 0.5, blendY(B_HEAD, B_NECK, 1.55, 0.06));
+        break;
+      }
+      case 'pony':
+        cap(98, 33, 1.05);
+        G.add(new THREE.CapsuleGeometry(0.032, 0.2, 4, 8), mtx(0, 1.58, -0.14, 1, 1, 1, 0.35, 0, 0), hair, 0.5, blendY(B_HEAD, B_NECK, 1.6, 0.05));
+        G.add(new THREE.SphereGeometry(1, 10, 8), mtx(0, 1.7, -0.115, 0.03, 0.03, 0.03), shade(hair, 0.6), 0.5, rigid(B_HEAD));
+        break;
+      case 'bun':
+        cap(98, 33, 1.05);
+        G.add(new THREE.SphereGeometry(1, 14, 10), mtx(0, 1.745, -0.1, 0.052, 0.05, 0.052), hair, 0.5, rigid(B_HEAD));
+        break;
+      default: break; // bald
+    }
+    return G.build();
+  }
+
   function vestGeo() {
     return kitGeo('vest', function () {
-      return mergeParts([
-        { g: new THREE.CylinderGeometry(0.218, 0.19, 0.4, 7), c: 0x55623a, p: [0, 0.3, 0], s: [1, 1, 0.7] },
-        { g: new THREE.BoxGeometry(0.13, 0.16, 0.04), c: 0x3b4528, p: [0.075, 0.33, 0.14] },
-        { g: new THREE.BoxGeometry(0.13, 0.16, 0.04), c: 0x3b4528, p: [-0.075, 0.33, 0.14] },
-        { g: new THREE.BoxGeometry(0.28, 0.2, 0.04), c: 0x3b4528, p: [0, 0.32, -0.145] },
-      ]);
+      // chest-bone space (chest joint at y = 1.20 in character space)
+      const g = tube(-0.24, 0.23, 20, 6, function (y) { const p = profile(TORSO_M, y + 1.2); PRO[0] = p[0] + 0.024; PRO[1] = p[1] + 0.026; return PRO; }, 0, 0);
+      const parts = [
+        { g: g, c: 0x4f5b36 },
+        { g: new THREE.BoxGeometry(0.13, 0.16, 0.03), c: 0x39432a, p: [0.072, 0.1, 0.14] },
+        { g: new THREE.BoxGeometry(0.13, 0.16, 0.03), c: 0x39432a, p: [-0.072, 0.1, 0.14] },
+        { g: new THREE.BoxGeometry(0.28, 0.22, 0.03), c: 0x39432a, p: [0, 0.07, -0.15] },
+        { g: new THREE.BoxGeometry(0.34, 0.03, 0.26), c: 0x2c3320, p: [0, -0.23, 0] },
+      ];
+      return mergeParts(parts);
     });
   }
   function packGeo() {
     return kitGeo('pack', function () {
       return mergeParts([
-        { g: new THREE.BoxGeometry(0.3, 0.36, 0.16), c: 0xe07b1f, p: [0, 0.18, 0] },
-        { g: new THREE.BoxGeometry(0.22, 0.14, 0.05), c: 0xb35d12, p: [0, 0.12, -0.1] },
-        { g: new THREE.BoxGeometry(0.31, 0.07, 0.17), c: 0xb35d12, p: [0, 0.34, 0] },
-        { g: new THREE.CylinderGeometry(0.055, 0.055, 0.32, 6), c: 0x2f6b43, p: [0, 0.41, 0], r: [0, 0, HP] },
+        { g: new THREE.CapsuleGeometry(0.11, 0.18, 4, 10), c: 0xd8741e, p: [0, 0.2, 0], s: [1.25, 1, 0.72] },
+        { g: new THREE.BoxGeometry(0.2, 0.12, 0.06), c: 0xa9571a, p: [0, 0.13, -0.09] },
+        { g: new THREE.CylinderGeometry(0.13, 0.13, 0.05, 12), c: 0xa9571a, p: [0, 0.37, 0], s: [1.05, 1, 0.7] },
+        { g: new THREE.CylinderGeometry(0.052, 0.052, 0.32, 10), c: 0x2f6b43, p: [0, 0.43, 0], r: [0, 0, HP] },
+        { g: new THREE.BoxGeometry(0.035, 0.34, 0.02), c: 0x1c1a17, p: [0.075, 0.22, 0.085] },
+        { g: new THREE.BoxGeometry(0.035, 0.34, 0.02), c: 0x1c1a17, p: [-0.075, 0.22, 0.085] },
       ]);
-    });
-  }
-  function armGeo() {
-    return kitGeo('arm', function () {
-      const g = new THREE.CapsuleGeometry(0.056, 0.48, 2, 6);
-      g.translate(0, -0.296, 0);
-      return g;
-    });
-  }
-  function legGeo() {
-    return kitGeo('leg', function () {
-      return mergeParts([
-        { g: new THREE.CapsuleGeometry(0.078, 0.72, 2, 6), c: 0xffffff, p: [0, -0.438, 0], fn: function (x, y) { return y < -0.7 ? 0.3 : 1; } },
-        { g: new THREE.BoxGeometry(0.13, 0.08, 0.22), c: 0x4d4d4d, p: [0, -0.86, 0.04] },
-      ]);
-    });
-  }
-  /** Head + hair + face baked into one geometry per (skin, hair, style). */
-  function headGeo(look) {
-    const key = 'head' + look.skin + '_' + look.hair + '_' + look.style;
-    return kitGeo(key, function () {
-      const sk = SKIN[look.skin % SKIN.length];
-      const hc = HAIR[look.hair % HAIR.length];
-      const parts = [
-        { g: new THREE.IcosahedronGeometry(0.125, 1), c: sk, p: [0, 0, 0], s: [0.95, 1.05, 1] },
-        { g: new THREE.BoxGeometry(0.03, 0.05, 0.04), c: sk, p: [0, -0.015, 0.122] },
-        { g: new THREE.BoxGeometry(0.026, 0.02, 0.012), c: 0x16181c, p: [0.045, 0.02, 0.113] },
-        { g: new THREE.BoxGeometry(0.026, 0.02, 0.012), c: 0x16181c, p: [-0.045, 0.02, 0.113] },
-        { g: new THREE.CylinderGeometry(0.05, 0.055, 0.08, 6), c: sk, p: [0, -0.14, -0.005] },
-      ];
-      const cap = function (r, thetaLen, y, z) {
-        return { g: new THREE.SphereGeometry(r, 8, 4, 0, TAU, 0, thetaLen), c: hc, p: [0, y || 0.012, z || -0.012] };
-      };
-      switch (look.style) {
-        case 'buzz': parts.push(cap(0.129, Math.PI * 0.38, 0.01, -0.01)); break;
-        case 'short': parts.push(cap(0.136, Math.PI * 0.46)); break;
-        case 'mop':
-          parts.push(cap(0.142, Math.PI * 0.5));
-          parts.push({ g: new THREE.BoxGeometry(0.2, 0.05, 0.05), c: hc, p: [0, 0.075, 0.1], r: [0.3, 0, 0] });
-          break;
-        case 'long':
-          parts.push(cap(0.14, Math.PI * 0.52));
-          parts.push({ g: new THREE.BoxGeometry(0.25, 0.3, 0.07), c: hc, p: [0, -0.1, -0.095] });
-          break;
-        case 'pony':
-          parts.push(cap(0.137, Math.PI * 0.48));
-          parts.push({ g: new THREE.ConeGeometry(0.045, 0.26, 5), c: hc, p: [0, -0.07, -0.16], r: [Math.PI - 0.35, 0, 0] });
-          break;
-        case 'bun':
-          parts.push(cap(0.136, Math.PI * 0.48));
-          parts.push({ g: new THREE.SphereGeometry(0.06, 6, 4), c: hc, p: [0, 0.09, -0.12] });
-          break;
-        default: break; // bald
-      }
-      return mergeParts(parts);
     });
   }
   /** Fallback weapon geometry (grip at origin, blade along +X) if Items is missing. */
@@ -699,7 +960,7 @@
     });
   }
 
-  // held-weapon transforms (weapon mesh inside the hand group)
+  // held-weapon transforms (weapon mesh inside the hand bone)
   const HELD = {
     knife: { r: [-0.4, -HP, 0], s: 1.25 },
     sickle: { r: [-0.4, -HP, 0], s: 1.25 },
@@ -714,8 +975,9 @@
 
   // =========================================================== the rig
   /**
-   * Build the tribute's scene graph. Returns the root Group (at the feet).
-   * rig parts are kept in t.rig for posing.
+   * Build the tribute's scene graph: a skinned body on a 17-bone skeleton
+   * plus rigid gear (vest, backpack, back weapon, held weapon). Returns the
+   * root Group (at the feet); parts are kept in t.rig for posing.
    */
   function buildRig(t) {
     initTemps();
@@ -729,82 +991,56 @@
     root.userData.tributeId = t.id;
     const body = new THREE.Group();
     root.add(body);
-    const hips = new THREE.Group();
-    hips.position.y = LEG;
-    body.add(hips);
 
-    const torso = new THREE.Mesh(torsoGeo(female), shirtMat(t.district));
-    hips.add(torso);
+    const rest = boneRest(female);
+    const bones = [];
+    for (let i = 0; i < BONE_NAMES.length; i++) {
+      const b = new THREE.Bone();
+      b.name = BONE_NAMES[i];
+      b.position.set(rest[i][0], rest[i][1], rest[i][2]);
+      bones.push(b);
+      if (BONE_PARENT[i] >= 0) bones[BONE_PARENT[i]].add(b);
+    }
+    body.add(bones[B_HIPS]);
+    const geo = buildBodyGeometry(t);
+    const mat = bodyMaterial();
+    const skinned = new THREE.SkinnedMesh(geo, mat);
+    skinned.name = 'body';
+    skinned.castShadow = shadows;
+    skinned.frustumCulled = false;
+    skinned.userData.tributeId = t.id;
+    body.add(skinned);
+    root.updateMatrixWorld(true);
+    skinned.bind(new THREE.Skeleton(bones));
+
+    const chest = bones[B_CHEST];
     const vest = new THREE.Mesh(vestGeo(), gearMat());
     vest.visible = false;
-    torso.add(vest);
+    chest.add(vest);
     const pack = new THREE.Mesh(packGeo(), gearMat());
-    pack.position.set(0, 0.1, -0.2);
+    pack.position.set(0, -0.17, -0.2);
     pack.visible = false;
-    torso.add(pack);
+    chest.add(pack);
     const back = new THREE.Mesh(weaponGeo('sword'), gearMat());
     back.visible = false;
     back.rotation.order = 'ZYX';
-    torso.add(back);
-
-    const neck = new THREE.Group();
-    neck.position.y = 0.56;
-    torso.add(neck);
-    const head = new THREE.Mesh(headGeo(look), vcMat());
-    head.position.y = 0.17;
-    neck.add(head);
-
-    const sw = female ? 0.235 : 0.25;
-    const shL = new THREE.Group();
-    shL.position.set(sw, 0.48, 0);
-    torso.add(shL);
-    const armL = new THREE.Mesh(armGeo(), skinMat(look.skin));
-    shL.add(armL);
-    const handL = new THREE.Group();
-    handL.position.set(0, -0.58, 0.02);
-    shL.add(handL);
-    const shR = new THREE.Group();
-    shR.position.set(-sw, 0.48, 0);
-    torso.add(shR);
-    const armR = new THREE.Mesh(armGeo(), skinMat(look.skin));
-    shR.add(armR);
-    const handR = new THREE.Group();
-    handR.position.set(0, -0.58, 0.02);
-    shR.add(handR);
-
+    chest.add(back);
     const weapon = new THREE.Mesh(weaponGeo('knife'), gearMat());
     weapon.visible = false;
-    handR.add(weapon);
+    bones[B_HANDR].add(weapon);
 
-    const hipL = new THREE.Group();
-    hipL.position.set(0.1, 0, 0);
-    hips.add(hipL);
-    const legL = new THREE.Mesh(legGeo(), pantsMat(look.pants));
-    hipL.add(legL);
-    const hipR = new THREE.Group();
-    hipR.position.set(-0.1, 0, 0);
-    hips.add(hipR);
-    const legR = new THREE.Mesh(legGeo(), pantsMat(look.pants));
-    hipR.add(legR);
-
-    const meshes = [torso, head, armL, armR, legL, legR];
-    for (let i = 0; i < meshes.length; i++) {
-      meshes[i].castShadow = shadows;
-      meshes[i].userData.tributeId = t.id;
-    }
-    vest.castShadow = shadows;
-    pack.castShadow = shadows;
-    weapon.castShadow = shadows;
-    vest.userData.tributeId = pack.userData.tributeId = weapon.userData.tributeId = back.userData.tributeId = t.id;
+    const gear = [vest, pack, weapon, back];
+    for (let i = 0; i < gear.length; i++) { gear[i].castShadow = shadows; gear[i].userData.tributeId = t.id; }
     root.scale.setScalar(look.height);
 
     t.rig = {
-      root: root, body: body, hips: hips, torso: torso, vest: vest, pack: pack, back: back, neck: neck, head: head,
-      shL: shL, shR: shR, armL: armL, armR: armR, handL: handL, handR: handR, weapon: weapon,
-      hipL: hipL, hipR: hipR, legL: legL, legR: legR,
-      meshes: meshes, baseMats: meshes.map(function (m) { return m.material; }), flashing: false,
+      root: root, body: body, bones: bones, skinned: skinned, mat: mat,
+      hips: bones[B_HIPS], torso: bones[B_TORSO], chest: chest, neck: bones[B_NECK], head: bones[B_HEAD],
+      shL: bones[B_SHL], elL: bones[B_ELL], handL: bones[B_HANDL], shR: bones[B_SHR], elR: bones[B_ELR], handR: bones[B_HANDR],
+      hipL: bones[B_HIPL], kneeL: bones[B_KNEEL], footL: bones[B_FOOTL], hipR: bones[B_HIPR], kneeR: bones[B_KNEER], footR: bones[B_FOOTR],
+      vest: vest, pack: pack, back: back, weapon: weapon,
       gearKey: -1, heldType: null, heldLeft: false, backType: null,
-      tag: null, icon: null, iconKey: '',
+      tag: null, icon: null, iconKey: '', wet: 0,
     };
     return root;
   }
@@ -949,10 +1185,13 @@
     const tex = new THREE.CanvasTexture(cv);
     tex.minFilter = THREE.LinearFilter;
     tex.generateMipmaps = false;
-    const m = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: false });
+    tex.encoding = THREE.sRGBEncoding;
+    const m = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: false, toneMapped: false });
     ICON_CACHE[ch] = m;
     return m;
   }
+  /** Name tags, icons and the selection ring render in the crisp overlay pass (post.js). */
+  function overlayLayer() { return GM.Post && GM.Post.OVERLAY != null ? GM.Post.OVERLAY : 0; }
 
   /** Name tag (canvas sprite, redrawn only on change) + status icon sprite. */
   function buildTag(t) {
@@ -964,8 +1203,10 @@
     const tex = new THREE.CanvasTexture(canvas);
     tex.minFilter = THREE.LinearFilter;
     tex.generateMipmaps = false;
-    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: false });
+    tex.encoding = THREE.sRGBEncoding;
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: false, toneMapped: false });
     const spr = new THREE.Sprite(mat);
+    spr.layers.set(overlayLayer());
     spr.center.set(0.5, 0);
     spr.renderOrder = 10;
     spr.frustumCulled = false;
@@ -974,6 +1215,7 @@
     spr.position.y = TAG_BASE;
     root.add(spr);
     const icon = new THREE.Sprite(iconMat('💤'));
+    icon.layers.set(overlayLayer());
     icon.center.set(0.5, 0);
     icon.renderOrder = 11;
     icon.frustumCulled = false;
@@ -1040,6 +1282,7 @@
       side: THREE.DoubleSide, blending: THREE.AdditiveBlending, fog: false,
     });
     selRing = new THREE.Mesh(g, m);
+    selRing.layers.set(overlayLayer());
     selRing.name = 'tribute-selection';
     selRing.renderOrder = 4;
     selRing.visible = false;
@@ -1218,6 +1461,15 @@
       } catch (err) { /* already gone */ }
       rig.tag = null;
     }
+    if (rig && rig.skinned) {
+      // the body geometry and material are per tribute
+      try {
+        rig.skinned.geometry.dispose();
+        rig.mat.dispose();
+        if (rig.skinned.skeleton) rig.skinned.skeleton.dispose();
+      } catch (err) { /* already gone */ }
+      rig.skinned = null;
+    }
     t.mesh = null;
   }
 
@@ -1384,7 +1636,7 @@
       if (back) {
         b.geometry = weaponGeo(back);
         const big = back === 'bow' || back === 'spear' || back === 'trident';
-        b.position.set(0.14, big ? 0.1 : 0.18, -0.17);
+        b.position.set(0.14, big ? -0.1 : -0.02, -0.19);     // chest-bone space
         b.rotation.set(0, 0, back === 'bow' ? HP + 0.35 : HP + 0.75);
         b.scale.setScalar(back === 'throwing_knives' ? 1 : 0.9);
         b.visible = true;
@@ -2215,17 +2467,21 @@
   };
 
   // ============================================================= animation
-  // Pose values are gathered in P (no allocations) and written to the rig.
+  // Pose values are gathered in P (no allocations) and written to the bones.
+  // Angles: hip/shoulder X > 0 swings the limb backward; knee > 0 flexes the
+  // shin back; elbow > 0 flexes the forearm forward; foot > 0 points the toes down.
   const P = {
-    bodyY: 0, bodyZ: 0, bodyRX: 0, bodyRY: 0, bodyRZ: 0, hipsY: LEG,
-    tX: 0, tY: 0, tZ: 0, nX: 0, nY: 0, nZ: 0,
+    bodyY: 0, bodyZ: 0, bodyRX: 0, bodyRY: 0, bodyRZ: 0, hipsY: LEG, hipsX: 0, hipTw: 0,
+    tX: 0, tY: 0, tZ: 0, chTw: 0, nX: 0, nY: 0, nZ: 0,
     lsX: 0, lsY: 0, lsZ: 0, rsX: 0, rsY: 0, rsZ: 0, lhX: 0, lhZ: 0, rhX: 0, rhZ: 0,
+    kL: 0, kR: 0, fL: 0, fR: 0, eL: 0, eR: 0,
   };
   function resetPose() {
-    P.bodyY = 0; P.bodyZ = 0; P.bodyRX = 0; P.bodyRY = 0; P.bodyRZ = 0; P.hipsY = LEG;
-    P.tX = 0; P.tY = 0; P.tZ = 0; P.nX = 0; P.nY = 0; P.nZ = 0;
-    P.lsX = 0; P.lsY = 0; P.lsZ = 0.07; P.rsX = 0; P.rsY = 0; P.rsZ = -0.07;
+    P.bodyY = 0; P.bodyZ = 0; P.bodyRX = 0; P.bodyRY = 0; P.bodyRZ = 0; P.hipsY = LEG; P.hipsX = 0; P.hipTw = 0;
+    P.tX = 0; P.tY = 0; P.tZ = 0; P.chTw = 0; P.nX = 0; P.nY = 0; P.nZ = 0;
+    P.lsX = 0; P.lsY = 0; P.lsZ = 0.08; P.rsX = 0; P.rsY = 0; P.rsZ = -0.08;
     P.lhX = 0; P.lhZ = 0; P.rhX = 0; P.rhZ = 0;
+    P.kL = 0; P.kR = 0; P.fL = 0; P.fR = 0; P.eL = 0.12; P.eR = 0.12;
   }
   /** Attack curve: ease into the wind-up (w), snap to the strike (s), recover to 0. */
   function atkVal(p, w, s) {
@@ -2244,43 +2500,64 @@
   function holdCurve(p) { const k = U.clamp01(p); return Math.min(1, k / 0.18, (1 - k) / 0.2); }
   function lerpP(key, v, k) { P[key] += (v - P[key]) * k; }
 
+  /** Crouch / kneel: bend both legs by k (0..1) keeping the feet planted; returns the hip drop. */
+  function legsBend(k, deep) {
+    const th = (deep ? 1.05 : 0.75) * k, kn = (deep ? 2.0 : 1.35) * k;
+    P.lhX -= th; P.rhX -= th;
+    P.kL += kn; P.kR += kn;
+    P.fL -= kn - th; P.fR -= kn - th;
+    const drop = 0.43 * (1 - Math.cos(th)) + 0.4 * (1 - Math.cos(kn - th));
+    P.hipsY -= drop;
+    return drop;
+  }
+
   function poseAttack(atk) {
     const p = U.clamp01(atk.t / Math.max(0.05, atk.dur));
     switch (atk.type) {
       case 'slash':
         P.rsX += atkVal(p, -2.3, -0.9); P.rsZ += atkVal(p, -0.8, 0.65);
-        P.tY += atkVal(p, -0.45, 0.45); P.tX += atkVal(p, -0.05, 0.12);
-        P.lsX += atkVal(p, -0.5, 0.2);
+        P.eR += atkVal(p, 1.3, 0.1);
+        P.tY += atkVal(p, -0.5, 0.5); P.tX += atkVal(p, -0.05, 0.15);
+        P.lsX += atkVal(p, -0.5, 0.2); P.eL += 0.5;
+        P.lhX += atkVal(p, 0.15, -0.3); P.kR += atkVal(p, 0.1, 0.35);
         break;
       case 'chop':
         P.rsX += atkVal(p, -2.9, -0.55); P.rsZ += atkVal(p, -0.15, 0.1);
-        P.lsX += atkVal(p, -1.2, -0.3);
-        P.tX += atkVal(p, -0.18, 0.35); P.tY += atkVal(p, -0.2, 0.15);
+        P.eR += atkVal(p, 1.5, 0.05);
+        P.lsX += atkVal(p, -1.2, -0.3); P.eL += atkVal(p, 1.1, 0.2);
+        P.tX += atkVal(p, -0.2, 0.4); P.tY += atkVal(p, -0.2, 0.15);
+        P.kL += atkVal(p, 0.1, 0.35); P.kR += atkVal(p, 0.1, 0.35); P.hipsY -= atkVal(p, 0, 0.05);
         break;
       case 'thrust':
         P.rsX += atkVal(p, -0.55, -1.45); P.lsX += atkVal(p, -0.95, -1.5);
+        P.eR += atkVal(p, 1.6, 0.08); P.eL += atkVal(p, 1.5, 0.15);
         P.rsZ += atkVal(p, 0.1, 0.3); P.lsZ += atkVal(p, -0.2, -0.35);
-        P.tX += atkVal(p, -0.1, 0.28); P.tY += atkVal(p, -0.25, 0.1);
+        P.tX += atkVal(p, -0.1, 0.3); P.tY += atkVal(p, -0.25, 0.1);
         P.bodyZ += atkVal(p, -0.08, 0.28);
+        P.lhX += atkVal(p, 0.1, -0.45); P.kL += atkVal(p, 0.1, 0.5); P.rhX += atkVal(p, 0, 0.3);
         break;
       case 'draw':
-        P.lsX += drawVal(p, -1.52, -1.5); P.lsZ += drawVal(p, -0.12, -0.1);
-        P.rsX += drawVal(p, -1.45, -1.2); P.rsZ += drawVal(p, 0.85, 0.3);
+        P.lsX += drawVal(p, -1.52, -1.5); P.lsZ += drawVal(p, -0.12, -0.1); P.eL = 0.05;
+        P.rsX += drawVal(p, -1.45, -1.2); P.rsZ += drawVal(p, 0.85, 0.3); P.eR += drawVal(p, 2.3, 0.4);
         P.tY += drawVal(p, 0.55, 0.45); P.nY += drawVal(p, -0.5, -0.4);
+        P.kL += 0.12; P.kR += 0.12;
         break;
       case 'throw':
-        P.rsX += atkVal(p, -2.7, -0.55); P.rsZ += atkVal(p, -0.4, 0.2);
-        P.lsX += atkVal(p, -0.9, 0.3);
-        P.tY += atkVal(p, -0.5, 0.45); P.tX += atkVal(p, -0.12, 0.2);
+        P.rsX += atkVal(p, -2.7, -0.55); P.rsZ += atkVal(p, -0.4, 0.2); P.eR += atkVal(p, 1.7, 0.05);
+        P.lsX += atkVal(p, -0.9, 0.3); P.eL += 0.4;
+        P.tY += atkVal(p, -0.55, 0.5); P.tX += atkVal(p, -0.15, 0.22);
+        P.lhX += atkVal(p, 0.2, -0.3); P.kL += atkVal(p, 0.05, 0.3);
         break;
       case 'punch':
-        P.lsX += -0.95 * bump(p); P.lsZ += -0.2 * bump(p);
-        P.rsX += atkVal(p, 0.35, -1.55); P.rsZ += atkVal(p, -0.05, 0.3);
-        P.tY += atkVal(p, -0.3, 0.35);
+        P.lsX += -0.95 * bump(p); P.lsZ += -0.2 * bump(p); P.eL += 1.9 - 0.6 * bump(p);
+        P.rsX += atkVal(p, 0.35, -1.55); P.rsZ += atkVal(p, -0.05, 0.3); P.eR += atkVal(p, 2.0, 0.1);
+        P.tY += atkVal(p, -0.35, 0.4);
+        P.kL += 0.2; P.kR += 0.2; P.hipsY -= 0.03;
         break;
       default: // stab
-        P.rsX += atkVal(p, 0.4, -1.55); P.rsZ += atkVal(p, -0.1, 0.25);
-        P.tY += atkVal(p, -0.3, 0.35); P.tX += atkVal(p, 0, 0.12);
+        P.rsX += atkVal(p, 0.4, -1.55); P.rsZ += atkVal(p, -0.1, 0.25); P.eR += atkVal(p, 1.4, 0.15);
+        P.tY += atkVal(p, -0.3, 0.35); P.tX += atkVal(p, 0, 0.15);
+        P.lhX += atkVal(p, 0.1, -0.25); P.kL += atkVal(p, 0.05, 0.25);
         break;
     }
   }
@@ -2291,39 +2568,42 @@
     switch (g.type) {
       case 'pickup':
       case 'forage':
-        P.tX += 0.95 * b; P.hipsY -= 0.1 * b; P.nX -= 0.25 * b;
-        P.rsX += -0.85 * b + (g.type === 'forage' ? Math.sin(ip * 9) * 0.15 * b : 0);
-        P.lsX += -0.55 * b;
-        P.lhX += -0.25 * b; P.rhX += 0.2 * b;
+        legsBend(0.75 * b, false);
+        P.tX += 0.7 * b; P.nX -= 0.25 * b;
+        P.rsX += -0.8 * b + (g.type === 'forage' ? Math.sin(ip * 9) * 0.15 * b : 0); P.eR += 0.4 * b;
+        P.lsX += -0.4 * b; P.eL += 0.6 * b;
         break;
       case 'trap':
-        P.tX += 1.05 * b; P.hipsY -= 0.2 * b; P.nX -= 0.3 * b;
-        P.lhX += -0.55 * b; P.rhX += 0.35 * b;
-        P.rsX += (-0.95 + Math.sin(ip * 12) * 0.18) * b;
-        P.lsX += (-0.8 + Math.sin(ip * 12 + 1.5) * 0.18) * b;
+        legsBend(0.9 * b, true);
+        P.tX += 0.75 * b; P.nX -= 0.3 * b;
+        P.rsX += (-0.9 + Math.sin(ip * 12) * 0.18) * b; P.eR += 0.8 * b;
+        P.lsX += (-0.75 + Math.sin(ip * 12 + 1.5) * 0.18) * b; P.eL += 0.8 * b;
         break;
       case 'drink':
-        P.tX += 1.2 * b; P.hipsY -= 0.26 * b; P.nX -= 0.2 * b;
-        P.lhX += -0.6 * b; P.rhX += 0.4 * b;
-        P.rsX += -1.1 * b; P.lsX += -1.0 * b;
+        legsBend(b, true);
+        P.tX += 0.95 * b; P.nX -= 0.15 * b;
+        P.rsX += -1.0 * b; P.lsX += -0.9 * b; P.eR += 0.3 * b; P.eL += 0.3 * b;
         break;
       case 'eat':
-        P.rsX += -2.25 * b; P.rsZ += 0.6 * b;
+        P.rsX += -1.0 * b; P.rsZ += 0.35 * b; P.eR += 2.1 * b;
         P.nX += 0.12 * b + Math.sin(ip * 10) * 0.04 * b;
         break;
       case 'heal':
-        P.lsX += -0.85 * b; P.rsX += -0.9 * b; P.lsZ += -0.55 * b; P.rsZ += 0.55 * b;
+        P.lsX += -0.7 * b; P.rsX += -0.75 * b; P.lsZ += -0.4 * b; P.rsZ += 0.4 * b;
+        P.eL += 1.3 * b; P.eR += 1.3 * b;
         P.tX += 0.3 * b; P.nX += 0.35 * b;
         break;
       case 'victory':
         P.lsX += -2.9 * b; P.rsX += -2.9 * b; P.lsZ += 0.25 * b; P.rsZ -= 0.25 * b;
-        P.tX -= 0.12 * b; P.nX -= 0.25 * b;
+        P.eL += 0.3 * b; P.eR += 0.3 * b;
+        P.tX -= 0.15 * b; P.nX -= 0.3 * b;
         break;
       case 'wave':
-        P.rsX += -2.6 * b; P.rsZ += (-0.3 + Math.sin(ip * 10) * 0.35) * b;
+        P.rsX += -2.5 * b; P.rsZ += (-0.3 + Math.sin(ip * 10) * 0.35) * b; P.eR += 0.6 * b;
         break;
       case 'flinch':
         P.tX -= 0.28 * b; P.nX -= 0.3 * b; P.tZ += 0.1 * b; P.lsX -= 0.4 * b; P.rsX -= 0.3 * b;
+        P.eL += 0.9 * b; P.eR += 0.9 * b; P.kL += 0.2 * b; P.kR += 0.2 * b;
         break;
       default:
         break;
@@ -2337,7 +2617,7 @@
     P.bodyZ += (-0.92 * mv - P.bodyZ) * k;
     lerpP('hipsY', LEG, k);
     lerpP('tX', 0, k);
-    lerpP('tY', Math.sin(ph) * 0.25 * mv, k);
+    lerpP('tY', Math.sin(ph) * 0.3 * mv, k);
     lerpP('nX', -0.85 * mv, k);
     lerpP('nY', 0, k);
     // crawl stroke when moving, sculling when treading water
@@ -2346,9 +2626,15 @@
     lerpP('rsX', mv > 0.5 ? -(ph + Math.PI) : -0.3 - scull, k);
     lerpP('lsZ', mv > 0.5 ? 0.15 : 0.9, k);
     lerpP('rsZ', mv > 0.5 ? -0.15 : -0.9, k);
+    lerpP('eL', mv > 0.5 ? 0.3 + 0.9 * Math.max(0, Math.sin(ph)) : 0.8, k);
+    lerpP('eR', mv > 0.5 ? 0.3 + 0.9 * Math.max(0, -Math.sin(ph)) : 0.8, k);
     const kick = Math.sin((mv > 0.5 ? ph : ip * 2) * 3) * 0.3;
     lerpP('lhX', kick, k);
     lerpP('rhX', -kick, k);
+    lerpP('kL', 0.25 + 0.3 * Math.max(0, kick), k);
+    lerpP('kR', 0.25 + 0.3 * Math.max(0, -kick), k);
+    lerpP('fL', 0.9, k);
+    lerpP('fR', 0.9, k);
   }
 
   function poseSleep(k, ip) {
@@ -2356,36 +2642,54 @@
     lerpP('bodyY', 0.2, k);
     lerpP('bodyRX', 0, k);
     lerpP('hipsY', LEG, k);
-    lerpP('tX', 0.12 + Math.sin(ip * 1.1) * 0.025, k);
+    lerpP('tX', 0.28 + Math.sin(ip * 1.1) * 0.025, k);
     lerpP('tY', 0, k);
     lerpP('tZ', 0, k);
-    lerpP('nX', 0.25, k);
+    lerpP('nX', 0.35, k);
     lerpP('nY', 0, k);
-    lerpP('lhX', -0.75, k);
-    lerpP('rhX', -0.35, k);
-    lerpP('lsX', -1.0, k);
-    lerpP('rsX', -0.7, k);
+    // curled up: knees drawn in, arms folded
+    lerpP('lhX', -1.0, k);
+    lerpP('rhX', -0.7, k);
+    lerpP('kL', 1.5, k);
+    lerpP('kR', 1.2, k);
+    lerpP('fL', 0.3, k);
+    lerpP('fR', 0.3, k);
+    lerpP('lsX', -1.1, k);
+    lerpP('rsX', -0.8, k);
     lerpP('lsZ', -0.2, k);
     lerpP('rsZ', -0.1, k);
+    lerpP('eL', 1.7, k);
+    lerpP('eR', 1.4, k);
   }
 
   function poseDeath(a) {
     const p = U.clamp01(a.dead);
     let e;
     if (p < 0.72) { const u = p / 0.72; e = u * u; } else e = 1 - 0.06 * Math.sin(((p - 0.72) / 0.28) * Math.PI);
+    const fwd = a.deathDir > 0;
+    // the knees give way first, then the body falls
+    const buckle = U.clamp01(p * 3) * (1 - 0.6 * e);
     P.bodyRX = a.deathDir * HP * 0.96 * e;
     P.bodyY = 0.13 * U.clamp01(e);
+    P.hipsY = LEG - 0.12 * buckle;
+    P.kL = 0.5 * buckle + (fwd ? 0.25 * e : 0.05 * e);
+    P.kR = 0.35 * buckle + (fwd ? 0.4 * e : 0.12 * e);
+    P.lhX = -0.25 * buckle + (fwd ? -0.15 * e : 0.1 * e);
+    P.rhX = -0.15 * buckle;
+    P.fL = 0.5 * e; P.fR = 0.4 * e;
     P.lsZ = 1.25 * e;
     P.rsZ = -1.1 * e;
     P.lsX = -0.2 * e;
     P.rsX = 0.15 * e;
+    P.eL = 0.4 * e + 0.3 * buckle; P.eR = 0.25 * e + 0.2 * buckle;
     P.lhZ = 0.14 * e;
     P.rhZ = -0.1 * e;
-    P.lhX = 0.12 * e;
     P.nY = 0.7 * a.deathTwist * e;
     P.nX = -0.15 * e;
+    P.tX = (fwd ? 0.25 : -0.1) * e;
   }
 
+  const _look = { x: 0, z: 0 };
   function applyPose(t, time) {
     const rig = t.rig, a = t.anim;
     resetPose();
@@ -2398,35 +2702,76 @@
       const runK = U.clamp01((sp - 2.4) / 2.8);
       const ph = a.walk, s = Math.sin(ph), c = Math.cos(ph);
       const busy = a.atk.on || a.gest.on;
-      // locomotion
-      const legAmp = (0.42 + 0.38 * runK) * moveK;
+      // --- locomotion: thighs, knees (flex through the swing), feet stay level
+      const legAmp = (0.44 + 0.4 * runK) * moveK;
       P.lhX = s * legAmp;
       P.rhX = -s * legAmp;
-      const armAmp = (0.32 + 0.6 * runK) * moveK * (busy ? 0.25 : 1);
+      const kAmp = (0.62 + 1.05 * runK) * moveK;
+      const cs = Math.cos(ph - 0.4);
+      P.kL = 0.06 * moveK + kAmp * Math.pow(Math.max(0, -cs), 1.3) + 0.12 * runK * moveK;
+      P.kR = 0.06 * moveK + kAmp * Math.pow(Math.max(0, cs), 1.3) + 0.12 * runK * moveK;
+      P.fL = -(P.lhX + P.kL) * 0.72 + 0.12 * Math.max(0, s) * moveK;
+      P.fR = -(P.rhX + P.kR) * 0.72 + 0.12 * Math.max(0, -s) * moveK;
+      // arms swing against the legs, elbows bend more when running
+      const armAmp = (0.34 + 0.62 * runK) * moveK * (busy ? 0.25 : 1);
       P.lsX = -s * armAmp;
       P.rsX = s * armAmp;
-      P.lsZ = 0.07 + 0.05 * runK;
-      P.rsZ = -0.07 - 0.05 * runK;
-      P.hipsY = LEG * Math.cos(Math.abs(s) * legAmp) + Math.abs(c) * 0.035 * runK * moveK;
-      P.tX = 0.05 * moveK + 0.17 * runK * moveK;
-      P.tY = s * 0.09 * moveK;
-      // idle: breathing and looking around
+      P.lsZ = 0.08 + 0.05 * runK;
+      P.rsZ = -0.08 - 0.05 * runK;
+      P.eL = 0.14 + 0.2 * moveK + 1.15 * runK * moveK + 0.25 * Math.max(0, s) * armAmp;
+      P.eR = 0.14 + 0.2 * moveK + 1.15 * runK * moveK + 0.25 * Math.max(0, -s) * armAmp;
+      // pelvis twist, chest counter-twist, bounce and lean
+      P.hipTw = s * (0.08 + 0.06 * runK) * moveK;
+      P.chTw = -s * (0.11 + 0.08 * runK) * moveK;
+      P.hipsY = LEG * Math.cos(Math.abs(s) * legAmp * 0.9) - (P.kL + P.kR) * 0.018 + Math.abs(c) * 0.04 * runK * moveK;
+      P.tX = 0.05 * moveK + 0.2 * runK * moveK;
+      P.tZ = c * 0.03 * moveK * (1 - runK);
+      P.nX = -0.06 * runK * moveK;
+      // --- idle: breathing, weight shift, looking around
       const idle = 1 - moveK;
-      P.tX += Math.sin(ip * 1.9) * 0.018 * idle;
+      const breath = Math.sin(ip * 1.9);
+      P.tX += breath * 0.015 * idle;
+      P.nX += breath * -0.01 * idle;
+      P.lsZ += breath * 0.02 * idle;
+      P.rsZ -= breath * 0.02 * idle;
+      const shift = Math.sin(ip * 0.31);
+      P.hipsX = shift * 0.025 * idle;
+      P.kL += Math.max(0, shift) * 0.14 * idle;
+      P.kR += Math.max(0, -shift) * 0.14 * idle;
+      P.fL -= Math.max(0, shift) * 0.1 * idle;
+      P.fR -= Math.max(0, -shift) * 0.1 * idle;
+      P.hipsY -= Math.abs(shift) * 0.008 * idle;
+      P.tZ -= shift * 0.03 * idle;
       P.nY = Math.sin(ip * 0.37) * 0.45 * idle;
-      P.nX = Math.sin(ip * 0.23 + 1.3) * 0.08 * idle;
-      P.lsZ += Math.sin(ip * 1.9) * 0.02 * idle;
-      P.rsZ -= Math.sin(ip * 1.9) * 0.02 * idle;
-      // sneaking / hiding crouch
+      P.nX += Math.sin(ip * 0.23 + 1.3) * 0.08 * idle;
+      // --- look at the current target
+      if (t.targetId != null && !busy) {
+        const o = GM.state.tributes[t.targetId];
+        if (o && o.alive && o.pos) {
+          const dx = o.pos.x - t.pos.x, dz = o.pos.z - t.pos.z;
+          if (dx * dx + dz * dz < 900) {
+            const d = U.angleDiff ? U.angleDiff(t.heading, Math.atan2(dx, dz)) : 0;
+            P.nY = U.clamp(d, -1.1, 1.1) * 0.8;
+            P.tY += U.clamp(d, -1.1, 1.1) * 0.25;
+          }
+        }
+      }
+      // --- guard stance when fighting
+      const gd = a.guard;
+      if (gd > 0.01) {
+        legsBend(0.28 * gd, false);
+        P.tX += 0.12 * gd;
+        P.rsX -= 0.7 * gd; P.eR += 1.0 * gd; P.rsZ += 0.15 * gd;
+        P.lsX -= 0.5 * gd; P.eL += 1.2 * gd; P.lsZ -= 0.1 * gd;
+      }
+      // --- sneaking / hiding crouch
       const cr = a.crouch;
       if (cr > 0.01) {
-        P.hipsY -= 0.12 * cr;
-        P.lhX += -0.38 * cr;
-        P.rhX += 0.3 * cr;
-        P.tX += 0.45 * cr;
+        legsBend(0.62 * cr, false);
+        P.tX += 0.42 * cr;
         P.nX -= 0.35 * cr;
-        P.lsX -= 0.35 * cr;
-        P.rsX -= 0.45 * cr;
+        P.lsX -= 0.3 * cr; P.eL += 0.5 * cr;
+        P.rsX -= 0.4 * cr; P.eR += 0.6 * cr;
       }
       if (a.atk.on) poseAttack(a.atk);
       if (a.gest.on) poseGesture(a.gest, ip);
@@ -2439,29 +2784,42 @@
         P.nX += 0.25 * k;
         P.lsZ += 0.15 * k;
         P.rsZ -= 0.15 * k;
+        P.kL += 0.25 * k; P.kR += 0.2 * k;
+        P.eL += 0.4 * k; P.eR += 0.4 * k;
       }
       if (a.swim > 0.01) poseSwim(a.swim, sp, ph, ip);
       if (a.sleep > 0.01) poseSleep(a.sleep, ip);
     }
     rig.body.position.set(0, P.bodyY, P.bodyZ);
     rig.body.rotation.set(P.bodyRX, P.bodyRY, P.bodyRZ);
-    rig.hips.position.y = P.hipsY;
-    rig.torso.rotation.set(P.tX, P.tY, P.tZ);
-    rig.neck.rotation.set(P.nX, P.nY, P.nZ);
+    rig.hips.position.set(P.hipsX, P.hipsY, 0);
+    rig.hips.rotation.set(0, P.hipTw, 0);
+    rig.torso.rotation.set(P.tX * 0.55, P.tY * 0.5, P.tZ * 0.6);
+    rig.chest.rotation.set(P.tX * 0.45, P.tY * 0.5 + P.chTw, P.tZ * 0.4);
+    rig.neck.rotation.set(P.nX * 0.45, P.nY * 0.45 - (P.hipTw + P.chTw) * 0.5, P.nZ * 0.5);
+    rig.head.rotation.set(P.nX * 0.55, P.nY * 0.55, P.nZ * 0.5);
     rig.shL.rotation.set(P.lsX, P.lsY, P.lsZ);
     rig.shR.rotation.set(P.rsX, P.rsY, P.rsZ);
+    rig.elL.rotation.set(-Math.max(0, P.eL), 0, 0);
+    rig.elR.rotation.set(-Math.max(0, P.eR), 0, 0);
     rig.hipL.rotation.set(P.lhX, 0, P.lhZ);
     rig.hipR.rotation.set(P.rhX, 0, P.rhZ);
+    rig.kneeL.rotation.set(Math.max(0, P.kL), 0, 0);
+    rig.kneeR.rotation.set(Math.max(0, P.kR), 0, 0);
+    rig.footL.rotation.set(P.fL, 0, 0);
+    rig.footR.rotation.set(P.fR, 0, 0);
   }
 
+  /** Hit flash, wet sheen after swimming, grey-out when dead (body material uniforms). */
   function applyFlash(t, realDt) {
     const rig = t.rig, a = t.anim;
     if (a.flash > 0) a.flash = Math.max(0, a.flash - realDt);
-    const on = a.flash > 0;
-    if (on === rig.flashing) return;
-    rig.flashing = on;
-    const fm = on ? flashMat() : null;
-    for (let i = 0; i < rig.meshes.length; i++) rig.meshes[i].material = on ? fm : rig.baseMats[i];
+    const u = rig.mat && rig.mat.userData.u;
+    if (!u) return;
+    rig.wet = t.swimming || t.inWater ? 1 : Math.max(0, rig.wet - realDt * 0.05);
+    u.x = Math.max(rig.wet, GM.Gfx ? GM.Gfx.uniforms.gmEnv.value[1] * 0.6 : 0);
+    u.y = t.alive ? 0 : U.clamp01(a.dead);
+    u.z = a.flash > 0 ? Math.min(1, a.flash / 0.08) : 0;
   }
 
   /** Sim-time animation state: attack / gesture timers and smooth blends. */
@@ -2475,6 +2833,47 @@
     a.sleep += ((t.sleeping ? 1 : 0) - a.sleep) * (1 - Math.exp(-3 * dt));
     a.crouch += ((t.sneaking ? 1 : t.hidden ? 0.75 : 0) - a.crouch) * (1 - Math.exp(-6 * dt));
     a.stun += ((t.status.stun > 0 ? 1 : 0) - a.stun) * k8;
+    const fighting = (t.action === 'fight' || t.action === 'berserk' || t.action === 'bloodbath' || t.action === 'mad') &&
+      t.nav.speed < 3 && !t.swimming && !t.sleeping;
+    a.guard = (a.guard || 0) + ((fighting ? 1 : 0) - (a.guard || 0)) * (1 - Math.exp(-4 * dt));
+    // footfalls (each time the stride crosses over)
+    const sg = Math.sin(a.walk) >= 0 ? 1 : -1;
+    if (sg !== a.stepSg) {
+      a.stepSg = sg;
+      if (t.nav.speed > 2.8 && !t.swimming && !t.sleeping) footfall(t, sg);
+    }
+  }
+
+  const FOOT = { count: 3, color: 0x9a8f80, color2: 0xc2b8a8, speed: 0.7, spread: 0.12, up: 0.9, gravity: -1.2, size: 0.34, life: 0.7, alpha: 0.5 };
+  /** Dust, snow puffs or splashes under a running tribute (only close to the main camera). */
+  function footfall(t, side) {
+    const cam = GM.Cameras && GM.Cameras.main;
+    if (!cam) return;
+    const dx = cam.position.x - t.pos.x, dz = cam.position.z - t.pos.z;
+    if (dx * dx + dz * dz > 42 * 42) return;
+    const c = Math.cos(t.heading), sn = Math.sin(t.heading);
+    const off = side * 0.1;
+    FXP.x = t.pos.x + c * off; FXP.y = t.pos.y + 0.04; FXP.z = t.pos.z - sn * off;
+    const run = t.nav.speed > 4.2;
+    if (t.inWater) {
+      FOOT.count = run ? 6 : 3; FOOT.color = 0xd8e6ee; FOOT.color2 = 0x9fc0d0; FOOT.speed = 1.3; FOOT.up = 2.2; FOOT.gravity = -9; FOOT.size = 0.12; FOOT.life = 0.55; FOOT.alpha = 0.8;
+      fx('emit', FXP, FOOT);
+      if (run) fx('ring', FXP, 0xbcd6e6, 0.7, 0.6);
+      return;
+    }
+    const surf = GM.Env && typeof GM.Env.surface === 'function' ? GM.Env.surface() : null;
+    const snow = surf ? surf.snow : 0, wet = surf ? surf.wet : 0;
+    const b = biomeAt(t.pos.x, t.pos.z);
+    let col = 0, col2 = 0;
+    if (snow > 0.35 && b !== 'plaza') { col = 0xf2f5fb; col2 = 0xdfe6f2; }
+    else if (wet > 0.5) return;                        // no dust on wet ground
+    else if (b === 'sand') { col = 0xc8b48a; col2 = 0xe0d0aa; }
+    else if (b === 'plaza') { if (!run) return; col = 0x9a9186; col2 = 0xb8b0a4; }
+    else if (b === 'rock' || b === 'swamp') { col = 0x807565; col2 = 0xa09483; }
+    else { if (!run || Math.random() < 0.6) return; col = 0x7c6c52; col2 = 0x9c8c70; }
+    FOOT.count = run ? 3 : 2; FOOT.color = col; FOOT.color2 = col2; FOOT.speed = 0.7; FOOT.up = 0.8; FOOT.gravity = -0.6;
+    FOOT.size = run ? 0.8 : 0.7; FOOT.life = 0.8; FOOT.alpha = 0.2;
+    fx('emit', FXP, FOOT);
   }
 
   // ================================================= hovercraft body pickup
@@ -2484,27 +2883,38 @@
   function craftGeo() {
     return kitGeo('craft', function () {
       return mergeParts([
-        { g: new THREE.CylinderGeometry(2.1, 3.1, 0.9, 8), c: 0x2b2f36, s: [1, 1, 1.6] },
-        { g: new THREE.CylinderGeometry(1.2, 2.0, 0.8, 8), c: 0x3c424c, p: [0, 0.8, 0.4], s: [1, 1, 1.4] },
-        { g: new THREE.BoxGeometry(9, 0.2, 1.7), c: 0x23272d, p: [0, 0.1, -0.9] },
-        { g: new THREE.BoxGeometry(1.5, 0.32, 0.7), c: 0x8fd3ff, p: [0, 0.95, 1.95] },
-        { g: new THREE.CylinderGeometry(0.35, 0.35, 0.22, 8), c: 0xff4a3c, p: [4.3, 0.22, -0.9] },
-        { g: new THREE.CylinderGeometry(0.35, 0.35, 0.22, 8), c: 0x5cff7a, p: [-4.3, 0.22, -0.9] },
-        { g: new THREE.CylinderGeometry(0.95, 1.15, 0.3, 8), c: 0x121417, p: [0, -0.55, 0] },
-        { g: new THREE.BoxGeometry(0.4, 0.5, 1.2), c: 0xc9a227, p: [0, 0.2, -3.0] },
+        { g: new THREE.CylinderGeometry(1.6, 2.9, 1.1, 16), c: 0x2e333b, s: [1, 1, 1.9] },
+        { g: new THREE.SphereGeometry(1.5, 20, 10, 0, TAU, 0, Math.PI / 2), c: 0x3a414b, p: [0, 0.5, 0.2], s: [1, 0.55, 1.7] },
+        { g: new THREE.BoxGeometry(10, 0.22, 2.0), c: 0x23272e, p: [0, 0.05, -1.0], r: [0, 0, 0] },
+        { g: new THREE.BoxGeometry(2.2, 0.16, 1.4), c: 0x23272e, p: [0, 0.9, -3.8], r: [0.25, 0, 0] },
+        { g: new THREE.BoxGeometry(0.2, 1.1, 1.2), c: 0x2e333b, p: [0, 1.2, -4.0], r: [-0.35, 0, 0] },
+        { g: new THREE.CylinderGeometry(0.55, 0.65, 1.8, 14), c: 0x1b1e23, p: [4.3, 0.05, -1.1], r: [HP, 0, 0] },
+        { g: new THREE.CylinderGeometry(0.55, 0.65, 1.8, 14), c: 0x1b1e23, p: [-4.3, 0.05, -1.1], r: [HP, 0, 0] },
+        { g: new THREE.CylinderGeometry(0.95, 1.2, 0.35, 16), c: 0x121417, p: [0, -0.62, 0] },
+        { g: new THREE.BoxGeometry(0.5, 0.06, 1.6), c: 0xc9a227, p: [0, 1.02, 0.5] },
+      ]);
+    });
+  }
+  function craftGlowGeo() {
+    return kitGeo('craftGlow', function () {
+      return mergeParts([
+        { g: new THREE.CircleGeometry(0.5, 16), c: 0xffffff, p: [4.3, 0.05, -2.02], r: [0, Math.PI, 0] },
+        { g: new THREE.CircleGeometry(0.5, 16), c: 0xffffff, p: [-4.3, 0.05, -2.02], r: [0, Math.PI, 0] },
+        { g: new THREE.BoxGeometry(1.8, 0.28, 0.1), c: 0xffffff, p: [0, 0.7, 2.62], r: [-0.5, 0, 0] },
+        { g: new THREE.RingGeometry(0.75, 0.95, 24), c: 0xffffff, p: [0, -0.8, 0], r: [HP, 0, 0] },
       ]);
     });
   }
   function cableGeo() {
     return kitGeo('cable', function () {
-      const g = new THREE.CylinderGeometry(0.05, 0.05, 1, 5);
+      const g = new THREE.CylinderGeometry(0.05, 0.05, 1, 6);
       g.translate(0, -0.5, 0);
       return g;
     });
   }
   function clawGeo() {
     return kitGeo('claw', function () {
-      const parts = [{ g: new THREE.CylinderGeometry(0.22, 0.28, 0.2, 6), c: 0x6d737c }];
+      const parts = [{ g: new THREE.CylinderGeometry(0.22, 0.28, 0.2, 10), c: 0x6d737c }];
       for (let i = 0; i < 3; i++) {
         const a = i * TAU / 3;
         parts.push({ g: new THREE.BoxGeometry(0.07, 0.6, 0.07), c: 0x9aa1aa, p: [Math.sin(a) * 0.3, -0.3, Math.cos(a) * 0.3], r: [Math.cos(a) * 0.45, 0, -Math.sin(a) * 0.45] });
@@ -2527,14 +2937,15 @@
     if (hasThree() && sceneRef()) {
       const g = new THREE.Group();
       g.name = 'hovercraft';
-      const craft = new THREE.Mesh(craftGeo(), vcMat());
+      const craft = new THREE.Mesh(craftGeo(), craftMat());
       craft.castShadow = GM.state.settings ? GM.state.settings.quality !== 'low' : true;
       g.add(craft);
-      const cable = new THREE.Mesh(cableGeo(), vcMat());
+      g.add(new THREE.Mesh(craftGlowGeo(), glowMat('craft', 1.6, 3.2, 4.0)));
+      const cable = new THREE.Mesh(cableGeo(), craftMat());
       cable.position.y = -0.6;
       cable.scale.y = 0.001;
       g.add(cable);
-      const claw = new THREE.Mesh(clawGeo(), vcMat());
+      const claw = new THREE.Mesh(clawGeo(), craftMat());
       claw.position.y = -0.6;
       g.add(claw);
       g.position.set(pk.sx, pk.sy, pk.sz);

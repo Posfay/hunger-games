@@ -794,7 +794,7 @@
       if (knifeIM.parent !== W.scene) W.scene.add(knifeIM);
       return true;
     }
-    const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
+    const mat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, metalness: 0.2 });
     arrowIM = new THREE.InstancedMesh(arrowGeometry(), mat, CAP.arrow);
     knifeIM = new THREE.InstancedMesh(knifeGeometry(), mat, CAP.knife);
     const list = [arrowIM, knifeIM];

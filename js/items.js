@@ -759,16 +759,18 @@
 
   function ensureMaterials() {
     if (itemMat || !hasThree()) return;
-    itemMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true });
+    itemMat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.62, metalness: 0.15 });
     crateMat = itemMat;
-    trapMat = new THREE.MeshLambertMaterial({ vertexColors: true, flatShading: true, transparent: true, opacity: 0.8 });
+    trapMat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, transparent: true, opacity: 0.8, roughness: 0.9, metalness: 0 });
     lineMat = new THREE.LineBasicMaterial({ color: 0xd6d6d6, transparent: true, opacity: 0.85 });
     beaconMat = new THREE.MeshBasicMaterial({ color: 0xff3b30 });
+    beaconMat.color.multiplyScalar(6);         // HDR: blinking beacons bloom
     beamMat = new THREE.MeshBasicMaterial({
       color: 0xffc36b, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending,
       depthWrite: false, side: THREE.DoubleSide,
     });
     silverMat = new THREE.MeshBasicMaterial({ color: 0x8fd3ff });
+    silverMat.color.multiplyScalar(4);
   }
 
   // =========================================================== instancing

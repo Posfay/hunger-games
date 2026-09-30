@@ -343,12 +343,12 @@
     if (tr.type === 'pine') {
       _cr.pine = true;
       _cr.yb = by + 1.2 * sh;
-      _cr.yt = by + 6.3 * sh;
-      _cr.r = 1.75 * sw;
+      _cr.yt = by + 6.7 * sh;
+      _cr.r = 2.05 * sw;
       if (tr.burnt) { _cr.yt = _cr.yb + (_cr.yt - _cr.yb) * 0.55; _cr.r *= 0.55; }
     } else {
       _cr.pine = false;
-      let yc = by + 3.75 * sh, hv = 1.5 * sh, r = 1.8 * sw;
+      let yc = by + 3.8 * sh, hv = 1.6 * sh, r = 1.95 * sw;
       if (tr.burnt) { const pv = by + 2.1 * sh; yc = pv + (yc - pv) * 0.55; hv *= 0.55; r *= 0.55; }
       _cr.yc = yc; _cr.hv = hv; _cr.r = r;
       _cr.yb = yc - hv; _cr.yt = yc + hv;
@@ -2216,10 +2216,28 @@
     if (Math.abs(cam.aspect - a) > 1e-4) { cam.aspect = a; cam.updateProjectionMatrix(); }
   }
 
+  let renderNo = 0;
+  const _dofP = new V3();
+  /** Cinematic depth of field: close shots of a tribute soften the background (post.js). */
+  function updateDof(S) {
+    let want = 0, focus = S.dofFocus || 10;
+    const sid = mode === 'follow' || mode === 'director' ? mainSubject() : null;
+    const t = sid != null ? tributeById(sid) : null;
+    if (t && t.pos) {
+      entPos(t, _dofP);
+      _dofP.y += t.alive ? 1.2 : 0.3;
+      focus = main.position.distanceTo(_dofP);
+      want = (1 - U.smoothstep(4, 15, focus)) * 0.8;
+    }
+    S.dof += (want - S.dof) * 0.08;
+    S.dofFocus += (focus - S.dofFocus) * 0.2;
+    S.dofRange = Math.max(5, S.dofFocus * 1.5);
+  }
   /** Render the main view into #viewport and the live feeds into .feed-slot rectangles. */
   Cameras.render = function () {
     const W = GM.World;
     if (!W || !W.renderer || !W.scene) return;
+    renderNo = (renderNo + 1) % 3000;
     const r = W.renderer, scene = W.scene;
     const canvas = r.domElement;
     const cw = Math.max(1, window.innerWidth || 1), ch = Math.max(1, window.innerHeight || 1);
@@ -2233,18 +2251,26 @@
     readViewport(cw, ch);
     const sm = r.shadowMap;
     if (sm) { sm.autoUpdate = false; sm.needsUpdate = !!sm.enabled; }
+    r.setRenderTarget(null);
     if (!vp.full) {
       r.setScissorTest(false);
       r.setViewport(0, 0, cw, ch);
       r.clear();
     }
     // Main view (bottom-left origin in CSS px; three.js applies the pixel ratio).
+    // GM.Post renders through the HDR pipeline (tone mapping, bloom, AO ...).
+    const P = GM.Post && typeof GM.Post.renderView === 'function' ? GM.Post : null;
     const mx = vp.left - ox, my = ch - (vp.top - oy) - vp.height;
     setAspect(main, vp.width / vp.height);
-    r.setScissorTest(true);
-    r.setViewport(mx, my, vp.width, vp.height);
-    r.setScissor(mx, my, vp.width, vp.height);
-    r.render(scene, main);
+    if (P && P.settings) updateDof(P.settings);
+    if (P) {
+      P.renderView(scene, main, mx, my, vp.width, vp.height, 0, true);
+    } else {
+      r.setScissorTest(true);
+      r.setViewport(mx, my, vp.width, vp.height);
+      r.setScissor(mx, my, vp.width, vp.height);
+      r.render(scene, main);
+    }
     // Live feeds.
     if (feedsEnabled()) {
       refreshSlotStyles();
@@ -2260,13 +2286,22 @@
         slotVis[i] = vis;
         if (!vis) continue;
         const f = feeds[i];
-        if (!f.shot.active || wasHidden) { feedThink(i); f.snap = true; prepareFeed(f, 0); }
+        let fresh = false;
+        if (!f.shot.active || wasHidden) { feedThink(i); f.snap = true; prepareFeed(f, 0); fresh = true; }
         if (!f.shot.active) continue;
         const fx = rc.left - ox, fy = ch - (rc.top - oy) - rc.height;
         setAspect(f.camera, rc.width / rc.height);
-        r.setViewport(fx, fy, rc.width, rc.height);
-        r.setScissor(fx, fy, rc.width, rc.height);
-        r.render(scene, f.camera);
+        if (P) {
+          // feeds re-render their scene round-robin (one per frame); the others re-use their last image
+          const refresh = fresh || renderNo % FEED_COUNT === i || f.shot !== f.lastShotRef || f.shot.t0 !== f.lastShotT0;
+          f.lastShotRef = f.shot;
+          f.lastShotT0 = f.shot.t0;
+          P.renderView(scene, f.camera, fx, fy, rc.width, rc.height, 1 + i, false, refresh);
+        } else {
+          r.setViewport(fx, fy, rc.width, rc.height);
+          r.setScissor(fx, fy, rc.width, rc.height);
+          r.render(scene, f.camera);
+        }
       }
     } else {
       slotVis[0] = slotVis[1] = slotVis[2] = false;
