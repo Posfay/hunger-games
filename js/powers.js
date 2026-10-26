@@ -372,6 +372,13 @@
   const R_COOLDOWN = Object.freeze({ ok: false, reason: 'cooldown' });
   const R_ENERGY = Object.freeze({ ok: false, reason: 'energy' });
   const R_MISSING = Object.freeze({ ok: false, reason: 'missing' });
+  const R_LOCKED = Object.freeze({ ok: false, reason: 'locked' });
+  const FREE_GRADE_CUTS = Object.freeze([62, 50, 38, 27]);   // score needed for S, A, B, C
+
+  // Career upgrades (set in reset() from GM.Career.modsFor; neutral in free play)
+  const NEUTRAL_MODS = Object.freeze({ maxEnergy: MAX_ENERGY, startEnergy: START_ENERGY, regen: 1, cooldown: 1, hype: 1 });
+  let careerMods = NEUTRAL_MODS;
+  function isCareerShow() { const s = GM.state.settings; return !!(s && s.career); }
 
   // ---------------------------------------------------------------- helpers
   function settings() { return GM.state.settings || null; }
@@ -1117,7 +1124,7 @@
   }
   resetCooldowns();
 
-  function cooldownOf(def) { return def.cooldown * (isSandbox() ? SANDBOX_CD : 1); }
+  function cooldownOf(def) { return def.cooldown * (isSandbox() ? SANDBOX_CD : 1) * careerMods.cooldown; }
 
   /** Power definition by id (or null). */
   Powers.def = function (id) { return BY_ID[id] || null; };
@@ -1135,7 +1142,7 @@
   };
   Powers.categoryColor = function (cat) { return '#' + (CAT_COLORS[cat] || 0xffffff).toString(16).padStart(6, '0'); };
   /** Energy per sim second (SPEC: 0.6 + excitement / 45). */
-  Powers.regenRate = function () { return isSandbox() ? 0 : 0.6 + GM.Audience.excitement / 45; };
+  Powers.regenRate = function () { return isSandbox() ? 0 : (0.6 + GM.Audience.excitement / 45) * careerMods.regen; };
   /** Seconds until the announced feast opens (0 when none is pending). */
   Powers.feastCountdown = function () { return feastPending ? Math.max(0, feastPending.at - GM.state.time) : 0; };
   /** Seconds of reveal left. */
@@ -1145,6 +1152,7 @@
   Powers.canUse = function (id) {
     const def = BY_ID[id];
     if (!def) return R_MISSING;
+    if (isCareerShow() && GM.Career && !GM.Career.isUnlocked(id)) return R_LOCKED;   // shown even before the gong
     if (GM.state.phase !== 'running') return R_PHASE;
     if ((Powers.cooldowns[id] || 0) > 0) return R_COOLDOWN;
     if (!isSandbox() && Powers.energy < def.cost) return R_ENERGY;
@@ -1462,10 +1470,10 @@
       if (c > 0) cds[id] = c > dt ? c - dt : 0;
     }
     if (st.phase === 'running') {
-      if (isSandbox()) Powers.energy = MAX_ENERGY;
+      if (isSandbox()) Powers.energy = Powers.maxEnergy;
       else {
         Powers.energy += Powers.regenRate() * dt;
-        if (Powers.energy > MAX_ENERGY) Powers.energy = MAX_ENERGY;
+        if (Powers.energy > Powers.maxEnergy) Powers.energy = Powers.maxEnergy;
       }
     }
     runTasks();
@@ -1491,6 +1499,8 @@
 
   function clearPowers() {
     const st = GM.state;
+    careerMods = NEUTRAL_MODS;
+    Powers.maxEnergy = MAX_ENERGY;
     Powers.energy = START_ENERGY;
     resetCooldowns();
     for (const k in Powers.used) delete Powers.used[k];
@@ -1569,7 +1579,7 @@
     amount = +amount || 0;
     if (!amount) return 0;
     let a = amount;
-    if (a > 0) a *= 1 - 0.5 * (Audience.excitement / 100);
+    if (a > 0) a *= (1 - 0.5 * (Audience.excitement / 100)) * careerMods.hype;
     const before = Audience.excitement;
     Audience.excitement = U.clamp(before + a, 0, 100);
     const real = Audience.excitement - before;
@@ -1603,7 +1613,9 @@
   /** Audience grade for the whole Show so far: 'S' | 'A' | 'B' | 'C' | 'D'. */
   Audience.grade = function () {
     const s = Audience.score();
-    return s >= 62 ? 'S' : s >= 50 ? 'A' : s >= 38 ? 'B' : s >= 27 ? 'C' : 'D';
+    // career Shows grade on a stricter scale (GM.Career.GRADE_CUTS); free play keeps the original one
+    const cuts = isCareerShow() && GM.Career ? GM.Career.GRADE_CUTS : FREE_GRADE_CUTS;
+    return s >= cuts[0] ? 'S' : s >= cuts[1] ? 'A' : s >= cuts[2] ? 'B' : s >= cuts[3] ? 'C' : 'D';
   };
   /** 'audience.mood.*' key for the current excitement. */
   Audience.moodKey = function () {
@@ -2083,7 +2095,9 @@
       clearAudience();
       AutoGM.enabled = !!(s && s.autoGM);
       clearAuto();
-      Powers.energy = s && s.sandbox ? MAX_ENERGY : START_ENERGY;
+      if (s && s.career && GM.Career) careerMods = GM.Career.modsFor(s);
+      Powers.maxEnergy = careerMods.maxEnergy;
+      Powers.energy = s && s.sandbox ? Powers.maxEnergy : careerMods.startEnergy;
       initPopularity();
       Audience.viewers = viewersTarget();
       Audience.peakViewers = Audience.viewers;

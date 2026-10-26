@@ -11,7 +11,7 @@
   'use strict';
 
   const GM = (window.GM = window.GM || {});
-  GM.VERSION = '1.0.0';
+  GM.VERSION = '2.0.0';
 
   // ------------------------------------------------------------------ config
   GM.CFG = {

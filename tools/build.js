@@ -23,7 +23,9 @@ const html = read('index.html');
 
 const title = (html.match(/<title>([\s\S]*?)<\/title>/) || [, "Arena Showrunner"])[1].trim();
 const fonts = (html.match(/<!-- FONTS:BEGIN[^>]*-->([\s\S]*?)<!-- FONTS:END -->/) || [, ''])[1].trim();
-const css = read('css/style.css');
+const cssFiles = [...html.matchAll(/<link\s+rel="stylesheet"\s+href="(css\/[^"]+)"\s*>/g)].map((m) => m[1]);
+if (!cssFiles.length) throw new Error('no local <link rel="stylesheet"> found in index.html');
+const css = cssFiles.map((f) => `/* ${f} */\n${read(f)}`).join('\n');
 
 const scriptTags = [...html.matchAll(/<script\s+src="([^"]+)"\s*><\/script>/g)].map((m) => m[1]);
 if (!scriptTags.length) throw new Error('no <script src> tags found in index.html');

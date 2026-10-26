@@ -27,6 +27,25 @@ Rebuild the single-file version after changing the source: `node tools/build.js`
    shows (fights, betrayals, big events) earn more energy. Keep the viewers watching.
 4. The last contestant alive wins. The victory screen grades your show (S to D).
 
+## Career mode
+
+You run a TV network. A **season** is six **episodes** (Shows). Before each one the
+Studio gives you a **brief**: a ratings target (a grade to reach) plus two bonus goals,
+such as reaching a viewer count, witnessing betrayals or making a certain type of
+contestant win. Every goal you hit is a star.
+
+- **Credits** (grade, goals, trophies) buy **studio upgrades**: more energy, faster
+  recharge, shorter cooldowns, stronger hype, a head start, and the assistant Showrunner.
+- **Reputation** raises your level (1 to 10). Levels unlock Showrunner powers one by one
+  and allow bigger casts. Free play always has everything unlocked.
+- Finish a season for a bonus, then start a harder one. Trophies give extra credits.
+- Progress is saved in the browser (`localStorage`) after every episode and purchase.
+  The **Profile** tab has a backup code you can copy to move or restore a save.
+- Leaving an episode early earns nothing; the same brief is waiting for another try.
+
+Switch between **Career mode** and **Free play** with the button in the setup screen's
+top corner, or in the career header. Free play is the original sandbox, unchanged.
+
 ### Powers
 
 | Gifts | Nature | Danger | Rules |
@@ -62,6 +81,8 @@ emotions (fear, rage, confidence, sanity). Every contestant shows what it is thi
 |---|---|
 | `SPEC.md` | Architecture and module contract |
 | `js/core.js`, `js/i18n.js`, `js/main.js` | Runtime, localisation, game loop |
+| `js/save.js` | Versioned save in `localStorage` (sections, backup code, memory fallback) |
+| `js/career.js`, `js/careerui.js`, `css/career.css` | Career mode: rules, briefs, rewards, upgrades / hub, objective HUD, results |
 | `js/gfx.js`, `js/post.js` | Rendering foundation (linear colour, height fog, shared shader uniforms) and the HDR post-processing pipeline (bloom, SSAO, sun shafts, depth of field, ACES tone mapping, colour grade) |
 | `js/terrain.js`, `js/world.js`, `js/env.js` | Terrain + pathfinding, 3D world + effects, sky/day/night/weather/lighting |
 | `js/contestants.js`, `js/items.js`, `js/combat.js` | Contestants, loot, fighting |
@@ -73,4 +94,10 @@ emotions (fear, rage, confidence, sanity). Every contestant shows what it is thi
 | `tools/build.js` | Bundles everything into `dist/arena.html` |
 | `tools/serve.js` | Static dev server with caching disabled (`node tools/serve.js . 8766`) |
 
-Test: `node tools/smoke.js --norender` (add `--powers`, `--lang hu`, `--shots <dir>`).
+Tests:
+
+- `node tools/career-test.js`: unit tests for the save and career logic (no browser needed).
+- `node tools/smoke.js --norender`: a whole free-play Show in headless Chrome
+  (add `--powers`, `--lang hu`, `--shots <dir>`).
+- `node tools/smoke.js --norender --career 6 --bot random --buy`: plays a career season
+  with a bot and prints grade, goals and rewards per episode (use it to tune difficulty).

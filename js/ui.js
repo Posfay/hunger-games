@@ -973,6 +973,7 @@
       const c = cooldownLeft(id);
       return t('ui.pow.reason.cooldown', { n: c >= 10 ? Math.ceil(c) : Math.max(0.1, Math.round(c * 10) / 10) });
     }
+    if (reason === 'locked') return t('ui.pow.reason.locked', { n: GM.Career ? GM.Career.unlockLevel(id) : 1 });
     return tk('ui.pow.reason.' + reason, 'ui.pow.reason.failed');
   }
   function isSandbox() { const s = settings(); return !!(s && s.sandbox); }
@@ -2705,6 +2706,8 @@
     for (let i = 0; i < ui.powBtns.length; i++) {
       const b = ui.powBtns[i];
       txt(b.name, powerName(b.def));
+      b.lk = false;   // refreshPowers repaints the lock label
+      tog(b.el, 'locked', false);
       txt(b.cost, sb ? '∞' : String(b.def.cost == null ? 0 : b.def.cost));
     }
   }
@@ -2744,6 +2747,12 @@
       txt(b.cdt, frac > 0 ? fmtCd(cd) : '');
       tog(b.el, 'off', !cu.ok);
       tog(b.el, 'poor', cu.reason === 'energy');
+      const lk = cu.reason === 'locked';
+      if (lk !== !!b.lk) {
+        b.lk = lk;
+        tog(b.el, 'locked', lk);
+        txt(b.cost, lk ? '🔒 L' + (GM.Career ? GM.Career.unlockLevel(b.id) : 1) : isSandbox() ? '∞' : String(b.def.cost == null ? 0 : b.def.cost));
+      }
       tog(b.el, 'armed', tgt.active && tgt.id === b.id);
       attr(b.el, 'aria-disabled', cu.ok ? null : 'true');
     }
@@ -2763,6 +2772,7 @@
   function toggleAssistant() {
     const AG = GM.AutoGM;
     if (!AG || typeof AG.setEnabled !== 'function') return;
+    if (GM.Career && GM.Career.active() && !GM.Career.hasAssistant()) { toast('ui.toast.assistantLocked'); play('click'); return; }
     const on = !AG.enabled;
     try { AG.setEnabled(on); } catch (e) { GM.reportError('UI.autoGM', e); }
     if (GM.state.settings) GM.state.settings.autoGM = on;
@@ -3298,6 +3308,7 @@
       '<div class="v-actions"><button type="button" class="btn btn-ghost" data-act="watch">' + svgMarkup('eye') + '<span>' + esc(t('victory.watch')) + '</span></button>' +
       '<button type="button" class="start-btn v-new" data-act="new"><span class="start-glow" aria-hidden="true"></span><span class="start-label">' + esc(t('victory.newShow')) + '</span></button></div>' +
       '</div>';
+    GM.emit('ui:victory', { root: dom.victory });   // every (re)render: other modules may extend the card
   }
   function showVictory() {
     if (GM.state.phase !== 'ended') return;
@@ -3482,7 +3493,7 @@
       return;
     }
     ui.exitArmedUntil = now() + 3;
-    toast('ui.top.exitConfirm');
+    toast(GM.Career && GM.Career.active() && GM.state.phase !== 'ended' ? 'ui.top.exitCareer' : 'ui.top.exitConfirm');
     refreshTopbar();
   }
   function toggleNameTags() {
@@ -3871,6 +3882,8 @@
   const UI = (GM.UI = {
     hoverId: null,
     /** A power is armed and waits for a target. */
+    /** The setup options the player chose (quality, feeds, name tags, assistant): a copy. */
+    getOptions() { return Object.assign({}, setup.opts); },
     isTargeting() { return tgt.active; },
     /** The armed power (shared object, read-only for callers) or null. */
     targeting() { return tgt.active ? tgt : null; },

@@ -22,6 +22,12 @@
  *                         it may call snap('name') to request a screenshot (needs --shots)
  *     --setup-only        only load the page and screenshot the setup screen
  *     --page PATH         page to load (default index.html; e.g. dist/arena.html)
+ *     --career N          play N career episodes in a row on a fresh career (see below)
+ *     --bot NAME          none | random | assistant: who uses powers in career runs (default random)
+ *     --career-level L    start the career at level L (default 1)
+ *     --buy               spend credits on upgrades between episodes
+ *
+ * Career runs print one row per episode: grade / score / viewers / day / goals / rewards.
  *
  * Exit code 0 = no page errors; 1 = errors found; 2 = harness failure.
  * ========================================================================== */
@@ -59,6 +65,10 @@ const opt = {
   evalFile: arg('eval', null),
   setupOnly: !!arg('setup-only', false),
   page: String(arg('page', 'index.html')).replace(/\\/g, '/'),
+  career: +arg('career', 0),
+  bot: String(arg('bot', 'random')),
+  careerLevel: +arg('career-level', 1),
+  buy: !!arg('buy', false),
 };
 
 // --------------------------------------------------------- static server
@@ -234,6 +244,7 @@ function cdp(wsUrl) {
   await sleep(800);
   await shot('01-setup' + (opt.lang === 'hu' ? '-hu' : ''));
   if (opt.setupOnly) { printErrors(); return finish(consoleErrors.length ? 1 : 0); }
+  if (opt.career > 0) return careerRun();
 
   // start
   await evaluate(`(() => {
@@ -344,6 +355,7 @@ function cdp(wsUrl) {
       kickoff, causes, byArch, logTypes, missing: GM.i18n.missing(), unresolved: [...new Set(unresolved)].slice(0, 30),
       errors: GM.errors, en, hu,
       alliances: GM.AI && GM.AI.alliances ? GM.AI.alliances.length : null,
+      audience: GM.Audience ? { score: Math.round(GM.Audience.score() * 10) / 10, grade: GM.Audience.grade(), peakViewersM: Math.round(GM.Audience.peakViewers / 1e5) / 10, peakExcitement: Math.round(GM.Audience.peakExcitement) } : null,
       powers: window.__powerLog ? window.__powerLog.slice(-60) : null,
       fps: null,
     };
@@ -354,6 +366,7 @@ function cdp(wsUrl) {
   console.log('death causes: ' + JSON.stringify(rep.causes));
   console.log('log types: ' + JSON.stringify(rep.logTypes));
   console.log('alliances ever: ' + rep.alliances);
+  if (rep.audience) console.log(`audience: grade ${rep.audience.grade}, score ${rep.audience.score}, peak ${rep.audience.peakViewersM}M viewers, peak excitement ${rep.audience.peakExcitement}`);
   console.log('by archetype (n / alive / kills / avg placement):');
   for (const [k, a] of Object.entries(rep.byArch)) console.log(`  ${k.padEnd(12)} ${a.n} / ${a.alive} / ${a.kills} / ${(a.placeSum / a.n).toFixed(1)}`);
   if (rep.powers) console.log('powers used: ' + rep.powers.join(', '));
@@ -366,6 +379,85 @@ function cdp(wsUrl) {
   printErrors();
   console.log(`\ntotal real time ${((Date.now() - t0) / 1000).toFixed(0)}s`);
   return finish(consoleErrors.length || rep.errors.length ? 1 : 0);
+
+  /** Play opt.career episodes of a fresh career with a bot and print a row per episode. */
+  async function careerRun() {
+    await evaluate(`(() => {
+      GM.Save.reset();
+      GM.Career.begin();
+      if (${opt.careerLevel} > 1) GM.Career.data.rep = GM.Career.LEVEL_XP[${opt.careerLevel} - 1];
+      GM.CFG.MAX_SUBSTEPS = ${opt.norender ? 120 : 24};
+      ${opt.norender ? 'if (GM.Cameras) GM.Cameras.render = function () {};' : ''}
+      if ('${opt.bot}' === 'assistant') GM.Career.data.upgrades.writers = 1;
+      window.__bot = { mode: '${opt.bot}', last: 0 };
+      setInterval(() => {
+        try {
+          const b = window.__bot;
+          if (b.mode !== 'random' || GM.state.phase !== 'running' || !GM.Career.active()) return;
+          if (GM.state.time - b.last < 22) return;
+          const alive = GM.state.contestants.filter(t => t.alive);
+          const defs = GM.Powers.defs.filter(d => GM.Powers.canUse(d.id).ok && d.id !== 'terraform');
+          if (!alive.length || !defs.length) return;
+          const d = defs[Math.floor(Math.random() * defs.length)];
+          const t = alive[Math.floor(Math.random() * alive.length)];
+          const target = d.target === 'point' ? { x: t.pos.x + 5, z: t.pos.z + 3 } : d.target === 'contestant' ? t : null;
+          const option = d.options && d.options.length ? d.options[Math.floor(Math.random() * d.options.length)].id : undefined;
+          if (GM.Powers.use(d.id, target, option)) b.last = GM.state.time;
+        } catch (e) { console.error('bot: ' + e.message); }
+      }, 250);
+    })()`);
+    const rows = [];
+    for (let n = 1; n <= opt.career; n++) {
+      const ok = await evaluate('GM.Career.startEpisode()');
+      if (!ok) { console.log('episode ' + n + ': could not start (season finished?)'); break; }
+      await evaluate(`(() => { GM.Game.setSpeed(${opt.speed}); ${opt.bot === 'assistant' ? 'GM.AutoGM.setEnabled(true);' : ''} window.__bot.last = 0; })()`);
+      const t1 = Date.now();
+      let state = null;
+      while ((Date.now() - t1) / 1000 < opt.timeout) {
+        await sleep(1000);
+        state = await evaluate('({ phase: GM.state.phase, day: GM.state.day, alive: GM.state.contestants.filter(t => t.alive).length })').catch(() => null);
+        if (state && state.phase === 'ended') break;
+      }
+      if (!state || state.phase !== 'ended') { console.log('episode ' + n + ': TIMEOUT at day ' + (state && state.day)); break; }
+      await sleep(5000);   // let the victory report open
+      if (n === 1) {
+        // a night recap may cover the viewport: open the results card explicitly, in both languages
+        await evaluate("(() => { const b = document.querySelector('.results-btn'); if (b) b.click(); })()");
+        await sleep(700);
+        await shot('career-report');
+        await evaluate("GM.i18n.setLang('hu')");
+        await sleep(500);
+        await shot('career-report-hu');
+        await evaluate("GM.i18n.setLang('en')");
+      }
+      const r = await evaluate(`(() => {
+        const R = GM.Career.results();
+        if (!R) return null;
+        return { id: R.brief.id, count: R.brief.count, mix: R.brief.mix, grade: R.grade, score: R.score,
+          viewers: Math.round(R.viewers / 1e5) / 10, day: R.day, win: R.winner ? R.winner.archetype : '-', betrayals: R.betrayals,
+          stars: R.stars, credits: R.credits, rep: R.rep, level: R.levelAfter, balance: R.creditsTotal, powers: GM.state.stats.powersUsed,
+          goals: R.objectives.map(o => o.type + (o.primary ? '*' : '') + ':' + (o.done ? 'Y' : 'n')).join(' '),
+          trophies: R.trophies.join(','), season: R.season ? 'done' : '' };
+      })()`);
+      rows.push(r);
+      console.log(r ? `${r.id} n=${r.count} ${r.mix.padEnd(12)} ${r.grade} score=${String(r.score).padEnd(5)} viewers=${String(r.viewers).padEnd(5)}M day=${r.day} win=${r.win.padEnd(11)} bet=${r.betrayals} pw=${r.powers} stars=${r.stars} +${r.credits}cr +${r.rep}rep L${r.level} bal=${r.balance} | ${r.goals} ${r.trophies} ${r.season}` : 'episode ' + n + ': no results');
+      if (opt.buy) {
+        const bought = await evaluate(`(() => { const out = []; let go = true; while (go) { go = false; for (const id of ['power','regen','hype','rigging','sponsors','writers']) { if (GM.Career.canBuy(id).ok) { GM.Career.buy(id); out.push(id); go = true; break; } } } return out; })()`);
+        if (bought.length) console.log('   bought: ' + bought.join(', '));
+      }
+      await evaluate('GM.Game.toSetup()');
+      await sleep(500);
+      const sd = await evaluate('GM.Career.data.seasonDone');
+      if (sd) { console.log('season complete'); break; }
+    }
+    const tot = await evaluate('JSON.stringify({ level: GM.Career.level(), rep: GM.Career.rep(), credits: GM.Career.credits(), trophies: Object.keys(GM.Career.data.trophies), saved: JSON.parse(localStorage.getItem(GM.Save.KEY)).sections.career.stats.shows })');
+    console.log('career state: ' + tot);
+    const errs = await evaluate('GM.errors');
+    printErrors();
+    if (errs.length) console.log('GM.errors:\n  ' + errs.map((e) => `${e.where}: ${e.message} (x${e.count})`).join('\n  '));
+    console.log(`\ntotal real time ${((Date.now() - t0) / 1000).toFixed(0)}s`);
+    return finish(consoleErrors.length || errs.length ? 1 : 0);
+  }
 
   function printErrors() {
     const uniq = [...new Set(consoleErrors)];

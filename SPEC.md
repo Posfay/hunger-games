@@ -127,6 +127,9 @@ Creative pillars:
 | `js/minimap.js` | **UI** | `GM.Minimap` |
 | `js/ui.js` | **UI** | `GM.UI` |
 | `css/style.css` | **UI** | – |
+| `js/save.js` | core | `GM.Save` |
+| `js/career.js` | core | `GM.Career` |
+| `js/careerui.js`, `css/career.css` | **UI** | – (a system, `CareerUI`) |
 
 Only edit files you own. If you need something from another module that the
 spec does not give you, feature-detect it and list it in your report.
@@ -163,6 +166,8 @@ System order (ascending):
 | 95 | Audio | audio.js |
 | 100 | UI | ui.js |
 | 105 | Minimap | minimap.js |
+| 110 | Career | career.js |
+| 111 | CareerUI | careerui.js |
 
 Flow (main.js):
 1. Boot: `i18n.init()`, all `init()`, `previewArena(randomSeed)` →
@@ -927,6 +932,50 @@ when ≤ 6 alive (betrayal chance by loyalty/cunning); final 2 always fight.
 | `audience:changed` | `{excitement, viewers}` | Audience |
 | `canvas:click` | `{clientX, clientY, button, point, contestant}` | Cameras |
 | `canvas:hover` | `{clientX, clientY, point}` | Cameras |
+| `career:changed` | `{mode? began? bought? finished? season? reset?}` | Career |
+| `career:results` | `{results}` | Career (after the final audience sample) |
+| `career:levelup` / `career:trophy` | `{level}` / `{id}` | Career |
+| `save:imported` / `save:reset` / `save:external` | `{}` | Save |
+| `ui:victory` | `{root}` | UI (after the victory card is rendered; others may extend it) |
+
+---------------------------------------------------------------------------
+
+## 10b. Persistence and career mode
+
+**`GM.Save`** (`save.js`): one JSON document in `localStorage` (key `arena-showrunner-save-v1`,
+`{v, created, updated, sections}`). Modules ask for their part with
+`GM.Save.section(name, defaults)` and get a live object whose missing keys are filled from
+`defaults` (so a new build never breaks an old save; never remove or retype a key, only add).
+Call `GM.Save.commit()` after changing it. Import, reset and changes from another tab mutate the
+section objects **in place**. Storage errors never throw: the save then lives in memory only
+(`GM.Save.persistent()` is false and the profile tab warns). `exportCode()` / `importCode()` give a
+checksummed one-line backup (`ARS1.<crc>.<base64 json>`). A running Show is never saved.
+
+**`GM.Career`** (`career.js`, system order 110): seasons of 6 episodes. The current episode brief
+(`{id, season, episode, seed, count, mix, title, objectives[]}`) is generated deterministically from the career
+seed, season, episode and level, then stored so a retry is the same Show. Objective types are in
+`GM.Career.OBJECTIVES` (`make`, `check`, `progress`); the primary one is always a grade target.
+A career Show is a normal Show started with `settings.career = {season, episode, id}`;
+`GM.Career.active()` is true while its phase is not setup. At `game:end` (its listener is registered in
+`init()`, so it runs after `GM.Powers` has added the winner bonus) it settles credits, reputation, stars,
+unlocks, trophies and the season finale, saves, and emits `career:results`.
+Leaving a Show before `game:end` earns nothing.
+
+What career changes inside the Show (free play is never affected):
+`GM.Audience.grade()` uses `GM.Career.GRADE_CUTS` (S/A/B/C at score 80/68/56/44 instead of 62/50/38/27; measured:
+a passive player scores ~50-58, a bot using powers at random ~62-89);
+`GM.Powers.canUse(id)` returns `reason: 'locked'` for powers above the player's level;
+`GM.Career.modsFor(settings)` gives `maxEnergy / startEnergy / regen / cooldown / hype` from the studio
+upgrades, read by `GM.Powers` in `reset()`; the assistant needs the *Writers room* upgrade.
+
+**`CareerUI`** (`careerui.js`, order 111): the hub replaces the free-play setup sheet while
+`GM.Career.mode() === 'career'` and the phase is `setup`; the objective HUD lives in `#viewport`;
+the results block is injected into the victory card on `ui:victory`. All career strings live in
+`careerui.js` (plus the three `ui.*` keys for locked powers and the assistant).
+
+Tuning knobs are the constants at the top of `career.js` (`LEVEL_XP`, `CAST_CAP`, `POWERS`,
+`GRADE_*`, `PRIMARY_RANK`, `UPGRADES`). Check balance with
+`node tools/smoke.js --norender --career 6 --bot random --buy`; logic with `node tools/career-test.js`.
 
 ---------------------------------------------------------------------------
 

@@ -12,6 +12,7 @@
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#04070d">
 <style>
+/* css/style.css */
 /* ==========================================================================
    Arena Showrunner - control room stylesheet
    Owned by the UI module. The DOM is built by js/ui.js (+ js/minimap.js).
@@ -2840,6 +2841,375 @@ button.chip-i:active { transform: translateY(1px); }
   .start-glow, .v-rays { display: none; }
 }
 
+/* css/career.css */
+/* ==========================================================================
+   Career mode: hub, in-Show brief, results block, locked powers.
+   Uses the tokens and base classes of style.css (.card, .btn, .seg, .start-btn).
+   ========================================================================== */
+
+/* ------------------------------------------------------------------ switch */
+.setup-kicker .cr-sw { flex: none; height: 26px; padding: 0 10px; font-size: var(--fs-xs); letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); border-color: rgb(var(--gold-rgb) / 0.5); }
+.setup-kicker .cr-sw:hover { color: var(--gold-hi); border-color: var(--gold); background: var(--gold-a); }
+
+/* --------------------------------------------------------------------- hub */
+.cr-hub {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: flex-end;
+  overflow: hidden;
+  pointer-events: auto;
+  background:
+    radial-gradient(ellipse 60% 80% at 20% 60%, transparent 0 40%, rgb(var(--ink-rgb) / 0.35) 100%),
+    linear-gradient(90deg, rgb(var(--ink-rgb) / 0) 0%, rgb(var(--ink-rgb) / 0.18) 34%, rgb(var(--ink-rgb) / 0.62) 100%);
+}
+.cr-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(1040px, 100%);
+  height: 100%;
+  background: linear-gradient(180deg, rgb(var(--panel-rgb) / 0.8), rgb(var(--panel-rgb) / 0.9));
+  border-left: 1px solid var(--line-2);
+  box-shadow: -30px 0 60px rgb(var(--shadow-rgb) / 0.45);
+  -webkit-backdrop-filter: blur(10px) saturate(1.15);
+  backdrop-filter: blur(10px) saturate(1.15);
+  animation: gm-slide-in 0.5s var(--ease) backwards;
+}
+.cr-sheet::before { content: ''; position: absolute; inset: 0; background: var(--scan); pointer-events: none; opacity: 0.6; }
+.cr-sheet::after {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, var(--cyan) 18%, var(--gold) 50%, var(--cyan) 82%, transparent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.cr-spacer { flex: 1 1 auto; }
+
+.cr-head { position: relative; flex: none; padding: 16px 26px 0; border-bottom: 1px solid var(--line); }
+.cr-head-top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cr-brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.cr-brand-ico { font-size: 22px; color: var(--gold); filter: drop-shadow(0 0 6px rgb(var(--gold-rgb) / 0.5)); }
+.cr-brand-name {
+  font: 900 clamp(18px, 2.4vw, 26px)/1.05 var(--font-brand);
+  letter-spacing: 0.05em;
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold) 45%, var(--gold-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  overflow-wrap: anywhere;
+}
+.cr-level, .cr-credits {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 12px 5px 6px;
+  background: rgb(var(--ink-rgb) / 0.5);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-2);
+}
+.cr-lv-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 30px;
+  font-size: var(--fs-m);
+  font-weight: 800;
+  color: var(--on-gold);
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-2));
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+}
+.cr-lv-body { display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
+.cr-lv-lbl { font-size: var(--fs-xs); font-weight: 600; color: var(--text-2); white-space: nowrap; }
+.cr-lv-bar { display: block; height: 5px; background: rgb(var(--line-rgb) / 0.16); border-radius: 3px; overflow: hidden; }
+.cr-lv-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--cyan-2), var(--gold)); transition: width 0.5s var(--ease); }
+.cr-credits { padding-left: 10px; }
+.cr-cr-ico { font-size: 20px; color: var(--gold); }
+.cr-cr-body { display: flex; flex-direction: column; line-height: 1.1; }
+.cr-cr-lbl { font-size: var(--fs-xs); font-weight: 600; color: var(--text-3); }
+.cr-cr-val { font-size: var(--fs-l); font-weight: 700; color: var(--gold); }
+.cr-free { height: 32px; }
+.cr-head .seg-lang { flex: none; }
+
+.cr-tabs { display: flex; gap: 2px; margin-top: 12px; overflow-x: auto; scrollbar-width: none; }
+.cr-tabs::-webkit-scrollbar { display: none; }
+.cr-tab {
+  position: relative;
+  flex: none;
+  padding: 9px 16px 10px;
+  font-size: var(--fs-m);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  border-bottom: 2px solid transparent;
+  transition: color var(--t-fast), border-color var(--t-fast), background var(--t-fast);
+}
+.cr-tab:hover { color: var(--text); background: rgb(var(--cyan-rgb) / 0.06); }
+.cr-tab.on { color: var(--cyan); border-bottom-color: var(--cyan); background: linear-gradient(180deg, transparent, rgb(var(--cyan-rgb) / 0.1)); }
+.cr-tab:focus-visible { outline: 2px solid var(--cyan); outline-offset: -2px; }
+
+.cr-body { position: relative; flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 18px 26px 22px; user-select: text; -webkit-user-select: text; }
+.cr-foot {
+  position: relative;
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 26px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, rgb(var(--panel-rgb) / 0.7), rgb(var(--panel-rgb) / 0.97) 40%);
+  border-top: 1px solid var(--line-2);
+}
+.cr-start { min-width: min(420px, 100%); }
+.cr-start .start-label { font-size: 19px; }
+.cr-pane { display: flex; flex-direction: column; gap: 12px; }
+.cr-card { padding-top: 16px; }
+.cr-gap { margin-top: 12px; }
+
+/* welcome */
+.cr-welcome { display: flex; flex-direction: column; gap: 14px; max-width: 640px; padding: 20px 0; }
+.cr-w-title { font: 900 clamp(26px, 3.4vw, 38px)/1.1 var(--font-brand); color: var(--text); letter-spacing: 0.03em; }
+.cr-w-text { font-size: var(--fs-l); color: var(--text-2); line-height: 1.5; }
+.cr-w-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 6px; }
+
+/* season */
+.cr-season { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 14px; align-items: start; }
+.cr-eps { display: flex; flex-direction: column; gap: 6px; }
+.cr-ep {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgb(var(--ink-rgb) / 0.45);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-2);
+  border-radius: var(--r-2);
+}
+.cr-ep-n { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; font-weight: 700; color: var(--text-3); border: 1px solid var(--line-2); border-radius: 50%; }
+.cr-ep-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.cr-ep-title { font-size: var(--fs-m); font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cr-ep-sub { font-size: var(--fs-xs); color: var(--text-3); }
+.cr-ep-res { display: flex; align-items: center; gap: 8px; }
+.cr-ep-stars { color: var(--gold); letter-spacing: 0.1em; font-size: var(--fs-m); }
+.cr-ep.done { border-left-color: var(--green); }
+.cr-ep.done .cr-ep-n { color: var(--green); border-color: var(--green); }
+.cr-ep.current { border-left-color: var(--gold); background: linear-gradient(90deg, rgb(var(--gold-rgb) / 0.14), rgb(var(--ink-rgb) / 0.45)); box-shadow: var(--gold-glow); }
+.cr-ep.current .cr-ep-n { color: var(--on-gold); background: var(--gold); border-color: var(--gold); }
+.cr-ep.current .cr-ep-sub { color: var(--gold); }
+.cr-ep.locked { opacity: 0.55; }
+
+.cr-grade { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 4px; font: 900 15px/1 var(--font-brand); border-radius: var(--r-1); border: 1px solid currentColor; }
+.cr-grade.g-S { color: var(--gold); box-shadow: 0 0 10px rgb(var(--gold-rgb) / 0.4); }
+.cr-grade.g-A { color: var(--green); }
+.cr-grade.g-B { color: var(--cyan); }
+.cr-grade.g-C { color: var(--amber); }
+.cr-grade.g-D { color: var(--red); }
+
+.cr-brief-card { display: flex; flex-direction: column; gap: 12px; }
+.cr-kick { font-size: var(--fs-xs); letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); }
+.cr-b-title { font: 900 clamp(24px, 3vw, 34px)/1.05 var(--font-brand); letter-spacing: 0.03em; color: var(--text); overflow-wrap: anywhere; }
+.cr-b-meta { display: flex; align-items: center; gap: 14px; }
+.cr-thumb { flex: none; width: 92px; height: 92px; border-radius: 50%; border: 1px solid var(--line-3); background: rgb(var(--ink-rgb) / 0.6); }
+.cr-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.cr-chip { padding: 4px 9px; font-size: var(--fs-s); font-weight: 600; color: var(--text-2); background: rgb(var(--ink-rgb) / 0.55); border: 1px solid var(--line-2); border-radius: 999px; white-space: nowrap; }
+.cr-objs { display: flex; flex-direction: column; gap: 6px; }
+.cr-obj {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  background: rgb(var(--ink-rgb) / 0.5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+}
+.cr-obj.primary { border-color: rgb(var(--gold-rgb) / 0.55); background: linear-gradient(90deg, rgb(var(--gold-rgb) / 0.1), rgb(var(--ink-rgb) / 0.5)); }
+.cr-obj-mark { text-align: center; color: var(--cyan); font-size: 15px; }
+.cr-obj.primary .cr-obj-mark { color: var(--gold); }
+.cr-obj-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.cr-obj-kind { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-3); }
+.cr-obj-text { font-size: var(--fs-m); font-weight: 600; color: var(--text); line-height: 1.25; }
+.cr-obj-rew { font-size: var(--fs-xs); color: var(--gold); white-space: nowrap; }
+.cr-b-total { font-size: var(--fs-s); color: var(--text-2); text-align: right; }
+
+.cr-done { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.cr-done-ico { font-size: 40px; }
+.cr-done-title { font: 900 28px/1.1 var(--font-brand); color: var(--gold); letter-spacing: 0.04em; }
+.cr-done-stars { color: var(--gold); font-size: var(--fs-l); }
+
+/* studio */
+.cr-ups { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.cr-up { display: flex; flex-direction: column; gap: 8px; }
+.cr-up.owned { border-color: rgb(var(--gold-rgb) / 0.4); }
+.cr-up-top { display: flex; align-items: center; gap: 10px; }
+.cr-up-ico { font-size: 22px; }
+.cr-up-name { flex: 1; font-size: var(--fs-l); font-weight: 700; color: var(--text); }
+.cr-up-lv { font-size: var(--fs-xs); color: var(--text-3); }
+.cr-up-desc { font-size: var(--fs-m); color: var(--text-2); line-height: 1.4; min-height: 2.8em; }
+.cr-up-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; }
+.cr-pips { display: inline-flex; gap: 4px; }
+.cr-pips i { width: 14px; height: 6px; background: rgb(var(--line-rgb) / 0.2); border-radius: 2px; }
+.cr-pips i.on { background: linear-gradient(90deg, var(--cyan-2), var(--gold)); box-shadow: 0 0 8px rgb(var(--gold-rgb) / 0.4); }
+.cr-buy { min-width: 132px; justify-content: center; }
+.cr-buy.ready { color: var(--on-gold); background: linear-gradient(180deg, var(--gold-hi), var(--gold) 45%, var(--gold-2)); border-color: var(--gold-hi); font-weight: 700; }
+.cr-buy.ready:hover { filter: brightness(1.08); color: var(--on-gold); }
+.cr-buy.maxed { color: var(--green); border-color: rgb(var(--green-rgb) / 0.5); }
+
+/* powers ladder */
+.cr-ladder { display: flex; flex-direction: column; gap: 6px; }
+.cr-lv { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 9px 12px; background: rgb(var(--ink-rgb) / 0.4); border: 1px solid var(--line); border-radius: var(--r-2); opacity: 0.6; }
+.cr-lv.reached { opacity: 1; border-color: var(--line-2); }
+.cr-lv.now { border-color: var(--gold); box-shadow: var(--gold-glow); background: linear-gradient(90deg, rgb(var(--gold-rgb) / 0.12), rgb(var(--ink-rgb) / 0.45)); }
+.cr-lv-n { display: inline-flex; align-items: center; justify-content: center; height: 30px; font-weight: 800; color: var(--text-3); background: rgb(var(--ink-rgb) / 0.6); border: 1px solid var(--line-2); clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
+.cr-lv.reached .cr-lv-n { color: var(--on-gold); background: var(--gold); border-color: var(--gold); }
+.cr-lv .cr-lv-body { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.cr-lv-pws { display: flex; flex-wrap: wrap; gap: 6px; }
+.cr-lv-pws:empty::before { content: '—'; color: var(--text-4); }
+.cr-pw { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 6px; font-size: var(--fs-s); font-weight: 600; color: var(--text-2); background: rgb(var(--ink-rgb) / 0.55); border: 1px solid var(--line-2); border-left: 3px solid var(--pcol, var(--cyan)); border-radius: var(--r-1); }
+.cr-pw.cat-gift { --pcol: var(--green); }
+.cr-pw.cat-nature { --pcol: var(--blue); }
+.cr-pw.cat-hazard { --pcol: var(--orange); }
+.cr-pw.cat-rule { --pcol: var(--violet); }
+.cr-lv-cast { font-size: var(--fs-xs); color: var(--text-3); }
+.cr-lv-here { font-size: var(--fs-xs); letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+
+/* trophies */
+.cr-trs { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; }
+.cr-tr { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 11px 12px; background: rgb(var(--ink-rgb) / 0.4); border: 1px solid var(--line); border-radius: var(--r-2); filter: grayscale(0.9); opacity: 0.6; }
+.cr-tr.got { filter: none; opacity: 1; border-color: rgb(var(--gold-rgb) / 0.5); background: linear-gradient(90deg, rgb(var(--gold-rgb) / 0.1), rgb(var(--ink-rgb) / 0.45)); }
+.cr-tr-ico { font-size: 28px; text-align: center; }
+.cr-tr-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cr-tr-name { font-size: var(--fs-m); font-weight: 700; color: var(--text); }
+.cr-tr-desc { font-size: var(--fs-s); color: var(--text-3); line-height: 1.3; }
+.cr-tr-rew { font-size: var(--fs-xs); color: var(--gold); white-space: nowrap; }
+
+/* profile */
+.cr-profile { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.cr-backup { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 10px; }
+.cr-grades { display: flex; flex-wrap: wrap; gap: 10px; }
+.cr-gcount { display: inline-flex; align-items: center; gap: 6px; }
+.cr-hist { display: flex; flex-direction: column; gap: 5px; }
+.cr-hrow { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 6px 9px; background: rgb(var(--ink-rgb) / 0.45); border: 1px solid var(--line); border-radius: var(--r-1); }
+.cr-hrow-t { font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cr-hrow-s { font-size: var(--fs-xs); color: var(--text-3); white-space: nowrap; }
+.cr-code { width: 100%; resize: vertical; min-height: 64px; font-size: 11.5px; word-break: break-all; user-select: text; -webkit-user-select: text; }
+.cr-backup-btns { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cr-msg { min-height: 1.3em; font-size: var(--fs-s); font-weight: 600; }
+.cr-msg.ok { color: var(--green); }
+.cr-msg.bad { color: var(--red-soft); }
+.btn-danger { color: var(--red-soft); border-color: rgb(var(--red-rgb) / 0.5); }
+.btn-danger:hover { color: var(--white); background: var(--red-a); border-color: var(--red); }
+.cr-hub .warn { color: var(--amber); font-size: var(--fs-s); font-weight: 600; }
+
+.cr-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 84px;
+  z-index: 5;
+  padding: 8px 16px;
+  font-weight: 700;
+  color: var(--text);
+  background: rgb(var(--panel-rgb) / 0.95);
+  border: 1px solid var(--gold);
+  border-radius: var(--r-2);
+  box-shadow: var(--gold-glow);
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, 8px);
+  transition: opacity 0.2s, transform 0.2s var(--ease), visibility 0s 0.2s;
+  pointer-events: none;
+}
+.cr-toast.on { opacity: 1; visibility: visible; transform: translate(-50%, 0); transition: opacity 0.2s, transform 0.2s var(--ease), visibility 0s; }
+
+/* ------------------------------------------------------------- brief (HUD) */
+.cr-brief {
+  position: absolute;
+  left: 16px;
+  top: 92px;
+  z-index: 3;
+  width: min(290px, 44%);
+  background: var(--glass-soft);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--r-2);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+.cr-brief-head { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 10px; text-align: left; }
+.cr-brief-ep { flex: none; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
+.cr-brief-name { flex: 1; min-width: 0; font-size: var(--fs-s); font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cr-brief-chev { flex: none; color: var(--text-3); transition: transform var(--t-med); }
+.cr-brief.min .cr-brief-chev { transform: rotate(-90deg); }
+.cr-brief.min .cr-brief-list { display: none; }
+.cr-brief-list { display: flex; flex-direction: column; gap: 1px; padding: 0 6px 6px; }
+.cr-bo { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; align-items: start; gap: 6px; padding: 4px 5px; border-radius: var(--r-1); font-size: var(--fs-xs); line-height: 1.3; color: var(--text-2); }
+.cr-bo.primary { background: rgb(var(--gold-rgb) / 0.08); }
+.cr-bo-mark { text-align: center; color: var(--text-3); }
+.cr-bo-prog { color: var(--text-3); white-space: nowrap; }
+.cr-bo.on-track .cr-bo-mark, .cr-bo.on-track .cr-bo-prog { color: var(--cyan); }
+.cr-bo.ok { color: var(--text); }
+.cr-bo.ok .cr-bo-mark, .cr-bo.ok .cr-bo-prog { color: var(--green); }
+.cr-bo.bad { color: var(--text-3); }
+.cr-bo.bad .cr-bo-text { text-decoration: line-through; }
+.cr-bo.bad .cr-bo-mark, .cr-bo.bad .cr-bo-prog { color: var(--red); }
+
+/* ------------------------------------------------------- results (victory) */
+.cr-res { position: relative; margin: 0 18px 14px; padding: 12px 14px 12px; background: rgb(var(--ink-rgb) / 0.55); border: 1px solid rgb(var(--gold-rgb) / 0.4); border-radius: var(--r-2); }
+.cr-res-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.cr-res-kick { font-size: var(--fs-xs); letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
+.cr-stars { font-size: 20px; color: var(--gold); letter-spacing: 0.12em; text-shadow: 0 0 12px rgb(var(--gold-rgb) / 0.5); }
+.cr-res-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; }
+.cr-ros { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.cr-ro { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 5px 8px; background: rgb(var(--ink-rgb) / 0.5); border-radius: var(--r-1); font-size: var(--fs-s); }
+.cr-ro.ok { color: var(--text); border-left: 2px solid var(--green); }
+.cr-ro.ok .cr-ro-mark { color: var(--green); }
+.cr-ro.bad { color: var(--text-3); border-left: 2px solid var(--red); }
+.cr-ro.bad .cr-ro-mark { color: var(--red); }
+.cr-ro-rew { color: var(--gold); font-size: var(--fs-xs); white-space: nowrap; }
+.cr-res-pay { display: flex; flex-direction: column; gap: 6px; }
+.cr-pay { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 6px 10px; background: rgb(var(--ink-rgb) / 0.5); border: 1px solid var(--line); border-radius: var(--r-1); }
+.cr-pay b { font-size: var(--fs-l); color: var(--gold); }
+.cr-scale, .cr-bal { font-size: var(--fs-xs); color: var(--text-3); text-align: right; }
+.cr-note { margin-top: 8px; padding: 6px 10px; font-size: var(--fs-s); font-weight: 600; color: var(--text-2); background: rgb(var(--ink-rgb) / 0.5); border: 1px solid var(--line); border-radius: var(--r-1); }
+.cr-note.up { color: var(--gold-hi); border-color: var(--gold); background: var(--gold-a); font-weight: 700; }
+.cr-note.trophy { color: var(--amber); border-color: rgb(var(--amber-rgb) / 0.5); }
+.cr-note.season { color: var(--cyan); border-color: var(--line-hi); }
+
+/* ------------------------------------------------------------ locked power */
+.pow.locked { opacity: 0.45; border-left-color: var(--text-4); }
+.pow.locked .pw-ico { filter: grayscale(1); }
+.pow.locked .pw-bolt { display: none; }
+.pow.locked .pw-cost { color: var(--text-3); }
+.pow.locked:hover { opacity: 0.7; box-shadow: none; }
+
+/* -------------------------------------------------------------- responsive */
+@media (max-width: 1100px) {
+  .cr-season { grid-template-columns: minmax(0, 1fr); }
+  .cr-profile { grid-template-columns: minmax(0, 1fr); }
+  .cr-res-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .cr-head { padding: 12px 14px 0; }
+  .cr-body { padding: 14px; }
+  .cr-foot { padding: 10px 14px; }
+  .cr-credits .cr-cr-lbl { display: none; }
+  .cr-brief { top: 86px; width: min(260px, 60%); }
+}
+@media (max-height: 700px) {
+  .cr-head { padding-top: 10px; }
+  .cr-tab { padding: 7px 14px 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cr-sheet { animation: none; }
+  .cr-lv-bar i, .cr-toast { transition: none; }
+}
+
 </style>
 </head>
 <body>
@@ -2860,7 +3230,7 @@ button.chip-i:active { transform: translateY(1px); }
   'use strict';
 
   const GM = (window.GM = window.GM || {});
-  GM.VERSION = '1.0.0';
+  GM.VERSION = '2.0.0';
 
   // ------------------------------------------------------------------ config
   GM.CFG = {
@@ -3608,6 +3978,873 @@ button.chip-i:active { transform: translateY(1px); }
       'log.gamesBegin': 'A Műsor {n} versenyzővel kezdődik.',
       'log.victor': 'A Műsort {name} nyerte ({team}. csapat)!',
       'log.noVictor': 'Az utolsó versenyzők együtt haltak meg. Nincs győztes.',
+    },
+  });
+})();
+
+</script>
+<script>/* js/save.js */
+/* ==========================================================================
+ * save.js — persistent player profile (localStorage).
+ *
+ *   GM.Save.section(name, defaults)  -> live object for one section of the save
+ *                                       (missing keys are filled from defaults,
+ *                                       so new versions never break old saves)
+ *   GM.Save.commit()                 write the whole document now
+ *   GM.Save.persistent()             false when the browser refuses to store data
+ *   GM.Save.exportCode() / importCode(text)   copy / paste backup code
+ *   GM.Save.reset()                  back to defaults (every section, in place)
+ *
+ * Section objects are mutated IN PLACE by import / reset / other-tab changes, so
+ * modules can keep their reference. Events: 'save:imported', 'save:reset',
+ * 'save:external' (another tab wrote the save).
+ *
+ * A running Show is never saved (it is a live 3D simulation); progress is saved
+ * when something is earned.
+ * Owner: core. Never throws: storage errors fall back to memory.
+ * ========================================================================== */
+(function () {
+  'use strict';
+  const GM = window.GM;
+
+  const KEY = 'arena-showrunner-save-v1';
+  const VERSION = 1;
+  const CODE_PREFIX = 'ARS1.';
+
+  const sections = Object.create(null);   // name -> { data, defaults }
+  let doc = { v: VERSION, created: 0, updated: 0, sections: {} };
+  let storageOk = false;
+  let writeFailed = false;
+
+  const Save = (GM.Save = {
+    KEY: KEY,
+    VERSION: VERSION,
+    /** true when data really reaches localStorage. */
+    persistent() { return storageOk && !writeFailed; },
+  });
+
+  // ---------------------------------------------------------------- helpers
+  function clone(v) { return JSON.parse(JSON.stringify(v)); }
+  function isObj(v) { return !!v && typeof v === 'object' && !Array.isArray(v); }
+
+  /** Fill keys missing in target from defaults (deep for plain objects). */
+  function fill(target, defaults) {
+    for (const k in defaults) {
+      const d = defaults[k];
+      if (target[k] === undefined) target[k] = clone(d);
+      else if (isObj(d) && isObj(target[k])) fill(target[k], d);
+    }
+    return target;
+  }
+  function replaceInPlace(target, src) {
+    for (const k of Object.keys(target)) delete target[k];
+    for (const k in src) target[k] = src[k];
+  }
+  function validDoc(d) {
+    return isObj(d) && typeof d.v === 'number' && d.v >= 1 && isObj(d.sections);
+  }
+
+  function readRaw() {
+    try { return window.localStorage.getItem(KEY); } catch (e) { return null; }
+  }
+  function probeStorage() {
+    try {
+      const k = KEY + '.probe';
+      window.localStorage.setItem(k, '1');
+      window.localStorage.removeItem(k);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function parseDoc(raw) {
+    const d = JSON.parse(raw);
+    if (!validDoc(d)) throw new Error('bad save shape');
+    return d;
+  }
+
+  // ------------------------------------------------------------------- load
+  function load() {
+    storageOk = probeStorage();
+    doc = { v: VERSION, created: Date.now(), updated: 0, sections: {} };
+    const raw = readRaw();
+    if (!raw) return;
+    try {
+      const d = parseDoc(raw);
+      d.v = Math.max(VERSION, d.v);      // saved by a newer build: keep its data, don't downgrade
+      doc = d;
+    } catch (e) {
+      GM.reportError('Save.load', e);
+      // keep the unreadable text so it can be recovered by hand, then start fresh
+      try { window.localStorage.setItem(KEY + '.corrupt', raw); } catch (e2) { /* ignore */ }
+    }
+  }
+  load();
+
+  // ---------------------------------------------------------------- sections
+  Save.section = function (name, defaults) {
+    if (sections[name]) return sections[name].data;
+    const raw = doc.sections[name];
+    const data = isObj(raw) ? raw : {};
+    fill(data, defaults);
+    doc.sections[name] = data;
+    sections[name] = { data: data, defaults: defaults };
+    return data;
+  };
+
+  Save.commit = function () {
+    doc.updated = Date.now();
+    if (!storageOk) return false;
+    try {
+      window.localStorage.setItem(KEY, JSON.stringify(doc));
+      writeFailed = false;
+      return true;
+    } catch (e) {
+      writeFailed = true;
+      GM.reportError('Save.commit', e);
+      return false;
+    }
+  };
+
+  Save.reset = function () {
+    for (const name in sections) {
+      const s = sections[name];
+      replaceInPlace(s.data, clone(s.defaults));
+      doc.sections[name] = s.data;
+    }
+    doc.created = Date.now();
+    Save.commit();
+    GM.emit('save:reset', {});
+  };
+
+  // ------------------------------------------------------- backup code (text)
+  function b64enc(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+  }
+  function b64dec(b64) {
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+  function hex8(n) { return (n >>> 0).toString(16).padStart(8, '0'); }
+
+  /** One-line backup code of the whole save. */
+  Save.exportCode = function () {
+    const json = JSON.stringify({ v: doc.v, sections: doc.sections });
+    return CODE_PREFIX + hex8(GM.hashString(json)) + '.' + b64enc(json);
+  };
+
+  /**
+   * Replace the save with a backup code. -> { ok: true } or
+   * { ok: false, error: 'format' | 'checksum' | 'version' | 'empty' }
+   */
+  Save.importCode = function (text) {
+    const code = String(text == null ? '' : text).replace(/\s+/g, '');
+    if (!code) return { ok: false, error: 'empty' };
+    if (code.indexOf(CODE_PREFIX) !== 0) return { ok: false, error: 'format' };
+    const rest = code.slice(CODE_PREFIX.length);
+    const dot = rest.indexOf('.');
+    if (dot !== 8) return { ok: false, error: 'format' };
+    let json, incoming;
+    try {
+      json = b64dec(rest.slice(dot + 1));
+    } catch (e) { return { ok: false, error: 'format' }; }
+    if (hex8(GM.hashString(json)) !== rest.slice(0, dot)) return { ok: false, error: 'checksum' };
+    try { incoming = JSON.parse(json); } catch (e) { return { ok: false, error: 'format' }; }
+    if (!validDoc(incoming)) return { ok: false, error: 'format' };
+    if (incoming.v > VERSION) return { ok: false, error: 'version' };
+    for (const name in sections) {
+      const s = sections[name];
+      const src = isObj(incoming.sections[name]) ? incoming.sections[name] : {};
+      replaceInPlace(s.data, fill(src, s.defaults));
+      doc.sections[name] = s.data;
+    }
+    for (const name in incoming.sections) if (!sections[name]) doc.sections[name] = incoming.sections[name];
+    Save.commit();
+    GM.emit('save:imported', {});
+    return { ok: true };
+  };
+
+  // ------------------------------------------------- another tab saved a change
+  try {
+    window.addEventListener('storage', function (e) {
+      if (e.key !== KEY) return;
+      try {
+        if (e.newValue == null) {
+          for (const name in sections) {
+            replaceInPlace(sections[name].data, clone(sections[name].defaults));
+            doc.sections[name] = sections[name].data;
+          }
+        } else {
+          const d = parseDoc(e.newValue);
+          for (const name in sections) {
+            const src = isObj(d.sections[name]) ? d.sections[name] : {};
+            replaceInPlace(sections[name].data, fill(src, sections[name].defaults));
+            doc.sections[name] = sections[name].data;
+          }
+        }
+        GM.emit('save:external', {});
+      } catch (err) { GM.reportError('Save.storageEvent', err); }
+    });
+  } catch (e) { /* no window events (tests) */ }
+})();
+
+</script>
+<script>/* js/career.js */
+/* ==========================================================================
+ * career.js — career mode: seasons, episodes, objectives, rewards, upgrades.
+ *
+ * You run a TV network. A season is 6 episodes (Shows). Every episode has a
+ * brief from the Studio: a ratings target plus bonus objectives. Grades,
+ * objectives and stars earn Credits (spent on upgrades) and Reputation
+ * (levels unlock Showrunner powers and bigger casts). Progress is saved by
+ * GM.Save after every episode and purchase.
+ *
+ *   GM.Career.active()            a career Show is running (settings.career set)
+ *   GM.Career.mods()              upgrade modifiers for GM.Powers (neutral outside career)
+ *   GM.Career.isUnlocked(powerId) / unlockLevel(powerId)
+ *   GM.Career.brief()             the current episode brief (generated on demand)
+ *   GM.Career.startEpisode()      launch the current brief
+ *   GM.Career.progress()          live objective states for the HUD
+ *   GM.Career.buy(id) / canBuy(id)
+ *   GM.Career.results()           last finished episode (null after a restart)
+ *
+ * Events: 'career:changed', 'career:results' {results}, 'career:levelup' {level},
+ * 'career:trophy' {id}.
+ * Pure logic: no DOM here (see careerui.js). Owner: core.
+ * ========================================================================== */
+(function () {
+  'use strict';
+  const GM = window.GM;
+  const U = GM.U;
+
+  // ============================================================ tuning tables
+  const EPISODES = 6;
+  /** Total reputation needed for level 1..10. */
+  const LEVEL_XP = [0, 100, 260, 480, 760, 1100, 1500, 1960, 2480, 3060];
+  const MAX_LEVEL = LEVEL_XP.length;
+  /** Biggest cast per level. */
+  const CAST_CAP = [12, 14, 16, 20, 24, 28, 32, 38, 44, 48];
+  /** Power id -> { lv: level that unlocks it, cat: category }. */
+  const POWERS = {
+    supply_drop: { lv: 1, cat: 'gift' }, sponsor_gift: { lv: 1, cat: 'gift' }, feast: { lv: 2, cat: 'gift' },
+    weather: { lv: 1, cat: 'nature' }, time_skip: { lv: 1, cat: 'nature' }, terraform: { lv: 1, cat: 'nature' },
+    flood: { lv: 4, cat: 'nature' }, quake: { lv: 4, cat: 'nature' },
+    lightning: { lv: 1, cat: 'hazard' }, fireball: { lv: 2, cat: 'hazard' }, poison_fog: { lv: 3, cat: 'hazard' },
+    wasps: { lv: 3, cat: 'hazard' }, beasts: { lv: 5, cat: 'hazard' }, madness_gas: { lv: 5, cat: 'hazard' },
+    lure: { lv: 1, cat: 'rule' }, reveal: { lv: 4, cat: 'rule' }, shrink_zone: { lv: 6, cat: 'rule' }, smite: { lv: 7, cat: 'rule' },
+  };
+  const CATEGORIES = ['gift', 'nature', 'hazard', 'rule'];
+  const GRADES = ['D', 'C', 'B', 'A', 'S'];
+  /**
+   * Show score needed for S, A, B, C in career Shows (free play uses 62 / 50 / 38 / 27).
+   * Measured with tools/smoke.js: a Show where the player does nothing scores ~52, a
+   * player using powers at random ~76-87. So: C = passive, B = some effort, A = good, S = excellent.
+   */
+  const GRADE_CUTS = Object.freeze([80, 68, 56, 44]);
+  const GRADE_CREDITS = { S: 150, A: 110, B: 75, C: 45, D: 20 };
+  const GRADE_REP = { S: 120, A: 90, B: 60, C: 35, D: 15 };
+  const PRIMARY_REWARD = { credits: 40, rep: 25 };
+  const BONUS_REWARD = { credits: 35, rep: 20 };
+  const SEASON_STAR_CREDITS = 20;         // season bonus per star earned
+  const SEASON_SCALE = 0.12;              // rewards grow per season
+  /** Rating target (grade rank) by episode of season 1; +1 rank per later season. */
+  const PRIMARY_RANK = [1, 1, 2, 2, 3, 3];
+
+  /** Studio upgrades: cost of each level, effect per level is in mods(). */
+  const UPGRADES = [
+    { id: 'power', icon: '🔋', max: 5, costs: [80, 140, 220, 330, 480] },
+    { id: 'regen', icon: '📡', max: 5, costs: [90, 150, 230, 340, 490] },
+    { id: 'rigging', icon: '⚙️', max: 5, costs: [100, 170, 260, 380, 540] },
+    { id: 'hype', icon: '🎆', max: 5, costs: [110, 180, 280, 400, 560] },
+    { id: 'sponsors', icon: '🤝', max: 4, costs: [70, 130, 210, 320] },
+    { id: 'writers', icon: '✍️', max: 1, costs: [250], minLevel: 4 },
+  ];
+  const UPGRADE_BY_ID = Object.create(null);
+  UPGRADES.forEach(function (u) { UPGRADE_BY_ID[u.id] = u; });
+
+  const BASE_MODS = Object.freeze({ maxEnergy: 100, startEnergy: 60, regen: 1, cooldown: 1, hype: 1 });
+  const ARCHETYPES = ['survivor', 'scavenger', 'opportunist', 'strategist', 'protector', 'lonewolf'];   // crown targets
+  const TITLE_WORDS = 12;
+
+  // ================================================================ save data
+  const data = GM.Save ? GM.Save.section('career', {
+    mode: 'career',          // last screen the player used: 'career' | 'freeplay'
+    started: false,
+    seed: 0,                 // career seed: every season / episode is derived from it
+    rep: 0,
+    credits: 0,
+    season: 1,
+    episode: 1,
+    brief: null,             // the current episode's brief (kept so a retry is the same Show)
+    seasonDone: false,       // all episodes played; waiting for "next season"
+    seasons: {},             // season -> { eps: { n: record }, stars }
+    upgrades: {},            // id -> level
+    trophies: {},            // id -> timestamp
+    stats: { shows: 0, freeShows: 0, kills: 0, deaths: 0, days: 0, powers: 0, bestViewers: 0, bestScore: 0, stars: 0, grades: { S: 0, A: 0, B: 0, C: 0, D: 0 }, wins: {} },
+    history: [],             // last finished episodes, newest last
+  }) : null;
+
+  function commit() { if (GM.Save) GM.Save.commit(); }
+
+  // ================================================================= helpers
+  function rankOf(g) { return Math.max(0, GRADES.indexOf(g)); }
+  function levelOf(rep) {
+    let lv = 1;
+    for (let i = 1; i < MAX_LEVEL; i++) if (rep >= LEVEL_XP[i]) lv = i + 1;
+    return lv;
+  }
+  function upgradeLevel(id) { return (data.upgrades[id] | 0); }
+  function seasonScale(season) { return 1 + SEASON_SCALE * (Math.max(1, season) - 1); }
+  function difficulty(season, episode) { return (season - 1) * 0.8 + (episode - 1) * 0.25; }
+
+  const Career = (GM.Career = {
+    EPISODES: EPISODES, MAX_LEVEL: MAX_LEVEL, LEVEL_XP: LEVEL_XP, POWERS: POWERS, CATEGORIES: CATEGORIES,
+    GRADES: GRADES, GRADE_CUTS: GRADE_CUTS, UPGRADES: UPGRADES, ARCHETYPES: ARCHETYPES, TITLE_WORDS: TITLE_WORDS, data: data,
+  });
+
+  // ================================================================== profile
+  Career.level = function () { return levelOf(data.rep); };
+  Career.rep = function () { return data.rep; };
+  Career.credits = function () { return data.credits; };
+  /** { level, cur, next, frac, max } — progress bar numbers inside the current level. */
+  Career.levelProgress = function () {
+    const lv = levelOf(data.rep);
+    if (lv >= MAX_LEVEL) return { level: lv, cur: data.rep - LEVEL_XP[MAX_LEVEL - 1], next: 0, frac: 1, max: true };
+    const lo = LEVEL_XP[lv - 1], hi = LEVEL_XP[lv];
+    return { level: lv, cur: data.rep - lo, next: hi - lo, frac: U.clamp01((data.rep - lo) / (hi - lo)), max: false };
+  };
+  Career.castCap = function (level) { return CAST_CAP[U.clamp((level || levelOf(data.rep)) - 1, 0, CAST_CAP.length - 1)]; };
+  Career.isUnlocked = function (id) { const p = POWERS[id]; return !p || levelOf(data.rep) >= p.lv; };
+  Career.unlockLevel = function (id) { const p = POWERS[id]; return p ? p.lv : 1; };
+  Career.powerCategory = function (id) { const p = POWERS[id]; return p ? p.cat : null; };
+  Career.upgradeLevel = upgradeLevel;
+
+  Career.mode = function () { return data.mode === 'freeplay' ? 'freeplay' : 'career'; };
+  Career.setMode = function (m) {
+    m = m === 'freeplay' ? 'freeplay' : 'career';
+    if (data.mode === m) return;
+    data.mode = m;
+    commit();
+    GM.emit('career:changed', { mode: m });
+  };
+
+  /** True while a career Show is on (countdown, running, or just ended). */
+  Career.active = function () {
+    const st = GM.state;
+    const s = st && st.settings;
+    return !!(s && s.career) && st.phase !== 'setup' && st.phase !== 'boot';
+  };
+
+  /**
+   * Upgrade modifiers for a Show started with these settings (GM.Powers asks in its
+   * reset(), before the phase changes). Neutral for free play.
+   */
+  Career.modsFor = function (settings) {
+    const m = Object.assign({}, BASE_MODS);
+    if (!settings || !settings.career) return m;
+    m.maxEnergy += 10 * upgradeLevel('power');
+    m.startEnergy += 10 * upgradeLevel('sponsors');
+    m.regen += 0.1 * upgradeLevel('regen');
+    m.cooldown -= 0.05 * upgradeLevel('rigging');
+    m.hype += 0.06 * upgradeLevel('hype');
+    m.startEnergy = Math.min(m.startEnergy, m.maxEnergy);
+    return m;
+  };
+  Career.mods = function () { return Career.modsFor(Career.active() ? GM.state.settings : null); };
+  Career.hasAssistant = function () { return upgradeLevel('writers') > 0; };
+
+  // ============================================================== objectives
+  // Every objective: make(rng, ctx) -> params | null (not eligible),
+  //   check(params, s) -> bool at the end, progress(params, s) -> {done, locked, now, goal}.
+  // s = snapshot() of the Show; ctx = { level, count, season, episode, d, archetypes }.
+  function unlockedIn(cat, level) {
+    let n = 0;
+    for (const id in POWERS) if (POWERS[id].cat === cat && POWERS[id].lv <= level) n++;
+    return n;
+  }
+  function unlockedCount(level) {
+    let n = 0;
+    for (const id in POWERS) if (POWERS[id].lv <= level) n++;
+    return n;
+  }
+
+  const OBJ = {
+    grade: {
+      check(p, s) { return rankOf(s.grade) >= rankOf(p.g); },
+      progress(p, s) { return { done: rankOf(s.grade) >= rankOf(p.g), locked: false, now: s.grade, goal: p.g }; },
+    },
+    viewers: {
+      weight: 1.2,
+      // peak viewers = (6M + 0.2M x excitement) x (1 + 0.15 x day): ~28M passive, 34M+ needs hype AND a longer Show
+      make(rng, c) { return { n: Math.min(42, Math.round(30 + 3 * c.d)) }; },
+      check(p, s) { return s.viewers >= p.n * 1e6; },
+      progress(p, s) { const done = s.viewers >= p.n * 1e6; return { done: done, locked: done, now: Math.round(s.viewers / 1e5) / 10, goal: p.n }; },
+    },
+    betrayals: {
+      weight: 1,
+      // alliances (and so betrayals) are rare in small casts
+      make(rng, c) { return c.count >= 14 ? { n: 1 + (c.count >= 20 ? 1 : 0) + Math.min(1, Math.floor(c.d / 2)) } : null; },
+      check(p, s) { return s.betrayals >= p.n; },
+      progress(p, s) { const done = s.betrayals >= p.n; return { done: done, locked: done, now: s.betrayals, goal: p.n }; },
+    },
+    crown: {
+      weight: 0.8, mult: 1.5,
+      make(rng, c) {
+        const pool = (c.archetypes && c.archetypes.length ? c.archetypes : ARCHETYPES).filter(function (a) { return ARCHETYPES.indexOf(a) >= 0; });
+        return pool.length ? { a: pool[Math.floor(rng() * pool.length)] } : null;
+      },
+      check(p, s) { return !!(s.winner && s.winner.archetype === p.a); },
+      progress(p, s) { return { done: !!(s.winner && s.winner.archetype === p.a), locked: s.ended, now: null, goal: p.a }; },
+    },
+    long: {
+      weight: 0.8, group: 'length',
+      make(rng, c) { return { n: c.count >= 20 ? 4 : c.count >= 14 ? 3 : 2 }; },
+      check(p, s) { return s.day >= p.n; },
+      progress(p, s) { const done = s.day >= p.n; return { done: done, locked: done, now: s.day, goal: p.n }; },
+    },
+    quick: {
+      weight: 0.8, group: 'length',
+      make(rng, c) { return { n: c.count >= 20 ? 3 : 2 }; },
+      check(p, s) { return s.ended && s.day <= p.n; },
+      progress(p, s) { const fail = s.day > p.n; return { done: s.ended && !fail, locked: fail || s.ended, now: s.day, goal: p.n }; },
+    },
+    variety: {
+      weight: 1,
+      make(rng, c) { const n = Math.min(3 + Math.floor(c.d), unlockedCount(c.level) - 2); return n >= 3 ? { n: n } : null; },
+      check(p, s) { return s.powerKinds >= p.n; },
+      progress(p, s) { const done = s.powerKinds >= p.n; return { done: done, locked: done, now: s.powerKinds, goal: p.n }; },
+    },
+    category: {
+      weight: 1,
+      make(rng, c) {
+        const cats = CATEGORIES.filter(function (k) { return unlockedIn(k, c.level) >= 2; });
+        if (!cats.length) return null;
+        const cat = cats[Math.floor(rng() * cats.length)];
+        return { c: cat, n: Math.min(unlockedIn(cat, c.level), 2 + (c.d > 1.6 ? 1 : 0)) };
+      },
+      check(p, s) { return (s.byCategory[p.c] || 0) >= p.n; },
+      progress(p, s) { const v = s.byCategory[p.c] || 0; const done = v >= p.n; return { done: done, locked: done, now: v, goal: p.n }; },
+    },
+    beasts: {
+      weight: 0.9, minLevel: 3,
+      make(rng, c) { return { n: 1 + Math.floor(c.d / 1.5) }; },
+      check(p, s) { return s.beastDeaths >= p.n; },
+      progress(p, s) { const done = s.beastDeaths >= p.n; return { done: done, locked: done, now: s.beastDeaths, goal: p.n }; },
+    },
+    minimal: {
+      weight: 0.5, minLevel: 3, mult: 1.3,
+      make(rng, c) { return { n: Math.round(5 + c.count / 4) }; },
+      check(p, s) { return s.ended && s.powersUsed <= p.n; },
+      progress(p, s) { const fail = s.powersUsed > p.n; return { done: s.ended && !fail, locked: fail || s.ended, now: s.powersUsed, goal: p.n }; },
+    },
+    favorite: {
+      weight: 0.8,
+      make(rng, c) { return { n: Math.round((0.55 + 0.03 * Math.min(c.d, 2)) * 100) }; },
+      check(p, s) { return !!(s.winner && s.winner.popularity * 100 >= p.n); },
+      progress(p, s) { return { done: !!(s.winner && s.winner.popularity * 100 >= p.n), locked: s.ended, now: s.winner ? Math.round(s.winner.popularity * 100) : null, goal: p.n }; },
+    },
+    topkill: {
+      weight: 0.9,
+      make(rng, c) { return { n: Math.min(9, 3 + Math.floor(c.count / 8) + Math.floor(c.d)) }; },
+      check(p, s) { return s.topKills >= p.n; },
+      progress(p, s) { const done = s.topKills >= p.n; return { done: done, locked: done, now: s.topKills, goal: p.n }; },
+    },
+  };
+  Career.OBJECTIVES = OBJ;
+
+  function objReward(o) { return o.primary ? PRIMARY_REWARD : BONUS_REWARD; }
+
+  // ============================================================ brief builder
+  function pickWeighted(rng, list, weightOf) {
+    let total = 0;
+    for (let i = 0; i < list.length; i++) total += weightOf(list[i]);
+    let r = rng() * total;
+    for (let i = 0; i < list.length; i++) {
+      r -= weightOf(list[i]);
+      if (r <= 0) return list[i];
+    }
+    return list[list.length - 1];
+  }
+
+  function rosterArchetypes(count, mix, seed) {
+    try {
+      const C = GM.Contestants;
+      if (C && typeof C.generateRoster === 'function') return C.generateRoster(count, mix, seed).map(function (r) { return r.archetype; });
+    } catch (e) { GM.reportError('Career.roster', e); }
+    return null;
+  }
+
+  /** Episode title words (indices into the word lists). Independent of level, so old episodes keep their names. */
+  Career.titleFor = function (season, episode) {
+    const r = GM.makeRng(GM.hashString(data.seed + ':t:' + season + ':' + episode));
+    return { a: Math.floor(r() * TITLE_WORDS), n: Math.floor(r() * TITLE_WORDS) };
+  };
+
+  /** Deterministic brief for (season, episode) given the career seed and level. */
+  Career.makeBrief = function (season, episode, level) {
+    level = level || levelOf(data.rep);
+    const rng = GM.makeRng(GM.hashString(data.seed + ':' + season + ':' + episode));
+    const d = difficulty(season, episode);
+    let count = 8 + 2 * (episode - 1) + 3 * (season - 1);
+    count = U.clamp(count, 6, Career.castCap(level));
+    count -= count % 2;
+    const mix = episode === 1 ? 'balanced'
+      : episode === EPISODES ? pickWeighted(rng, ['chaos', 'bloodthirsty', 'balanced'], function (m) { return m === 'balanced' ? 1 : 1.6; })
+        : pickWeighted(rng, ['balanced', 'bloodthirsty', 'peaceful', 'chaos'], function (m) { return m === 'balanced' ? 3 : m === 'bloodthirsty' ? 1.5 : 1; });
+    const seed = 100000 + Math.floor(rng() * 900000);
+    const arch = rosterArchetypes(count, mix, seed);
+    const ctx = { level: level, count: count, season: season, episode: episode, d: d, archetypes: arch };
+
+    const objectives = [{
+      id: 'o0', type: 'grade', primary: true,
+      params: { g: GRADES[Math.min(GRADES.length - 1, PRIMARY_RANK[episode - 1] + (season - 1))] },
+      reward: { credits: PRIMARY_REWARD.credits, rep: PRIMARY_REWARD.rep },
+    }];
+    const types = Object.keys(OBJ).filter(function (k) { return k !== 'grade' && (OBJ[k].minLevel || 1) <= level; });
+    const usedGroups = {};
+    for (let slot = 1; slot <= 2; slot++) {
+      let guard = 0;
+      while (guard++ < 24 && types.length) {
+        const k = pickWeighted(rng, types, function (x) { return OBJ[x].weight || 1; });
+        const def = OBJ[k];
+        if (objectives.some(function (o) { return o.type === k; })) continue;
+        if (def.group && usedGroups[def.group]) continue;
+        const params = def.make(rng, ctx);
+        if (!params) continue;
+        if (def.group) usedGroups[def.group] = true;
+        const m = def.mult || 1;
+        objectives.push({
+          id: 'o' + slot, type: k, primary: false, params: params,
+          reward: { credits: Math.round(BONUS_REWARD.credits * m), rep: Math.round(BONUS_REWARD.rep * m) },
+        });
+        break;
+      }
+    }
+    return {
+      id: 's' + season + 'e' + episode, season: season, episode: episode, seed: seed, count: count, mix: mix,
+      title: Career.titleFor(season, episode),
+      objectives: objectives,
+    };
+  };
+
+  /** The current episode brief (generated and kept in the save on first use). */
+  Career.brief = function () {
+    if (!data.started) return null;
+    if (!data.brief || data.brief.season !== data.season || data.brief.episode !== data.episode) {
+      if (data.seasonDone) return null;
+      data.brief = Career.makeBrief(data.season, data.episode);
+      commit();
+    }
+    return data.brief;
+  };
+
+  // ============================================================ career control
+  /** Start a new career (or the first one). */
+  Career.begin = function () {
+    data.started = true;
+    data.seed = (GM.randomSeed() * 7919 + Date.now()) >>> 0;
+    data.rep = 0;
+    data.credits = 0;
+    data.season = 1;
+    data.episode = 1;
+    data.brief = null;
+    data.seasonDone = false;
+    data.seasons = {};
+    data.upgrades = {};
+    data.history = [];
+    data.mode = 'career';
+    commit();
+    GM.emit('career:changed', { began: true });
+  };
+
+  /** Wipe the whole career and all lifetime stats (back to the first-run state). */
+  Career.reset = function () {
+    if (GM.Save) GM.Save.reset();
+    GM.emit('career:changed', { reset: true });
+  };
+
+  Career.nextSeason = function () {
+    if (!data.started || !data.seasonDone) return false;
+    data.season += 1;
+    data.episode = 1;
+    data.seasonDone = false;
+    data.brief = null;
+    commit();
+    GM.emit('career:changed', { season: data.season });
+    return true;
+  };
+
+  /** Launch the current brief as a new Show. */
+  Career.startEpisode = function () {
+    const b = Career.brief();
+    if (!b || !GM.Game || GM.state.phase !== 'setup') return false;
+    const opts = (GM.UI && typeof GM.UI.getOptions === 'function' && GM.UI.getOptions()) || {};
+    const s = {
+      seed: b.seed, contestantCount: b.count, mix: b.mix, roster: null,
+      sandbox: false, autoGM: Career.hasAssistant() && !!opts.autoGM,
+      quality: opts.quality === 'low' ? 'low' : 'high',
+      feeds: opts.feeds !== false, nameTags: opts.nameTags !== false, startSpeed: 1,
+      career: { season: b.season, episode: b.episode, id: b.id },
+    };
+    if (GM.Audio && typeof GM.Audio.unlock === 'function') { try { GM.Audio.unlock(); } catch (e) { /* optional */ } }
+    GM.Game.newGame(s);
+    if (GM.AutoGM && typeof GM.AutoGM.setEnabled === 'function') { try { GM.AutoGM.setEnabled(!!s.autoGM); } catch (e) { /* optional */ } }
+    return true;
+  };
+
+  // ============================================================= upgrades shop
+  /** -> { ok, reason: null|'max'|'level'|'credits'|'missing', cost, level } */
+  Career.canBuy = function (id) {
+    const u = UPGRADE_BY_ID[id];
+    if (!u) return { ok: false, reason: 'missing', cost: 0, level: 0 };
+    const lv = upgradeLevel(id);
+    if (lv >= u.max) return { ok: false, reason: 'max', cost: 0, level: lv };
+    const cost = u.costs[lv];
+    if (u.minLevel && levelOf(data.rep) < u.minLevel) return { ok: false, reason: 'level', cost: cost, level: lv };
+    if (data.credits < cost) return { ok: false, reason: 'credits', cost: cost, level: lv };
+    return { ok: true, reason: null, cost: cost, level: lv };
+  };
+  Career.buy = function (id) {
+    const c = Career.canBuy(id);
+    if (!c.ok) return false;
+    data.credits -= c.cost;
+    data.upgrades[id] = c.level + 1;
+    awardTrophies(null);
+    commit();
+    GM.emit('career:changed', { bought: id });
+    return true;
+  };
+
+  // ======================================================== Show live tracking
+  const live = {
+    running: false,       // a career Show started and is not finalized
+    finalized: false,
+    betrayals: 0,
+    beastDeaths: 0,
+    powerCount: 0,
+    used: Object.create(null),
+    results: null,
+  };
+  function resetLive() {
+    live.running = false;
+    live.finalized = false;
+    live.betrayals = 0;
+    live.beastDeaths = 0;
+    live.powerCount = 0;
+    live.used = Object.create(null);
+  }
+
+  /** Numbers the objectives are judged on (works mid-Show and at the end). */
+  function snapshot() {
+    const st = GM.state;
+    const A = GM.Audience;
+    const winner = st.winner != null ? st.contestants[st.winner] : null;
+    let top = 0;
+    for (let i = 0; i < st.contestants.length; i++) top = Math.max(top, (st.contestants[i] && st.contestants[i].kills) || 0);
+    const byCategory = {};
+    let kinds = 0;
+    for (const id in live.used) {
+      kinds++;
+      const cat = POWERS[id] ? POWERS[id].cat : null;
+      if (cat) byCategory[cat] = (byCategory[cat] || 0) + 1;
+    }
+    return {
+      grade: A && typeof A.grade === 'function' ? A.grade() : 'D',
+      score: A && typeof A.score === 'function' ? A.score() : 0,
+      viewers: Math.max((st.stats && st.stats.peakViewers) || 0, (A && A.peakViewers) || 0),
+      day: st.day || 1,
+      time: st.endTime || st.time || 0,
+      ended: st.phase === 'ended',
+      winner: winner ? { name: winner.name, archetype: winner.archetype, team: winner.team, kills: winner.kills || 0, popularity: typeof winner.popularity === 'number' ? winner.popularity : 0.3 } : null,
+      betrayals: live.betrayals,
+      beastDeaths: live.beastDeaths,
+      powersUsed: live.powerCount,
+      powerKinds: kinds,
+      byCategory: byCategory,
+      topKills: top,
+      deaths: st.deaths ? st.deaths.length : 0,
+      kills: (st.stats && st.stats.kills) || 0,
+    };
+  }
+  Career.snapshot = snapshot;
+
+  /** Live objective states for the HUD: [{ id, type, primary, params, done, locked, now, goal }]. */
+  Career.progress = function () {
+    if (!Career.active()) return [];
+    const res = live.results;                       // set once the Show is settled
+    const b = data.brief || (res && res.brief);
+    if (!b) return [];
+    const s = snapshot();
+    return b.objectives.map(function (o, i) {
+      const p = OBJ[o.type].progress(o.params, s);
+      const fin = res ? res.objectives[i] : null;   // the final verdict wins over the live estimate
+      return {
+        id: o.id, type: o.type, primary: o.primary, params: o.params, now: p.now, goal: p.goal, reward: o.reward,
+        done: fin ? fin.done : !!p.done, locked: fin ? true : !!p.locked,
+      };
+    });
+  };
+  Career.results = function () { return live.results; };
+
+  // ================================================================== trophies
+  const TROPHIES = [
+    { id: 'debut', icon: '🎬', reward: 25, test(c, r) { return !!r; } },
+    { id: 'rating_a', icon: '📈', reward: 40, test(c, r) { return !!r && rankOf(r.grade) >= 3; } },
+    { id: 'rating_s', icon: '🌟', reward: 80, test(c, r) { return !!r && r.grade === 'S'; } },
+    { id: 'three_stars', icon: '⭐', reward: 50, test(c, r) { return !!r && r.stars >= 3; } },
+    { id: 'season_done', icon: '📺', reward: 100, test(c, r) { return !!r && !!r.season && r.season.done; } },
+    { id: 'viewers_30', icon: '👥', reward: 60, test(c) { return c.stats.bestViewers >= 30e6; } },
+    { id: 'betrayal_5', icon: '🗡️', reward: 40, test(c, r) { return !!r && r.betrayals >= 5; } },
+    { id: 'kills_100', icon: '☠️', reward: 60, test(c) { return c.stats.kills >= 100; } },
+    { id: 'underdog', icon: '🌿', reward: 50, test(c, r) { return !!r && r.objectives.some(function (o) { return o.type === 'crown' && o.done; }); } },
+    { id: 'upgrade_max', icon: '🔧', reward: 70, test(c) { return UPGRADES.some(function (u) { return u.id !== 'writers' && upgradeLevel(u.id) >= u.max; }); } },
+    { id: 'level_5', icon: '🏅', reward: 60, test(c) { return levelOf(c.rep) >= 5; } },
+    { id: 'level_10', icon: '👑', reward: 200, test(c) { return levelOf(c.rep) >= MAX_LEVEL; } },
+  ];
+  Career.TROPHIES = TROPHIES;
+
+  /** Grant every newly reached trophy (and its credits). -> [ids] */
+  function awardTrophies(res) {
+    const got = [];
+    for (let i = 0; i < TROPHIES.length; i++) {
+      const t = TROPHIES[i];
+      if (data.trophies[t.id]) continue;
+      let ok = false;
+      try { ok = !!t.test(data, res); } catch (e) { GM.reportError('Career.trophy.' + t.id, e); }
+      if (!ok) continue;
+      data.trophies[t.id] = Date.now();
+      data.credits += t.reward;
+      got.push(t.id);
+      GM.emit('career:trophy', { id: t.id });
+    }
+    return got;
+  }
+
+  // ============================================================ episode result
+  function finalize() {
+    if (live.finalized || !live.running) return null;
+    live.finalized = true;
+    live.running = false;
+    const b = data.brief;
+    const sc = GM.state.settings && GM.state.settings.career;
+    if (!b || !sc || b.season !== sc.season || b.episode !== sc.episode) return null;
+    const s = snapshot();
+    const scale = seasonScale(b.season);
+    const levelBefore = levelOf(data.rep);
+
+    const objectives = b.objectives.map(function (o) {
+      return { id: o.id, type: o.type, primary: o.primary, params: o.params, reward: o.reward, done: !!OBJ[o.type].check(o.params, s) };
+    });
+    let credits = GRADE_CREDITS[s.grade] || 0;
+    let rep = GRADE_REP[s.grade] || 0;
+    let stars = 0;
+    for (let i = 0; i < objectives.length; i++) {
+      if (!objectives[i].done) continue;
+      credits += objectives[i].reward.credits;
+      rep += objectives[i].reward.rep;
+      stars++;
+    }
+    credits = Math.round(credits * scale);
+    rep = Math.round(rep * scale);
+    stars = Math.min(3, stars);
+
+    const rec = {
+      grade: s.grade, score: Math.round(s.score * 10) / 10, viewers: s.viewers, stars: stars, credits: credits, rep: rep,
+      winner: s.winner ? s.winner.name : null, day: s.day, ts: Date.now(),
+      objectives: objectives.map(function (o) { return { id: o.id, done: o.done }; }),
+    };
+    const sea = data.seasons[b.season] || (data.seasons[b.season] = { eps: {}, stars: 0 });
+    sea.eps[b.episode] = rec;
+    sea.stars += stars;
+
+    // lifetime stats
+    const st = data.stats;
+    st.shows++;
+    st.kills += s.kills;
+    st.deaths += s.deaths;
+    st.days += s.day;
+    st.powers += s.powersUsed;
+    st.stars += stars;
+    st.bestViewers = Math.max(st.bestViewers, s.viewers);
+    st.bestScore = Math.max(st.bestScore, rec.score);
+    st.grades[s.grade] = (st.grades[s.grade] || 0) + 1;
+    if (s.winner) st.wins[s.winner.archetype] = (st.wins[s.winner.archetype] || 0) + 1;
+
+    // season finale
+    let seasonInfo = null;
+    if (b.episode >= EPISODES) {
+      const bonus = SEASON_STAR_CREDITS * sea.stars;
+      credits += bonus;
+      data.seasonDone = true;
+      seasonInfo = { done: true, season: b.season, stars: sea.stars, maxStars: EPISODES * 3, bonus: bonus };
+    } else {
+      data.episode = b.episode + 1;
+    }
+    data.rep += rep;
+    data.credits += credits;
+    data.brief = null;
+
+    data.history.push({ season: b.season, episode: b.episode, grade: s.grade, score: rec.score, viewers: s.viewers, winner: rec.winner, ts: rec.ts });
+    if (data.history.length > 30) data.history.splice(0, data.history.length - 30);
+
+    const results = {
+      season: seasonInfo, brief: b, grade: s.grade, score: rec.score, viewers: s.viewers, day: s.day, winner: s.winner,
+      betrayals: s.betrayals, objectives: objectives, stars: stars, credits: credits, rep: rep, scale: scale,
+      levelBefore: levelBefore, levelAfter: levelOf(data.rep), unlocked: [], castCap: Career.castCap(), trophies: [],
+    };
+    for (const id in POWERS) if (POWERS[id].lv > levelBefore && POWERS[id].lv <= results.levelAfter) results.unlocked.push(id);
+    results.trophies = awardTrophies(results);
+    results.creditsTotal = data.credits;
+    live.results = results;
+    commit();
+    if (results.levelAfter > levelBefore) GM.emit('career:levelup', { level: results.levelAfter });
+    GM.emit('career:results', { results: results });
+    GM.emit('career:changed', { finished: true });
+    return results;
+  }
+  Career.finalize = finalize;
+
+  // ================================================================ event wiring
+  // Registered in init() (order 110), after GM.Powers (order 80) has added the
+  // winner bonus and the last audience sample: the grade must include them.
+  GM.registerSystem({
+    name: 'Career',
+    order: 110,
+    init() {
+      GM.on('game:new', function () {
+        resetLive();
+        live.results = null;
+        live.running = Career.active();
+      });
+      GM.on('log', function (e) {
+        if (live.running && e && e.type === 'betrayal') live.betrayals++;
+      });
+      GM.on('contestant:died', function (e) {
+        if (!live.running || !e) return;
+        if (e.cause === 'beast' || e.cause === 'wasps') live.beastDeaths++;
+      });
+      GM.on('power:used', function (e) {
+        if (!live.running || !e) return;
+        live.powerCount++;
+        if (e.id) live.used[e.id] = (live.used[e.id] || 0) + 1;
+      });
+      GM.on('game:end', function () {
+        if (Career.active()) {
+          finalize();
+        } else if (data.stats) {
+          // free play: only count that a Show was finished
+          data.stats.freeShows++;
+          commit();
+        }
+      });
+      GM.on('game:setup', function () {
+        // leaving a career Show early: nothing is earned, the brief stays for another try
+        live.running = false;
+      });
     },
   });
 })();
@@ -24543,6 +25780,13 @@ button.chip-i:active { transform: translateY(1px); }
   const R_COOLDOWN = Object.freeze({ ok: false, reason: 'cooldown' });
   const R_ENERGY = Object.freeze({ ok: false, reason: 'energy' });
   const R_MISSING = Object.freeze({ ok: false, reason: 'missing' });
+  const R_LOCKED = Object.freeze({ ok: false, reason: 'locked' });
+  const FREE_GRADE_CUTS = Object.freeze([62, 50, 38, 27]);   // score needed for S, A, B, C
+
+  // Career upgrades (set in reset() from GM.Career.modsFor; neutral in free play)
+  const NEUTRAL_MODS = Object.freeze({ maxEnergy: MAX_ENERGY, startEnergy: START_ENERGY, regen: 1, cooldown: 1, hype: 1 });
+  let careerMods = NEUTRAL_MODS;
+  function isCareerShow() { const s = GM.state.settings; return !!(s && s.career); }
 
   // ---------------------------------------------------------------- helpers
   function settings() { return GM.state.settings || null; }
@@ -25288,7 +26532,7 @@ button.chip-i:active { transform: translateY(1px); }
   }
   resetCooldowns();
 
-  function cooldownOf(def) { return def.cooldown * (isSandbox() ? SANDBOX_CD : 1); }
+  function cooldownOf(def) { return def.cooldown * (isSandbox() ? SANDBOX_CD : 1) * careerMods.cooldown; }
 
   /** Power definition by id (or null). */
   Powers.def = function (id) { return BY_ID[id] || null; };
@@ -25306,7 +26550,7 @@ button.chip-i:active { transform: translateY(1px); }
   };
   Powers.categoryColor = function (cat) { return '#' + (CAT_COLORS[cat] || 0xffffff).toString(16).padStart(6, '0'); };
   /** Energy per sim second (SPEC: 0.6 + excitement / 45). */
-  Powers.regenRate = function () { return isSandbox() ? 0 : 0.6 + GM.Audience.excitement / 45; };
+  Powers.regenRate = function () { return isSandbox() ? 0 : (0.6 + GM.Audience.excitement / 45) * careerMods.regen; };
   /** Seconds until the announced feast opens (0 when none is pending). */
   Powers.feastCountdown = function () { return feastPending ? Math.max(0, feastPending.at - GM.state.time) : 0; };
   /** Seconds of reveal left. */
@@ -25316,6 +26560,7 @@ button.chip-i:active { transform: translateY(1px); }
   Powers.canUse = function (id) {
     const def = BY_ID[id];
     if (!def) return R_MISSING;
+    if (isCareerShow() && GM.Career && !GM.Career.isUnlocked(id)) return R_LOCKED;   // shown even before the gong
     if (GM.state.phase !== 'running') return R_PHASE;
     if ((Powers.cooldowns[id] || 0) > 0) return R_COOLDOWN;
     if (!isSandbox() && Powers.energy < def.cost) return R_ENERGY;
@@ -25633,10 +26878,10 @@ button.chip-i:active { transform: translateY(1px); }
       if (c > 0) cds[id] = c > dt ? c - dt : 0;
     }
     if (st.phase === 'running') {
-      if (isSandbox()) Powers.energy = MAX_ENERGY;
+      if (isSandbox()) Powers.energy = Powers.maxEnergy;
       else {
         Powers.energy += Powers.regenRate() * dt;
-        if (Powers.energy > MAX_ENERGY) Powers.energy = MAX_ENERGY;
+        if (Powers.energy > Powers.maxEnergy) Powers.energy = Powers.maxEnergy;
       }
     }
     runTasks();
@@ -25662,6 +26907,8 @@ button.chip-i:active { transform: translateY(1px); }
 
   function clearPowers() {
     const st = GM.state;
+    careerMods = NEUTRAL_MODS;
+    Powers.maxEnergy = MAX_ENERGY;
     Powers.energy = START_ENERGY;
     resetCooldowns();
     for (const k in Powers.used) delete Powers.used[k];
@@ -25740,7 +26987,7 @@ button.chip-i:active { transform: translateY(1px); }
     amount = +amount || 0;
     if (!amount) return 0;
     let a = amount;
-    if (a > 0) a *= 1 - 0.5 * (Audience.excitement / 100);
+    if (a > 0) a *= (1 - 0.5 * (Audience.excitement / 100)) * careerMods.hype;
     const before = Audience.excitement;
     Audience.excitement = U.clamp(before + a, 0, 100);
     const real = Audience.excitement - before;
@@ -25774,7 +27021,9 @@ button.chip-i:active { transform: translateY(1px); }
   /** Audience grade for the whole Show so far: 'S' | 'A' | 'B' | 'C' | 'D'. */
   Audience.grade = function () {
     const s = Audience.score();
-    return s >= 62 ? 'S' : s >= 50 ? 'A' : s >= 38 ? 'B' : s >= 27 ? 'C' : 'D';
+    // career Shows grade on a stricter scale (GM.Career.GRADE_CUTS); free play keeps the original one
+    const cuts = isCareerShow() && GM.Career ? GM.Career.GRADE_CUTS : FREE_GRADE_CUTS;
+    return s >= cuts[0] ? 'S' : s >= cuts[1] ? 'A' : s >= cuts[2] ? 'B' : s >= cuts[3] ? 'C' : 'D';
   };
   /** 'audience.mood.*' key for the current excitement. */
   Audience.moodKey = function () {
@@ -26254,7 +27503,9 @@ button.chip-i:active { transform: translateY(1px); }
       clearAudience();
       AutoGM.enabled = !!(s && s.autoGM);
       clearAuto();
-      Powers.energy = s && s.sandbox ? MAX_ENERGY : START_ENERGY;
+      if (s && s.career && GM.Career) careerMods = GM.Career.modsFor(s);
+      Powers.maxEnergy = careerMods.maxEnergy;
+      Powers.energy = s && s.sandbox ? Powers.maxEnergy : careerMods.startEnergy;
       initPopularity();
       Audience.viewers = viewersTarget();
       Audience.peakViewers = Audience.viewers;
@@ -32955,6 +34206,7 @@ button.chip-i:active { transform: translateY(1px); }
       const c = cooldownLeft(id);
       return t('ui.pow.reason.cooldown', { n: c >= 10 ? Math.ceil(c) : Math.max(0.1, Math.round(c * 10) / 10) });
     }
+    if (reason === 'locked') return t('ui.pow.reason.locked', { n: GM.Career ? GM.Career.unlockLevel(id) : 1 });
     return tk('ui.pow.reason.' + reason, 'ui.pow.reason.failed');
   }
   function isSandbox() { const s = settings(); return !!(s && s.sandbox); }
@@ -34687,6 +35939,8 @@ button.chip-i:active { transform: translateY(1px); }
     for (let i = 0; i < ui.powBtns.length; i++) {
       const b = ui.powBtns[i];
       txt(b.name, powerName(b.def));
+      b.lk = false;   // refreshPowers repaints the lock label
+      tog(b.el, 'locked', false);
       txt(b.cost, sb ? '∞' : String(b.def.cost == null ? 0 : b.def.cost));
     }
   }
@@ -34726,6 +35980,12 @@ button.chip-i:active { transform: translateY(1px); }
       txt(b.cdt, frac > 0 ? fmtCd(cd) : '');
       tog(b.el, 'off', !cu.ok);
       tog(b.el, 'poor', cu.reason === 'energy');
+      const lk = cu.reason === 'locked';
+      if (lk !== !!b.lk) {
+        b.lk = lk;
+        tog(b.el, 'locked', lk);
+        txt(b.cost, lk ? '🔒 L' + (GM.Career ? GM.Career.unlockLevel(b.id) : 1) : isSandbox() ? '∞' : String(b.def.cost == null ? 0 : b.def.cost));
+      }
       tog(b.el, 'armed', tgt.active && tgt.id === b.id);
       attr(b.el, 'aria-disabled', cu.ok ? null : 'true');
     }
@@ -34745,6 +36005,7 @@ button.chip-i:active { transform: translateY(1px); }
   function toggleAssistant() {
     const AG = GM.AutoGM;
     if (!AG || typeof AG.setEnabled !== 'function') return;
+    if (GM.Career && GM.Career.active() && !GM.Career.hasAssistant()) { toast('ui.toast.assistantLocked'); play('click'); return; }
     const on = !AG.enabled;
     try { AG.setEnabled(on); } catch (e) { GM.reportError('UI.autoGM', e); }
     if (GM.state.settings) GM.state.settings.autoGM = on;
@@ -35280,6 +36541,7 @@ button.chip-i:active { transform: translateY(1px); }
       '<div class="v-actions"><button type="button" class="btn btn-ghost" data-act="watch">' + svgMarkup('eye') + '<span>' + esc(t('victory.watch')) + '</span></button>' +
       '<button type="button" class="start-btn v-new" data-act="new"><span class="start-glow" aria-hidden="true"></span><span class="start-label">' + esc(t('victory.newShow')) + '</span></button></div>' +
       '</div>';
+    GM.emit('ui:victory', { root: dom.victory });   // every (re)render: other modules may extend the card
   }
   function showVictory() {
     if (GM.state.phase !== 'ended') return;
@@ -35464,7 +36726,7 @@ button.chip-i:active { transform: translateY(1px); }
       return;
     }
     ui.exitArmedUntil = now() + 3;
-    toast('ui.top.exitConfirm');
+    toast(GM.Career && GM.Career.active() && GM.state.phase !== 'ended' ? 'ui.top.exitCareer' : 'ui.top.exitConfirm');
     refreshTopbar();
   }
   function toggleNameTags() {
@@ -35853,6 +37115,8 @@ button.chip-i:active { transform: translateY(1px); }
   const UI = (GM.UI = {
     hoverId: null,
     /** A power is armed and waits for a target. */
+    /** The setup options the player chose (quality, feeds, name tags, assistant): a copy. */
+    getOptions() { return Object.assign({}, setup.opts); },
     isTargeting() { return tgt.active; },
     /** The armed power (shared object, read-only for callers) or null. */
     targeting() { return tgt.active ? tgt : null; },
@@ -35876,6 +37140,1044 @@ button.chip-i:active { transform: translateY(1px); }
     openDrawer(side) { safe('openDrawer', openDrawer, side); },
     /** Force a full refresh of the live panels. */
     refresh() { if (ui.built && isGamePhase(GM.state.phase)) safe('refresh', refreshAll); },
+  });
+})();
+
+</script>
+<script>/* js/careerui.js */
+/* ==========================================================================
+ * careerui.js — the interface of career mode.
+ *
+ *   hub        full-screen studio on the setup screen: season, upgrades,
+ *              unlocked powers, trophies, profile + backup
+ *   brief HUD  the episode objectives, live, over the main view
+ *   report     rewards block inside the victory card
+ *   switch     "Career mode" button on the free-play setup screen
+ *
+ * The hub replaces the free-play setup sheet while GM.Career.mode() is
+ * 'career'. Strings live here (EN + HU). Logic lives in career.js.
+ * Owner: UI.
+ * ========================================================================== */
+(function () {
+  'use strict';
+  const GM = window.GM;
+  const U = GM.U;
+  const C = GM.Career;
+
+  // ================================================================ strings
+  GM.i18n.add({
+    en: {
+      'career.mode.career': 'Career mode',
+      'career.mode.free': 'Free play',
+      'career.level': 'Level {n}',
+      'career.rep': 'Reputation',
+      'career.credits': 'Credits',
+      'career.tab.season': 'Season',
+      'career.tab.studio': 'Studio',
+      'career.tab.powers': 'Powers',
+      'career.tab.trophies': 'Trophies',
+      'career.tab.profile': 'Profile',
+
+      'career.welcome.kicker': 'Network control',
+      'career.welcome.title': 'Run your own network',
+      'career.welcome.text': 'Each season has six episodes. The Studio gives you a brief for every episode: reach the ratings target and hit the bonus goals. Earn credits and reputation to unlock new powers, bigger casts and upgrades for your control room.',
+      'career.welcome.start': 'Start career',
+      'career.welcome.free': 'Free play instead',
+      'career.welcome.tip': 'Free play stays open and unchanged. Your career progress is saved in this browser.',
+
+      'career.season.title': 'Season {n}',
+      'career.season.stars': '{n} / {max} stars',
+      'career.ep': 'Episode {n}',
+      'career.ep.next': 'Up next',
+      'career.ep.locked': 'Not yet',
+      'career.title.fmt': 'The {adj} {noun}',
+      'career.brief.kicker': 'Studio brief',
+      'career.brief.cast': '{n} contestants',
+      'career.brief.arena': 'Arena #{n}',
+      'career.brief.primary': 'Ratings target',
+      'career.brief.bonus': 'Bonus goal',
+      'career.brief.rewards': 'Rewards',
+      'career.brief.start': 'Start episode',
+      'career.brief.startSub': 'Episode {n} · {title}',
+      'career.reward': '+{c} credits · +{r} rep',
+      'career.reward.short': '+{c} cr · +{r} rep',
+      'career.seasonDone.title': 'Season complete',
+      'career.seasonDone.text': 'The network renews you! You earned {n} stars this season.',
+      'career.seasonDone.next': 'Begin season {n}',
+      'career.noBrief': 'No episode is waiting.',
+
+      'career.obj.grade': 'Earn a rating of {g} or better',
+      'career.obj.viewers': 'Reach {n} million viewers',
+      'career.obj.betrayals': 'Witness {n} betrayals',
+      'career.obj.betrayals_one': 'Witness a betrayal',
+      'career.obj.crown': 'The winner is a {a}',
+      'career.obj.long': 'Reach day {n}',
+      'career.obj.quick': 'Finish by day {n}',
+      'career.obj.variety': 'Use {n} different powers',
+      'career.obj.category': 'Use {n} different powers of type: {c}',
+      'career.obj.beasts': 'Beasts or wasps kill {n} contestants',
+      'career.obj.beasts_one': 'Beasts or wasps kill a contestant',
+      'career.obj.minimal': 'Use at most {n} powers',
+      'career.obj.favorite': 'The winner is a fan favorite ({n}%+)',
+      'career.obj.topkill': 'One contestant gets {n} kills',
+
+      'career.hud.title': 'Episode {n}',
+      'career.hud.collapse': 'Show or hide the brief',
+      'career.hud.done': 'Done',
+      'career.hud.failed': 'Missed',
+
+      'career.res.title': 'Episode report',
+      'career.res.goals': 'Goals',
+      'career.res.credits': 'Credits',
+      'career.res.rep': 'Reputation',
+      'career.res.total': 'Balance: {n} credits',
+      'career.res.levelup': 'Level up! You are now level {n}.',
+      'career.res.unlocked': 'Unlocked: {list}',
+      'career.res.cast': 'Bigger cast: up to {n} contestants',
+      'career.res.trophy': 'Trophy: {name}',
+      'career.res.season': 'Season complete: {n} stars and a {b} credit bonus!',
+      'career.res.continue': 'Back to the studio',
+      'career.res.scale': 'Season bonus ×{n}',
+
+      'career.studio.title': 'Studio upgrades',
+      'career.studio.hint': 'Upgrades only work in career episodes. Credits come from ratings, goals and trophies.',
+      'career.up.power': 'Power grid',
+      'career.up.power.desc': 'Maximum energy +10 per level.',
+      'career.up.regen': 'Fan engagement',
+      'career.up.regen.desc': 'Energy recharges 10% faster per level.',
+      'career.up.rigging': 'Fast rigging',
+      'career.up.rigging.desc': 'Power cooldowns are 5% shorter per level.',
+      'career.up.hype': 'Hype machine',
+      'career.up.hype.desc': 'Exciting moments raise the ratings 6% more per level.',
+      'career.up.sponsors': 'Sponsor network',
+      'career.up.sponsors.desc': 'Start every episode with +10 energy per level.',
+      'career.up.writers': 'Writers room',
+      'career.up.writers.desc': 'Unlocks the assistant Showrunner, who acts when the audience is bored.',
+      'career.up.level': 'Level {a} / {b}',
+      'career.up.max': 'Maxed out',
+      'career.up.buy': 'Buy · {n}',
+      'career.up.needLevel': 'Needs career level {n}',
+      'career.up.needCredits': 'Not enough credits',
+      'career.up.bought': 'Upgrade bought',
+
+      'career.powers.title': 'Levels and unlocks',
+      'career.powers.hint': 'Reputation raises your level. Free play has every power from the start.',
+      'career.powers.cast': 'Casts up to {n}',
+      'career.powers.now': 'You are here',
+
+      'career.tr.title': 'Trophies',
+      'career.tr.earned': 'Earned',
+      'career.tr.reward': '+{n} credits',
+      'career.tr.debut': 'Pilot',
+      'career.tr.debut.desc': 'Finish your first episode.',
+      'career.tr.rating_a': 'Rising star',
+      'career.tr.rating_a.desc': 'Earn an A rating or better.',
+      'career.tr.rating_s': 'Legend',
+      'career.tr.rating_s.desc': 'Earn an S rating.',
+      'career.tr.three_stars': 'Perfect brief',
+      'career.tr.three_stars.desc': 'Complete all three goals of one episode.',
+      'career.tr.season_done': 'Season finale',
+      'career.tr.season_done.desc': 'Complete a whole season.',
+      'career.tr.viewers_30': 'Blockbuster',
+      'career.tr.viewers_30.desc': 'Reach 30 million viewers.',
+      'career.tr.betrayal_5': 'Plot twist',
+      'career.tr.betrayal_5.desc': 'Witness 5 betrayals in one Show.',
+      'career.tr.kills_100': 'Body count',
+      'career.tr.kills_100.desc': 'See 100 contestants fall in your episodes.',
+      'career.tr.underdog': 'Underdog story',
+      'career.tr.underdog.desc': 'Make the winner type from the brief win.',
+      'career.tr.upgrade_max': 'Fully loaded',
+      'career.tr.upgrade_max.desc': 'Max out one studio upgrade.',
+      'career.tr.level_5': 'Veteran',
+      'career.tr.level_5.desc': 'Reach career level 5.',
+      'career.tr.level_10': 'Network mogul',
+      'career.tr.level_10.desc': 'Reach career level 10.',
+
+      'career.prof.title': 'Profile',
+      'career.prof.stats': 'Lifetime stats',
+      'career.prof.shows': 'Career episodes',
+      'career.prof.free': 'Free play Shows',
+      'career.prof.viewers': 'Best viewers',
+      'career.prof.score': 'Best show score',
+      'career.prof.kills': 'Contestants fallen',
+      'career.prof.powers': 'Powers used',
+      'career.prof.stars': 'Stars earned',
+      'career.prof.grades': 'Ratings',
+      'career.prof.history': 'Recent episodes',
+      'career.prof.historyEmpty': 'No episodes yet.',
+      'career.prof.row': 'S{s} · E{e}',
+      'career.prof.backup': 'Backup',
+      'career.prof.backup.text': 'Your progress is saved in this browser. Copy the backup code to keep it safe or to move it to another device.',
+      'career.prof.noStorage': 'This browser does not allow saving. Your progress is lost when you close the page. Copy the backup code now and then.',
+      'career.prof.export': 'Show backup code',
+      'career.prof.copy': 'Copy',
+      'career.prof.copied': 'Copied!',
+      'career.prof.codePh': 'Paste a backup code here',
+      'career.prof.import': 'Restore from code',
+      'career.prof.imported': 'Progress restored.',
+      'career.prof.err.empty': 'Paste a backup code first.',
+      'career.prof.err.format': 'That is not a valid backup code.',
+      'career.prof.err.checksum': 'The code is damaged. Copy it again.',
+      'career.prof.err.version': 'This code comes from a newer version of the game.',
+      'career.prof.reset': 'Reset career',
+      'career.prof.resetSure': 'Click again to erase all progress',
+      'career.prof.resetDone': 'Career erased.',
+
+      'ui.pow.reason.locked': 'Locked. Reach career level {n} to unlock.',
+      'ui.toast.assistantLocked': 'The assistant needs the Writers room upgrade.',
+      'ui.top.exitCareer': 'Click again to leave. This episode will not count!',
+
+      'career.adj.0': 'Golden', 'career.adj.1': 'Crimson', 'career.adj.2': 'Silent', 'career.adj.3': 'Burning',
+      'career.adj.4': 'Frozen', 'career.adj.5': 'Hollow', 'career.adj.6': 'Wild', 'career.adj.7': 'Last',
+      'career.adj.8': 'Broken', 'career.adj.9': 'Electric', 'career.adj.10': 'Midnight', 'career.adj.11': 'Savage',
+      'career.noun.0': 'Harvest', 'career.noun.1': 'Gauntlet', 'career.noun.2': 'Eclipse', 'career.noun.3': 'Reckoning',
+      'career.noun.4': 'Tide', 'career.noun.5': 'Spire', 'career.noun.6': 'Thunder', 'career.noun.7': 'Cascade',
+      'career.noun.8': 'Verdict', 'career.noun.9': 'Carnival', 'career.noun.10': 'Siege', 'career.noun.11': 'Dawn',
+    },
+    hu: {
+      'career.mode.career': 'Karrier mód',
+      'career.mode.free': 'Szabad játék',
+      'career.level': '{n}. szint',
+      'career.rep': 'Hírnév',
+      'career.credits': 'Kreditek',
+      'career.tab.season': 'Évad',
+      'career.tab.studio': 'Stúdió',
+      'career.tab.powers': 'Képességek',
+      'career.tab.trophies': 'Trófeák',
+      'career.tab.profile': 'Profil',
+
+      'career.welcome.kicker': 'Csatornairányítás',
+      'career.welcome.title': 'Vezesd a saját csatornádat',
+      'career.welcome.text': 'Minden évad hat epizódból áll. A Stúdió minden epizódhoz megbízást ad: érd el a nézettségi célt, és teljesítsd a bónusz célokat. Kreditet és hírnevet szerzel, amiből új képességeket, nagyobb szereplőgárdát és fejlesztéseket kapsz az irányítótermedbe.',
+      'career.welcome.start': 'Karrier indítása',
+      'career.welcome.free': 'Inkább szabad játék',
+      'career.welcome.tip': 'A szabad játék marad, ahogy volt. A karrier haladásod ebben a böngészőben mentődik.',
+
+      'career.season.title': '{n}. évad',
+      'career.season.stars': '{n} / {max} csillag',
+      'career.ep': '{n}. epizód',
+      'career.ep.next': 'Következő',
+      'career.ep.locked': 'Még nem',
+      'career.title.fmt': '{adj} {noun}',
+      'career.brief.kicker': 'Stúdió megbízás',
+      'career.brief.cast': '{n} versenyző',
+      'career.brief.arena': 'Aréna #{n}',
+      'career.brief.primary': 'Nézettségi cél',
+      'career.brief.bonus': 'Bónusz cél',
+      'career.brief.rewards': 'Jutalmak',
+      'career.brief.start': 'Epizód indítása',
+      'career.brief.startSub': '{n}. epizód · {title}',
+      'career.reward': '+{c} kredit · +{r} hírnév',
+      'career.reward.short': '+{c} kr · +{r} hírnév',
+      'career.seasonDone.title': 'Az évad lezárult',
+      'career.seasonDone.text': 'A csatorna megújít! Ebben az évadban {n} csillagot szereztél.',
+      'career.seasonDone.next': 'Új évad kezdése: {n}.',
+      'career.noBrief': 'Nincs várakozó epizód.',
+
+      'career.obj.grade': 'Érj el {g} vagy jobb értékelést',
+      'career.obj.viewers': 'Érj el {n} millió nézőt',
+      'career.obj.betrayals': 'Láss {n} árulást',
+      'career.obj.betrayals_one': 'Láss {n} árulást',
+      'career.obj.crown': 'A győztes típusa: {a}',
+      'career.obj.long': 'Elérendő nap: {n}.',
+      'career.obj.quick': 'Befejezés legkésőbb: {n}. nap',
+      'career.obj.variety': 'Használj {n} különböző képességet',
+      'career.obj.category': 'Használj {n} különböző képességet ebből a típusból: {c}',
+      'career.obj.beasts': 'Fenevadak vagy darazsak {n} versenyzőt ölnek meg',
+      'career.obj.beasts_one': 'Fenevadak vagy darazsak {n} versenyzőt ölnek meg',
+      'career.obj.minimal': 'Legfeljebb {n} képességet használj',
+      'career.obj.favorite': 'A győztes közönségkedvenc ({n}%+)',
+      'career.obj.topkill': 'Egy versenyző {n} ölést szerez',
+
+      'career.hud.title': '{n}. epizód',
+      'career.hud.collapse': 'A megbízás megjelenítése vagy elrejtése',
+      'career.hud.done': 'Kész',
+      'career.hud.failed': 'Nem sikerült',
+
+      'career.res.title': 'Epizód jelentés',
+      'career.res.goals': 'Célok',
+      'career.res.credits': 'Kreditek',
+      'career.res.rep': 'Hírnév',
+      'career.res.total': 'Egyenleg: {n} kredit',
+      'career.res.levelup': 'Szintet léptél! Új szint: {n}.',
+      'career.res.unlocked': 'Feloldva: {list}',
+      'career.res.cast': 'Nagyobb szereplőgárda: legfeljebb {n} versenyző',
+      'career.res.trophy': 'Trófea: {name}',
+      'career.res.season': 'Az évad lezárult: {n} csillag és {b} kredit bónusz!',
+      'career.res.continue': 'Vissza a stúdióba',
+      'career.res.scale': 'Évadszorzó: ×{n}',
+
+      'career.studio.title': 'Stúdió fejlesztések',
+      'career.studio.hint': 'A fejlesztések csak a karrier epizódokban hatnak. Kreditet a nézettség, a célok és a trófeák adnak.',
+      'career.up.power': 'Energiahálózat',
+      'career.up.power.desc': 'Maximális energia: +10 szintenként.',
+      'career.up.regen': 'Rajongói bevonás',
+      'career.up.regen.desc': 'Az energia szintenként 10%-kal gyorsabban töltődik.',
+      'career.up.rigging': 'Gyors szerelés',
+      'career.up.rigging.desc': 'A képességek várakozási ideje szintenként 5%-kal rövidebb.',
+      'career.up.hype': 'Hype-gép',
+      'career.up.hype.desc': 'Az izgalmas pillanatok szintenként 6%-kal jobban emelik a nézettséget.',
+      'career.up.sponsors': 'Szponzorhálózat',
+      'career.up.sponsors.desc': 'Minden epizódot szintenként +10 energiával kezdesz.',
+      'career.up.writers': 'Forgatókönyvírók',
+      'career.up.writers.desc': 'Feloldja a segéd Showrunnert, aki közbelép, ha unatkozik a közönség.',
+      'career.up.level': 'Szint: {a} / {b}',
+      'career.up.max': 'Teljesen kifejlesztve',
+      'career.up.buy': 'Vásárlás · {n}',
+      'career.up.needLevel': '{n}. karrierszint kell hozzá',
+      'career.up.needCredits': 'Nincs elég kredit',
+      'career.up.bought': 'Fejlesztés megvéve',
+
+      'career.powers.title': 'Szintek és feloldások',
+      'career.powers.hint': 'A hírnév növeli a szintedet. A szabad játékban az összes képesség az elejétől elérhető.',
+      'career.powers.cast': 'Legfeljebb {n} versenyző',
+      'career.powers.now': 'Itt tartasz',
+
+      'career.tr.title': 'Trófeák',
+      'career.tr.earned': 'Megszerezve',
+      'career.tr.reward': '+{n} kredit',
+      'career.tr.debut': 'Pilot',
+      'career.tr.debut.desc': 'Fejezd be az első epizódodat.',
+      'career.tr.rating_a': 'Feltörekvő sztár',
+      'career.tr.rating_a.desc': 'Szerezz A vagy jobb értékelést.',
+      'career.tr.rating_s': 'Legenda',
+      'career.tr.rating_s.desc': 'Szerezz S értékelést.',
+      'career.tr.three_stars': 'Hibátlan megbízás',
+      'career.tr.three_stars.desc': 'Teljesítsd egy epizód mindhárom célját.',
+      'career.tr.season_done': 'Évadzáró',
+      'career.tr.season_done.desc': 'Fejezz be egy teljes évadot.',
+      'career.tr.viewers_30': 'Kasszasiker',
+      'career.tr.viewers_30.desc': 'Érj el 30 millió nézőt.',
+      'career.tr.betrayal_5': 'Fordulat',
+      'career.tr.betrayal_5.desc': 'Láss 5 árulást egyetlen Műsorban.',
+      'career.tr.kills_100': 'Áldozatok',
+      'career.tr.kills_100.desc': 'Nézd végig 100 versenyző bukását az epizódjaidban.',
+      'career.tr.underdog': 'Esélytelenek története',
+      'career.tr.underdog.desc': 'Nyerjen a megbízásban kijelölt típusú versenyző.',
+      'career.tr.upgrade_max': 'Teljes felszerelés',
+      'career.tr.upgrade_max.desc': 'Fejlessz ki egy stúdió fejlesztést a maximumig.',
+      'career.tr.level_5': 'Veterán',
+      'career.tr.level_5.desc': 'Érj el 5. karrierszintet.',
+      'career.tr.level_10': 'Médiamágnás',
+      'career.tr.level_10.desc': 'Érj el 10. karrierszintet.',
+
+      'career.prof.title': 'Profil',
+      'career.prof.stats': 'Összesített adatok',
+      'career.prof.shows': 'Karrier epizódok',
+      'career.prof.free': 'Szabad játék Műsorok',
+      'career.prof.viewers': 'Legtöbb néző',
+      'career.prof.score': 'Legjobb Műsor pontszám',
+      'career.prof.kills': 'Elesett versenyzők',
+      'career.prof.powers': 'Használt képességek',
+      'career.prof.stars': 'Szerzett csillagok',
+      'career.prof.grades': 'Értékelések',
+      'career.prof.history': 'Legutóbbi epizódok',
+      'career.prof.historyEmpty': 'Még nincs epizód.',
+      'career.prof.row': '{s}. évad · {e}. epizód',
+      'career.prof.backup': 'Mentés',
+      'career.prof.backup.text': 'A haladásod ebben a böngészőben van elmentve. Másold ki a mentőkódot, hogy biztonságban legyen, vagy átvidd másik eszközre.',
+      'career.prof.noStorage': 'Ez a böngésző nem engedi a mentést. Az oldal bezárásakor a haladásod elvész. Időnként másold ki a mentőkódot.',
+      'career.prof.export': 'Mentőkód megjelenítése',
+      'career.prof.copy': 'Másolás',
+      'career.prof.copied': 'Kimásolva!',
+      'career.prof.codePh': 'Illeszd be ide a mentőkódot',
+      'career.prof.import': 'Visszaállítás kódból',
+      'career.prof.imported': 'A haladás visszaállítva.',
+      'career.prof.err.empty': 'Előbb illessz be egy mentőkódot.',
+      'career.prof.err.format': 'Ez nem érvényes mentőkód.',
+      'career.prof.err.checksum': 'A kód sérült. Másold ki újra.',
+      'career.prof.err.version': 'Ez a kód a játék újabb verziójából való.',
+      'career.prof.reset': 'Karrier törlése',
+      'career.prof.resetSure': 'Kattints újra: minden haladás törlődik',
+      'career.prof.resetDone': 'A karrier törölve.',
+
+      'ui.pow.reason.locked': 'Zárolva. Ehhez {n}. karrierszint kell.',
+      'ui.toast.assistantLocked': 'A segédhez a Forgatókönyvírók fejlesztés kell.',
+      'ui.top.exitCareer': 'Kattints újra a kilépéshez. Ez az epizód nem számít!',
+
+      'career.adj.0': 'Arany', 'career.adj.1': 'Vérvörös', 'career.adj.2': 'Néma', 'career.adj.3': 'Lángoló',
+      'career.adj.4': 'Fagyott', 'career.adj.5': 'Üreges', 'career.adj.6': 'Vad', 'career.adj.7': 'Utolsó',
+      'career.adj.8': 'Megtört', 'career.adj.9': 'Elektromos', 'career.adj.10': 'Éjféli', 'career.adj.11': 'Kegyetlen',
+      'career.noun.0': 'Aratás', 'career.noun.1': 'Próba', 'career.noun.2': 'Napfogyatkozás', 'career.noun.3': 'Leszámolás',
+      'career.noun.4': 'Dagály', 'career.noun.5': 'Torony', 'career.noun.6': 'Mennydörgés', 'career.noun.7': 'Zuhatag',
+      'career.noun.8': 'Ítélet', 'career.noun.9': 'Karnevál', 'career.noun.10': 'Ostrom', 'career.noun.11': 'Hajnal',
+    },
+  });
+
+  // ================================================================ helpers
+  const t = function (k, p) { return GM.t(k, p); };
+  const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ESC[c]; }); }
+  function play(name) { try { if (GM.Audio && GM.Audio.play) GM.Audio.play(name); } catch (e) { /* optional */ } }
+  function num(v, d) { return GM.i18n.num(v, d); }
+
+  function h(tag, props, kids) {
+    const el = document.createElement(tag);
+    if (props) {
+      for (const k in props) {
+        const v = props[k];
+        if (v == null || v === false) continue;
+        if (k === 'class') el.className = v;
+        else if (k === 'text') el.textContent = v;
+        else if (k.slice(0, 2) === 'on' && typeof v === 'function') el.addEventListener(k.slice(2), v);
+        else el.setAttribute(k, v === true ? '' : v);
+      }
+    }
+    if (kids != null) {
+      const list = Array.isArray(kids) ? kids : [kids];
+      for (let i = 0; i < list.length; i++) {
+        const c = list[i];
+        if (c == null || c === false) continue;
+        el.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(String(c)) : c);
+      }
+    }
+    return el;
+  }
+
+  function titleText(title) {
+    return t('career.title.fmt', { adj: '@career.adj.' + title.a, noun: '@career.noun.' + title.n });
+  }
+  function objParams(type, p) {
+    if (type === 'crown') return { a: '@arch.' + p.a };
+    if (type === 'category') return { n: p.n, c: '@ui.pow.cat.' + p.c };
+    return p;
+  }
+  function objText(o) { return t('career.obj.' + o.type, objParams(o.type, o.params)); }
+  function rewardText(r, short) { return t(short ? 'career.reward.short' : 'career.reward', { c: r.credits, r: r.rep }); }
+  /** "12 / 20" style progress for the HUD. */
+  function progText(p) {
+    if (p.type === 'grade') return p.now + ' / ' + p.goal;
+    if (p.type === 'viewers') return num(p.now, 1) + 'M / ' + p.goal + 'M';
+    if (p.type === 'crown') return '';
+    if (p.type === 'long' || p.type === 'quick') return t('common.day', { n: p.now }) + ' / ' + p.goal;
+    if (p.type === 'favorite') return p.now == null ? '' : p.now + '% / ' + p.goal + '%';
+    return p.now + ' / ' + p.goal;
+  }
+  function powerInfo(id) {
+    const P = GM.Powers;
+    const d = P && typeof P.def === 'function' ? P.def(id) : null;
+    return { icon: (d && d.icon) || '◆', name: t('power.' + id) };
+  }
+  function starsText(n, max) {
+    let s = '';
+    for (let i = 0; i < (max || 3); i++) s += i < n ? '★' : '☆';
+    return s;
+  }
+  function gradeEl(g) { return h('span', { class: 'cr-grade g-' + g }, [g]); }
+
+  // =================================================================== state
+  const ui = {
+    built: false,
+    tab: 'season',
+    hubShown: false,
+    previewSeed: -1,
+    previewTimer: 0,
+    thumbVer: -1,
+    thumbSeed: -1,
+    hudCollapsed: false,
+    hudSig: '',
+    hudAcc: 0,
+    resetArmedUntil: 0,
+    backupOpen: false,
+    importMsg: null,         // { ok, text }
+    copiedUntil: 0,
+    toastUntil: 0,
+  };
+  const dom = {};
+  const now = function () { return GM.state.realTime || 0; };
+
+  // ================================================================== hub
+  const TABS = ['season', 'studio', 'powers', 'trophies', 'profile'];
+
+  function buildHub(root) {
+    dom.hub = h('section', { class: 'cr-hub', id: 'career-hub', hidden: true, 'aria-label': 'Career' });
+    const sheet = h('div', { class: 'cr-sheet' });
+
+    // ---- header
+    dom.crBrand = h('div', { class: 'cr-brand' }, [h('span', { class: 'cr-brand-ico', 'aria-hidden': 'true' }, ['⬢']), h('span', { class: 'cr-brand-name' })]);
+    dom.crLang = h('div', { class: 'seg seg-lang', role: 'group' });
+    ['en', 'hu'].forEach(function (l) {
+      dom.crLang.appendChild(h('button', { type: 'button', class: 'seg-btn', 'data-lang': l, onclick: function () { GM.i18n.setLang(l); } }));
+    });
+    dom.crFree = h('button', { type: 'button', class: 'btn btn-ghost cr-free', onclick: function () { play('click'); C.setMode('freeplay'); } });
+    dom.crLevel = h('div', { class: 'cr-level' }, [
+      h('span', { class: 'cr-lv-badge mono' }),
+      h('span', { class: 'cr-lv-body' }, [h('span', { class: 'cr-lv-lbl' }), h('span', { class: 'cr-lv-bar' }, [h('i')])]),
+    ]);
+    dom.crCredits = h('div', { class: 'cr-credits' }, [h('span', { class: 'cr-cr-ico', 'aria-hidden': 'true' }, ['ⓒ']), h('span', { class: 'cr-cr-body' }, [h('span', { class: 'cr-cr-lbl' }), h('span', { class: 'cr-cr-val mono' })])]);
+    dom.crTabs = h('nav', { class: 'cr-tabs', role: 'tablist' });
+    TABS.forEach(function (id) {
+      dom.crTabs.appendChild(h('button', {
+        type: 'button', class: 'cr-tab', role: 'tab', 'data-tab': id,
+        onclick: function () { if (ui.tab !== id) { ui.tab = id; play('click'); renderHub(); } },
+      }));
+    });
+    sheet.appendChild(h('header', { class: 'cr-head' }, [
+      h('div', { class: 'cr-head-top' }, [dom.crBrand, h('span', { class: 'cr-spacer' }), dom.crLevel, dom.crCredits, dom.crLang, dom.crFree]),
+      dom.crTabs,
+    ]));
+
+    dom.crBody = h('div', { class: 'cr-body' });
+    sheet.appendChild(dom.crBody);
+
+    // ---- footer: the big start button (season tab)
+    dom.crStart = h('button', { type: 'button', class: 'start-btn cr-start', onclick: startEpisode }, [
+      h('span', { class: 'start-glow', 'aria-hidden': 'true' }),
+      h('span', { class: 'start-label' }),
+      h('span', { class: 'start-sub mono' }),
+    ]);
+    dom.crFoot = h('footer', { class: 'cr-foot' }, [dom.crStart]);
+    sheet.appendChild(dom.crFoot);
+    dom.hub.appendChild(sheet);
+    root.appendChild(dom.hub);
+  }
+
+  function startEpisode() {
+    if (dom.crStart.classList.contains('busy') || dom.crStart.disabled) return;
+    play('click');
+    C.startEpisode();
+  }
+
+  function setText(el, s) { if (el && el.textContent !== s) el.textContent = s; }
+
+  /** Header: translated labels, level, credits, tabs. */
+  function renderHead() {
+    setText(dom.crBrand.lastChild, t('app.title'));
+    setText(dom.crFree, t('career.mode.free'));
+    const lang = GM.i18n.lang;
+    Array.prototype.forEach.call(dom.crLang.children, function (b) {
+      const l = b.getAttribute('data-lang');
+      setText(b, t('lang.' + l));
+      b.classList.toggle('on', l === lang);
+      b.setAttribute('aria-pressed', l === lang ? 'true' : 'false');
+    });
+    Array.prototype.forEach.call(dom.crTabs.children, function (b) {
+      const id = b.getAttribute('data-tab');
+      setText(b, t('career.tab.' + id));
+      b.classList.toggle('on', id === ui.tab);
+      b.setAttribute('aria-selected', id === ui.tab ? 'true' : 'false');
+    });
+    const started = C.data.started;
+    dom.crLevel.hidden = !started;
+    dom.crCredits.hidden = !started;
+    dom.crTabs.hidden = !started;
+    if (started) {
+      const lp = C.levelProgress();
+      setText(dom.crLevel.firstChild, 'L' + lp.level);
+      setText(dom.crLevel.querySelector('.cr-lv-lbl'), lp.max ? t('career.level', { n: lp.level }) + ' · ' + t('career.rep') + ' ' + num(C.rep()) : t('career.level', { n: lp.level }) + ' · ' + num(lp.cur) + ' / ' + num(lp.next));
+      dom.crLevel.querySelector('.cr-lv-bar i').style.width = Math.round(lp.frac * 100) + '%';
+      setText(dom.crCredits.querySelector('.cr-cr-lbl'), t('career.credits'));
+      setText(dom.crCredits.querySelector('.cr-cr-val'), num(C.credits()));
+    }
+  }
+
+  function renderHub() {
+    renderHead();
+    dom.crBody.textContent = '';
+    dom.crFoot.hidden = true;
+    if (!C.data.started) { renderWelcome(); return; }
+    if (ui.tab === 'season') renderSeason();
+    else if (ui.tab === 'studio') renderStudio();
+    else if (ui.tab === 'powers') renderPowers();
+    else if (ui.tab === 'trophies') renderTrophies();
+    else renderProfile();
+    dom.crBody.scrollTop = 0;
+  }
+
+  // ---------------------------------------------------------------- welcome
+  function renderWelcome() {
+    dom.crBody.appendChild(h('div', { class: 'cr-welcome' }, [
+      h('div', { class: 'setup-kicker' }, [h('span', { text: t('career.welcome.kicker') }), h('span', { class: 'kicker-rule' })]),
+      h('h2', { class: 'cr-w-title', text: t('career.welcome.title') }),
+      h('p', { class: 'cr-w-text', text: t('career.welcome.text') }),
+      h('div', { class: 'cr-w-actions' }, [
+        h('button', { type: 'button', class: 'start-btn', onclick: function () { play('click'); C.begin(); ui.tab = 'season'; } }, [
+          h('span', { class: 'start-glow', 'aria-hidden': 'true' }), h('span', { class: 'start-label', text: t('career.welcome.start') }),
+        ]),
+        h('button', { type: 'button', class: 'btn btn-ghost', onclick: function () { play('click'); C.setMode('freeplay'); }, text: t('career.welcome.free') }),
+      ]),
+      h('p', { class: 'hint', text: t('career.welcome.tip') }),
+    ]));
+  }
+
+  // ------------------------------------------------------------------ season
+  function objRow(o, opts) {
+    opts = opts || {};
+    return h('li', { class: 'cr-obj' + (o.primary ? ' primary' : '') + (opts.cls ? ' ' + opts.cls : '') }, [
+      h('span', { class: 'cr-obj-mark', 'aria-hidden': 'true' }, [o.primary ? '★' : '◆']),
+      h('span', { class: 'cr-obj-body' }, [
+        h('span', { class: 'cr-obj-kind mono', text: t(o.primary ? 'career.brief.primary' : 'career.brief.bonus') }),
+        h('span', { class: 'cr-obj-text', text: objText(o) }),
+      ]),
+      h('span', { class: 'cr-obj-rew mono', text: rewardText(o.reward, true) }),
+    ]);
+  }
+
+  function renderSeason() {
+    const d = C.data;
+    const sea = d.seasons[d.season] || { eps: {}, stars: 0 };
+    const grid = h('div', { class: 'cr-season' });
+
+    // timeline
+    const list = h('ol', { class: 'cr-eps' });
+    for (let ep = 1; ep <= C.EPISODES; ep++) {
+      const rec = sea.eps[ep];
+      const current = !d.seasonDone && ep === d.episode;
+      const title = titleText(C.titleFor(d.season, ep));
+      const row = h('li', { class: 'cr-ep' + (rec ? ' done' : current ? ' current' : ' locked') }, [
+        h('span', { class: 'cr-ep-n mono', text: String(ep) }),
+        h('span', { class: 'cr-ep-body' }, [
+          h('span', { class: 'cr-ep-title', text: rec || current ? title : t('career.ep.locked') }),
+          h('span', { class: 'cr-ep-sub mono', text: rec ? t('career.ep', { n: ep }) + ' · ' + num(rec.viewers / 1e6, 1) + 'M' : current ? t('career.ep.next') : t('career.ep', { n: ep }) }),
+        ]),
+        rec ? h('span', { class: 'cr-ep-res' }, [gradeEl(rec.grade), h('span', { class: 'cr-ep-stars', text: starsText(rec.stars) })]) : null,
+      ]);
+      list.appendChild(row);
+    }
+    grid.appendChild(h('section', { class: 'card cr-card' }, [
+      h('div', { class: 'card-title-row' }, [
+        h('h2', { class: 'card-title' }, [h('span', { text: t('career.season.title', { n: d.season }) })]),
+        h('span', { class: 'summary mono', text: t('career.season.stars', { n: sea.stars, max: C.EPISODES * 3 }) }),
+      ]),
+      list,
+    ]));
+
+    // right: brief or season summary
+    if (d.seasonDone) {
+      grid.appendChild(h('section', { class: 'card cr-card cr-done' }, [
+        h('div', { class: 'cr-done-ico', 'aria-hidden': 'true' }, ['📺']),
+        h('h2', { class: 'cr-done-title', text: t('career.seasonDone.title') }),
+        h('div', { class: 'cr-done-stars mono', text: starsText(Math.round(sea.stars / C.EPISODES), 3) + '  ' + t('career.season.stars', { n: sea.stars, max: C.EPISODES * 3 }) }),
+        h('p', { class: 'cr-w-text', text: t('career.seasonDone.text', { n: sea.stars }) }),
+        h('button', { type: 'button', class: 'start-btn', onclick: function () { play('click'); C.nextSeason(); renderHub(); } }, [
+          h('span', { class: 'start-glow', 'aria-hidden': 'true' }), h('span', { class: 'start-label', text: t('career.seasonDone.next', { n: d.season + 1 }) }),
+        ]),
+      ]));
+      dom.crFoot.hidden = true;
+    } else {
+      const b = C.brief();
+      if (b) {
+        const thumb = h('canvas', { class: 'cr-thumb', width: 160, height: 160, 'aria-hidden': 'true' });
+        dom.crThumb = thumb;
+        ui.thumbVer = -1;
+        const objs = h('ul', { class: 'cr-objs' });
+        b.objectives.forEach(function (o) { objs.appendChild(objRow(o)); });
+        let tc = 0, tr = 0;
+        b.objectives.forEach(function (o) { tc += o.reward.credits; tr += o.reward.rep; });
+        const scale = 1 + 0.12 * (b.season - 1);
+        grid.appendChild(h('section', { class: 'card cr-card cr-brief-card' }, [
+          h('div', { class: 'cr-kick mono', text: t('career.brief.kicker') + ' · ' + t('career.ep', { n: b.episode }) }),
+          h('h2', { class: 'cr-b-title', text: titleText(b.title) }),
+          h('div', { class: 'cr-b-meta' }, [
+            thumb,
+            h('div', { class: 'cr-chips' }, [
+              h('span', { class: 'cr-chip', text: '👥 ' + t('career.brief.cast', { n: b.count }) }),
+              h('span', { class: 'cr-chip', text: '🎭 ' + t('setup.mix.' + b.mix) }),
+              h('span', { class: 'cr-chip mono', text: '🗺️ ' + t('career.brief.arena', { n: b.seed }) }),
+            ]),
+          ]),
+          objs,
+          h('div', { class: 'cr-b-total mono', text: t('career.brief.rewards') + ': ' + rewardText({ credits: Math.round(tc * scale), rep: Math.round(tr * scale) }) }),
+        ]));
+        dom.crFoot.hidden = false;
+        setText(dom.crStart.querySelector('.start-label'), t('career.brief.start'));
+        setText(dom.crStart.querySelector('.start-sub'), t('career.brief.startSub', { n: b.episode, title: titleText(b.title) }));
+        schedulePreview(b.seed);
+      } else {
+        grid.appendChild(h('section', { class: 'card cr-card' }, [h('p', { class: 'hint', text: t('career.noBrief') })]));
+      }
+    }
+    dom.crBody.appendChild(grid);
+  }
+
+  /** Show the episode's arena behind the hub (deferred so the click paints first). */
+  function schedulePreview(seed) {
+    if (ui.previewSeed === seed && (GM.state.seed >>> 0) === seed) return;
+    clearTimeout(ui.previewTimer);
+    ui.previewTimer = setTimeout(function () {
+      if (GM.state.phase !== 'setup' || C.mode() !== 'career') return;
+      ui.previewSeed = seed;
+      if ((GM.state.seed >>> 0) !== seed && GM.Game && GM.Game.previewArena) {
+        try { GM.Game.previewArena(seed); } catch (e) { GM.reportError('CareerUI.preview', e); }
+      }
+    }, 60);
+  }
+
+  /** Arena thumbnail from the minimap terrain image. */
+  function drawThumb() {
+    const cv = dom.crThumb;
+    const M = GM.Minimap;
+    if (!cv || !cv.isConnected || !M || typeof M.terrainImage !== 'function') return;
+    const b = C.data.brief;
+    if (!b || (GM.state.seed >>> 0) !== b.seed) return;
+    const ver = M.version || 0;
+    if (ui.thumbVer === ver && ui.thumbSeed === b.seed) return;
+    const img = M.terrainImage();
+    if (!img) return;
+    ui.thumbVer = ver;
+    ui.thumbSeed = b.seed;
+    const size = cv.width;
+    const g = cv.getContext('2d');
+    if (!g) return;
+    g.clearRect(0, 0, size, size);
+    g.save();
+    g.beginPath();
+    g.arc(size / 2, size / 2, size / 2 - 1, 0, Math.PI * 2);
+    g.clip();
+    g.drawImage(img, 0, 0, size, size);
+    const k = size / ((M.viewHalf || GM.CFG.MAP_SIZE / 2) * 2);
+    g.strokeStyle = 'rgba(120,220,255,0.85)';
+    g.lineWidth = 1.4;
+    g.beginPath();
+    g.arc(size / 2, size / 2, GM.CFG.ARENA_RADIUS * k, 0, Math.PI * 2);
+    g.stroke();
+    g.fillStyle = '#f2c14e';
+    g.beginPath();
+    g.arc(size / 2, size / 2, 3, 0, Math.PI * 2);
+    g.fill();
+    g.restore();
+  }
+
+  // ------------------------------------------------------------------ studio
+  function pips(level, max) {
+    const el = h('span', { class: 'cr-pips', 'aria-hidden': 'true' });
+    for (let i = 0; i < max; i++) el.appendChild(h('i', { class: i < level ? 'on' : '' }));
+    return el;
+  }
+  function renderStudio() {
+    const grid = h('div', { class: 'cr-ups' });
+    C.UPGRADES.forEach(function (u) {
+      const lv = C.upgradeLevel(u.id);
+      const can = C.canBuy(u.id);
+      let btnText, disabled = !can.ok;
+      if (can.reason === 'max') btnText = t('career.up.max');
+      else if (can.reason === 'level') btnText = t('career.up.needLevel', { n: u.minLevel });
+      else if (can.reason === 'credits') btnText = t('career.up.buy', { n: can.cost });
+      else btnText = t('career.up.buy', { n: can.cost });
+      const btn = h('button', {
+        type: 'button', class: 'btn cr-buy' + (can.ok ? ' ready' : '') + (can.reason === 'max' ? ' maxed' : ''),
+        disabled: disabled ? true : null,
+        title: can.reason === 'credits' ? t('career.up.needCredits') : null,
+        onclick: function () { if (C.buy(u.id)) { play('click'); flashToast(t('career.up.bought')); } },
+        text: btnText,
+      });
+      grid.appendChild(h('article', { class: 'card cr-card cr-up' + (lv > 0 ? ' owned' : '') }, [
+        h('div', { class: 'cr-up-top' }, [
+          h('span', { class: 'cr-up-ico', 'aria-hidden': 'true' }, [u.icon]),
+          h('span', { class: 'cr-up-name', text: t('career.up.' + u.id) }),
+          h('span', { class: 'cr-up-lv mono', text: t('career.up.level', { a: lv, b: u.max }) }),
+        ]),
+        h('p', { class: 'cr-up-desc', text: t('career.up.' + u.id + '.desc') }),
+        h('div', { class: 'cr-up-foot' }, [pips(lv, u.max), btn]),
+      ]));
+    });
+    dom.crBody.appendChild(h('div', { class: 'cr-pane' }, [
+      h('div', { class: 'card-title-row' }, [h('h2', { class: 'card-title', text: t('career.studio.title') }), h('span', { class: 'summary mono', text: t('career.credits') + ': ' + num(C.credits()) })]),
+      h('p', { class: 'hint', text: t('career.studio.hint') }),
+      grid,
+    ]));
+  }
+
+  // ------------------------------------------------------------------ powers
+  function renderPowers() {
+    const lvNow = C.level();
+    const list = h('ol', { class: 'cr-ladder' });
+    for (let lv = 1; lv <= C.MAX_LEVEL; lv++) {
+      const ids = Object.keys(C.POWERS).filter(function (id) { return C.POWERS[id].lv === lv; });
+      const reached = lv <= lvNow;
+      const kids = ids.map(function (id) {
+        const info = powerInfo(id);
+        return h('span', { class: 'cr-pw cat-' + C.POWERS[id].cat, title: info.name }, [h('span', { class: 'cr-pw-ico', 'aria-hidden': 'true' }, [info.icon]), h('span', { text: info.name })]);
+      });
+      list.appendChild(h('li', { class: 'cr-lv' + (reached ? ' reached' : '') + (lv === lvNow ? ' now' : '') }, [
+        h('span', { class: 'cr-lv-n mono', text: String(lv) }),
+        h('span', { class: 'cr-lv-body' }, [
+          h('span', { class: 'cr-lv-pws' }, kids),
+          h('span', { class: 'cr-lv-cast mono', text: t('career.powers.cast', { n: C.castCap(lv) }) }),
+        ]),
+        lv === lvNow ? h('span', { class: 'cr-lv-here mono', text: t('career.powers.now') }) : null,
+      ]));
+    }
+    dom.crBody.appendChild(h('div', { class: 'cr-pane' }, [
+      h('div', { class: 'card-title-row' }, [h('h2', { class: 'card-title', text: t('career.powers.title') })]),
+      h('p', { class: 'hint', text: t('career.powers.hint') }),
+      list,
+    ]));
+  }
+
+  // ---------------------------------------------------------------- trophies
+  function renderTrophies() {
+    const grid = h('div', { class: 'cr-trs' });
+    let got = 0;
+    C.TROPHIES.forEach(function (tr) {
+      const ts = C.data.trophies[tr.id];
+      if (ts) got++;
+      grid.appendChild(h('article', { class: 'cr-tr' + (ts ? ' got' : '') }, [
+        h('span', { class: 'cr-tr-ico', 'aria-hidden': 'true' }, [tr.icon]),
+        h('span', { class: 'cr-tr-body' }, [
+          h('span', { class: 'cr-tr-name', text: t('career.tr.' + tr.id) }),
+          h('span', { class: 'cr-tr-desc', text: t('career.tr.' + tr.id + '.desc') }),
+        ]),
+        h('span', { class: 'cr-tr-rew mono', text: ts ? t('career.tr.earned') : t('career.tr.reward', { n: tr.reward }) }),
+      ]));
+    });
+    dom.crBody.appendChild(h('div', { class: 'cr-pane' }, [
+      h('div', { class: 'card-title-row' }, [h('h2', { class: 'card-title', text: t('career.tr.title') }), h('span', { class: 'summary mono', text: got + ' / ' + C.TROPHIES.length })]),
+      grid,
+    ]));
+  }
+
+  // ----------------------------------------------------------------- profile
+  function renderProfile() {
+    const s = C.data.stats;
+    const stat = function (lbl, val) {
+      return h('div', { class: 'vs' }, [h('span', { class: 'vs-l', text: lbl }), h('span', { class: 'vs-v mono', text: val })]);
+    };
+    const grades = h('div', { class: 'cr-grades' });
+    ['S', 'A', 'B', 'C', 'D'].forEach(function (g) {
+      grades.appendChild(h('span', { class: 'cr-gcount' }, [gradeEl(g), h('span', { class: 'mono', text: '×' + (s.grades[g] || 0) })]));
+    });
+    const stats = h('section', { class: 'card cr-card' }, [
+      h('h2', { class: 'card-title', text: t('career.prof.stats') }),
+      h('div', { class: 'v-stats' }, [
+        stat(t('career.prof.shows'), num(s.shows)),
+        stat(t('career.prof.free'), num(s.freeShows)),
+        stat(t('career.prof.viewers'), s.bestViewers ? GM.i18n.compact(s.bestViewers) : '—'),
+        stat(t('career.prof.score'), s.bestScore ? num(s.bestScore, 1) : '—'),
+        stat(t('career.prof.kills'), num(s.kills)),
+        stat(t('career.prof.powers'), num(s.powers)),
+        stat(t('career.prof.stars'), num(s.stars)),
+      ]),
+      h('div', { class: 'vs-l cr-gap', text: t('career.prof.grades') }),
+      grades,
+    ]);
+
+    const hist = h('ul', { class: 'cr-hist' });
+    const rows = C.data.history.slice(-8).reverse();
+    if (!rows.length) hist.appendChild(h('li', { class: 'hint', text: t('career.prof.historyEmpty') }));
+    rows.forEach(function (r) {
+      hist.appendChild(h('li', { class: 'cr-hrow' }, [
+        gradeEl(r.grade),
+        h('span', { class: 'cr-hrow-t', text: titleText(C.titleFor(r.season, r.episode)) }),
+        h('span', { class: 'cr-hrow-s mono', text: t('career.prof.row', { s: r.season, e: r.episode }) + ' · ' + GM.i18n.compact(r.viewers) }),
+      ]));
+    });
+    const history = h('section', { class: 'card cr-card' }, [h('h2', { class: 'card-title', text: t('career.prof.history') }), hist]);
+
+    // backup
+    const code = h('textarea', { class: 'inp cr-code mono', rows: 3, spellcheck: 'false', autocomplete: 'off', placeholder: t('career.prof.codePh') });
+    const msg = h('div', { class: 'cr-msg', 'aria-live': 'polite' });
+    const showMsg = function (ok, text) { msg.className = 'cr-msg ' + (ok ? 'ok' : 'bad'); msg.textContent = text; };
+    if (ui.importMsg) showMsg(ui.importMsg.ok, ui.importMsg.text);
+    const exportBtn = h('button', { type: 'button', class: 'btn btn-ghost', text: t('career.prof.export'), onclick: function () {
+      code.value = GM.Save.exportCode();
+      code.focus();
+      code.select();
+      ui.importMsg = null;
+      msg.textContent = '';
+    } });
+    const copyBtn = h('button', { type: 'button', class: 'btn btn-ghost', text: t('career.prof.copy'), onclick: function () {
+      if (!code.value) code.value = GM.Save.exportCode();
+      code.select();
+      let ok = false;
+      try { ok = document.execCommand && document.execCommand('copy'); } catch (e) { ok = false; }
+      if (!ok && navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(code.value).catch(function () {}); ok = true; }
+      if (ok) showMsg(true, t('career.prof.copied'));
+    } });
+    const importBtn = h('button', { type: 'button', class: 'btn', text: t('career.prof.import'), onclick: function () {
+      const r = GM.Save.importCode(code.value);
+      ui.importMsg = r.ok ? { ok: true, text: t('career.prof.imported') } : { ok: false, text: t('career.prof.err.' + r.error) };
+      if (r.ok) { play('click'); renderHub(); } else showMsg(false, ui.importMsg.text);
+    } });
+    const resetBtn = h('button', { type: 'button', class: 'btn btn-danger cr-reset', text: now() < ui.resetArmedUntil ? t('career.prof.resetSure') : t('career.prof.reset'), onclick: function () {
+      if (now() < ui.resetArmedUntil) {
+        ui.resetArmedUntil = 0;
+        C.reset();
+        ui.importMsg = { ok: true, text: t('career.prof.resetDone') };
+        ui.tab = 'season';
+        renderHub();
+      } else {
+        ui.resetArmedUntil = now() + 4;
+        resetBtn.textContent = t('career.prof.resetSure');
+      }
+    } });
+    const backup = h('section', { class: 'card cr-card cr-backup' }, [
+      h('h2', { class: 'card-title', text: t('career.prof.backup') }),
+      GM.Save.persistent() ? null : h('p', { class: 'warn', text: t('career.prof.noStorage') }),
+      h('p', { class: 'hint', text: t('career.prof.backup.text') }),
+      code,
+      h('div', { class: 'cr-backup-btns' }, [exportBtn, copyBtn, importBtn, h('span', { class: 'cr-spacer' }), resetBtn]),
+      msg,
+    ]);
+    dom.crBody.appendChild(h('div', { class: 'cr-profile' }, [stats, history, backup]));
+  }
+
+  function flashToast(text) {
+    if (!dom.crToast) return;
+    dom.crToast.textContent = text;
+    dom.crToast.classList.add('on');
+    ui.toastUntil = now() + 1.8;
+  }
+
+  // =============================================================== brief HUD
+  function buildHud() {
+    const vp = document.getElementById('viewport');
+    if (!vp) return;
+    dom.hud = h('aside', { class: 'cr-brief', hidden: true, 'aria-live': 'polite' });
+    dom.hudHead = h('button', { type: 'button', class: 'cr-brief-head', onclick: function () { ui.hudCollapsed = !ui.hudCollapsed; dom.hud.classList.toggle('min', ui.hudCollapsed); } });
+    dom.hudHead.setAttribute('data-tip', 'career.hud.collapse');
+    dom.hudList = h('ul', { class: 'cr-brief-list' });
+    dom.hud.appendChild(dom.hudHead);
+    dom.hud.appendChild(dom.hudList);
+    vp.appendChild(dom.hud);
+  }
+
+  function hudRender(prog, brief) {
+    dom.hudHead.textContent = '';
+    dom.hudHead.appendChild(h('span', { class: 'cr-brief-ep mono', text: t('career.hud.title', { n: brief.episode }) }));
+    dom.hudHead.appendChild(h('span', { class: 'cr-brief-name', text: titleText(brief.title) }));
+    dom.hudHead.appendChild(h('span', { class: 'cr-brief-chev', 'aria-hidden': 'true' }, ['▾']));
+    dom.hudList.textContent = '';
+    prog.forEach(function (p) {
+      const state = p.locked ? (p.done ? 'ok' : 'bad') : p.done ? 'on-track' : 'pending';
+      const o = { type: p.type, params: p.params };
+      dom.hudList.appendChild(h('li', { class: 'cr-bo ' + state + (p.primary ? ' primary' : '') }, [
+        h('span', { class: 'cr-bo-mark', 'aria-hidden': 'true' }, [state === 'ok' ? '✔' : state === 'bad' ? '✖' : state === 'on-track' ? '◉' : '○']),
+        h('span', { class: 'cr-bo-text', text: objText(o) }),
+        h('span', { class: 'cr-bo-prog mono', text: progText(p) }),
+      ]));
+    });
+  }
+
+  function hudTick(dt) {
+    if (!dom.hud) return;
+    const st = GM.state;
+    const on = C.active() && (st.phase === 'countdown' || st.phase === 'running' || st.phase === 'ended');
+    if (dom.hud.hidden === on) dom.hud.hidden = !on;
+    if (!on) { ui.hudSig = ''; return; }
+    ui.hudAcc += dt;
+    if (ui.hudAcc < 0.25 && ui.hudSig) return;
+    ui.hudAcc = 0;
+    const brief = C.data.brief || (C.results() && C.results().brief);
+    const prog = C.progress();
+    if (!brief || !prog.length) return;
+    const sig = GM.i18n.lang + '|' + prog.map(function (p) { return (p.locked ? 'L' : '') + (p.done ? 1 : 0) + ':' + p.now; }).join('|');
+    // (the final verdicts differ from live estimates; the signature includes `locked`/`done`, so they repaint)
+    if (sig === ui.hudSig) return;
+    ui.hudSig = sig;
+    hudRender(prog, brief);
+  }
+
+  // ============================================================ results block
+  function resultsHtml(res) {
+    const goals = res.objectives.map(function (o) {
+      return '<li class="cr-ro ' + (o.done ? 'ok' : 'bad') + '"><span class="cr-ro-mark">' + (o.done ? '✔' : '✖') + '</span>' +
+        '<span class="cr-ro-text">' + esc(objText(o)) + '</span>' +
+        '<span class="cr-ro-rew mono">' + (o.done ? esc(rewardText(o.reward, true)) : '') + '</span></li>';
+    }).join('');
+    let extra = '';
+    if (res.levelAfter > res.levelBefore) {
+      extra += '<div class="cr-note up">🎉 ' + esc(t('career.res.levelup', { n: res.levelAfter })) + '</div>';
+      if (res.unlocked.length) {
+        extra += '<div class="cr-note">' + esc(t('career.res.unlocked', { list: res.unlocked.map(function (id) { const i = powerInfo(id); return i.icon + ' ' + i.name; }).join(', ') })) + '</div>';
+      }
+      extra += '<div class="cr-note">' + esc(t('career.res.cast', { n: res.castCap })) + '</div>';
+    }
+    res.trophies.forEach(function (id) {
+      const tr = C.TROPHIES.filter(function (x) { return x.id === id; })[0];
+      extra += '<div class="cr-note trophy">' + esc((tr ? tr.icon : '🏆') + ' ' + t('career.res.trophy', { name: t('career.tr.' + id) })) + '</div>';
+    });
+    if (res.season && res.season.done) {
+      extra += '<div class="cr-note season">📺 ' + esc(t('career.res.season', { n: res.season.stars, b: res.season.bonus })) + '</div>';
+    }
+    return '<div class="cr-res">' +
+      '<div class="cr-res-head"><span class="cr-res-kick mono">' + esc(t('career.res.title')) + ' · ' + esc(titleText(res.brief.title)) + '</span>' +
+      '<span class="cr-stars" aria-label="' + res.stars + '/3">' + starsText(res.stars) + '</span></div>' +
+      '<div class="cr-res-grid">' +
+      '<div class="cr-res-goals"><div class="vs-l">' + esc(t('career.res.goals')) + '</div><ul class="cr-ros">' + goals + '</ul></div>' +
+      '<div class="cr-res-pay">' +
+      '<div class="cr-pay"><span class="vs-l">' + esc(t('career.res.credits')) + '</span><b class="mono">+' + esc(num(res.credits)) + '</b></div>' +
+      '<div class="cr-pay"><span class="vs-l">' + esc(t('career.res.rep')) + '</span><b class="mono">+' + esc(num(res.rep)) + '</b></div>' +
+      (res.scale > 1 ? '<div class="cr-scale mono">' + esc(t('career.res.scale', { n: num(res.scale, 2) })) + '</div>' : '') +
+      '<div class="cr-bal mono">' + esc(t('career.res.total', { n: num(res.creditsTotal) })) + '</div>' +
+      '</div></div>' + extra + '</div>';
+  }
+
+  function injectResults(e) {
+    const res = C.results();
+    if (!C.active() || !res || !e || !e.root) return;
+    const card = e.root.querySelector('.victory-card');
+    if (!card) return;
+    const actions = card.querySelector('.v-actions');
+    const wrap = document.createElement('div');
+    wrap.innerHTML = resultsHtml(res);
+    if (actions) card.insertBefore(wrap.firstChild, actions);
+    else card.appendChild(wrap.firstChild);
+    const lbl = card.querySelector('.v-new .start-label');
+    if (lbl) lbl.textContent = t('career.res.continue');
+  }
+
+  // ============================================================ mode switch
+  function buildSwitch() {
+    const kicker = document.querySelector('#setup .setup-kicker');
+    if (!kicker) return;
+    dom.swBtn = h('button', { type: 'button', class: 'btn btn-ghost cr-sw', onclick: function () { play('click'); C.setMode('career'); } });
+    kicker.appendChild(dom.swBtn);
+  }
+
+  // ============================================================== visibility
+  function applyVisibility() {
+    const st = GM.state;
+    const setupEl = document.getElementById('setup');
+    const inSetup = st.phase === 'setup';
+    const showHub = inSetup && C.mode() === 'career';
+    if (dom.hub.hidden === showHub) {
+      dom.hub.hidden = !showHub;
+      if (showHub) { ui.previewSeed = -1; renderHub(); }
+    }
+    if (setupEl) {
+      const wantSetup = inSetup && !showHub;
+      if (setupEl.hidden === wantSetup) setupEl.hidden = !wantSetup;
+    }
+    if (dom.swBtn) setText(dom.swBtn, '▶ ' + t('career.mode.career'));
+  }
+
+  function refreshAll() {
+    if (!ui.built) return;
+    if (dom.hub && !dom.hub.hidden) renderHub();
+    ui.hudSig = '';
+  }
+
+  GM.registerSystem({
+    name: 'CareerUI',
+    order: 111,
+    init() {
+      const root = document.getElementById('ui-root');
+      if (!root) return;
+      buildHub(root);
+      dom.crToast = h('div', { class: 'cr-toast', role: 'status' });
+      dom.hub.appendChild(dom.crToast);
+      buildHud();
+      buildSwitch();
+      ui.built = true;
+      GM.on('lang:changed', refreshAll);
+      GM.on('career:changed', function () { applyVisibility(); refreshAll(); });
+      GM.on('save:imported', refreshAll);
+      GM.on('save:reset', refreshAll);
+      GM.on('save:external', refreshAll);
+      GM.on('ui:victory', injectResults);
+      // after the UI module has shown its own setup sheet: pick the right screen at once (no flash)
+      GM.on('game:setup', function () { ui.previewSeed = -1; ui.hudSig = ''; applyVisibility(); refreshAll(); });
+    },
+    frame(dt) {
+      if (!ui.built) return;
+      applyVisibility();
+      if (!dom.hub.hidden) {
+        if (ui.tab === 'season') drawThumb();
+        if (ui.toastUntil && now() > ui.toastUntil) { ui.toastUntil = 0; dom.crToast.classList.remove('on'); }
+      }
+      hudTick(dt);
+    },
   });
 })();
 
