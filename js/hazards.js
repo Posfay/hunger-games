@@ -15,7 +15,7 @@
  *   GM.Hazards.zone / shrinkZone(center, radius, seconds) / isInsideZone(x, z) / previewZone(p, r)
  *
  * Sudden death: from dawn of day 4 (>= 2 alive) the zone closes to r 35 over ~1.5 days.
- * Owner: GAMEMAKER.
+ * Owner: SHOWRUNNER.
  * ========================================================================== */
 (function () {
   'use strict';
@@ -56,7 +56,7 @@
       'log.hazard.quakeHit': 'The earthquake threw {name} to the ground.',
       'log.hazard.outsideZone': '{name} is outside the force field and is getting hurt.',
       'log.hazard.zoneDone': 'The force field stopped moving.',
-      'log.hazard.suddenDeath': 'Sudden death: the force field closes around the last tributes.',
+      'log.hazard.suddenDeath': 'Sudden death: the force field closes around the last contestants.',
       'log.hazard.floodEnd': 'The flood is over. The water goes down.',
       'log.hazard.fireOut': 'The big fire has burned out.',
       'ann.gm.suddenDeath': 'Sudden death! The force field is closing.',
@@ -91,7 +91,7 @@
       'log.hazard.quakeHit': 'A földrengés a földre döntötte: {name}.',
       'log.hazard.outsideZone': 'Az erőtéren kívül van, és sérül: {name}.',
       'log.hazard.zoneDone': 'Az erőtér megállt.',
-      'log.hazard.suddenDeath': 'Hirtelen halál: az erőtér bezárul az utolsó kiválasztottak körül.',
+      'log.hazard.suddenDeath': 'Hirtelen halál: az erőtér bezárul az utolsó versenyzők körül.',
       'log.hazard.floodEnd': 'Vége az árvíznek. A víz visszahúzódik.',
       'log.hazard.fireOut': 'A nagy tűz kialudt.',
       'ann.gm.suddenDeath': 'Hirtelen halál! Szűkül az erőtér.',
@@ -199,8 +199,8 @@
   let dryness = 0.55;
   let curWater = CFG.BASE_WATER_LEVEL;
   let fireAcc = 0, dmgAcc = 0, flushAcc = 0, interestAcc = 0, suddenAcc = 0;
-  let lastFireLog = [];        // per tribute id: sim time of the last "caught fire" log
-  let lastZoneLog = [];        // per tribute id: shrink id of the last "outside" log
+  let lastFireLog = [];        // per contestant id: sim time of the last "caught fire" log
+  let lastZoneLog = [];        // per contestant id: shrink id of the last "outside" log
   let lastBlastLog = [];
   let zoneShrinkId = 0;
   const clouds = [];           // gas clouds
@@ -317,24 +317,24 @@
     try { C.shake(intensity * k, seconds); } catch (err) { GM.reportError('Hazards.shake', err); }
   }
   function hurt(t, amount, cause, pos) {
-    const Tr = GM.Tributes;
+    const Tr = GM.Contestants;
     if (!Tr || typeof Tr.damage !== 'function' || !t || !t.alive || !(amount > 0)) return 0;
     try {
-      return Tr.damage(t, amount, { cause: cause, attacker: null, mutt: null, weapon: null, pos: pos || t.pos }) || 0;
+      return Tr.damage(t, amount, { cause: cause, attacker: null, beast: null, weapon: null, pos: pos || t.pos }) || 0;
     } catch (err) {
       GM.reportError('Hazards.damage', err);
       return 0;
     }
   }
-  function hurtMutt(m, amount) {
-    const M = GM.Mutts;
+  function hurtBeast(m, amount) {
+    const M = GM.Beasts;
     if (!M || typeof M.damage !== 'function' || !m || !m.alive || !(amount > 0)) return;
-    try { M.damage(m, amount, null); } catch (err) { GM.reportError('Hazards.muttDamage', err); }
+    try { M.damage(m, amount, null); } catch (err) { GM.reportError('Hazards.beastDamage', err); }
   }
   function tribCall(method, a, b, c, d) {
-    const Tr = GM.Tributes;
+    const Tr = GM.Contestants;
     if (!Tr || typeof Tr[method] !== 'function') return;
-    try { Tr[method](a, b, c, d); } catch (err) { GM.reportError('Hazards.Tributes.' + method, err); }
+    try { Tr[method](a, b, c, d); } catch (err) { GM.reportError('Hazards.Contestants.' + method, err); }
   }
   function applyMindStatus(t, status, seconds) {
     const AI = GM.AI;
@@ -1293,7 +1293,7 @@
     if (!opts.visualOnly && base > 0) {
       const inWater = waterDepthAt(x, z) > 0.3;
       const outer = inWater ? 12 : 8;
-      const trs = GM.state.tributes;
+      const trs = GM.state.contestants;
       for (let k = 0; k < trs.length; k++) {
         const t = trs[k];
         if (!t || !t.alive) continue;
@@ -1308,16 +1308,16 @@
           if (d > 0.1) tribCall('knockback', t, dx / d, dz / d, d <= 3 ? 5 : 3);
         }
         hits++;
-        if (natural) GM.log('hazard', 'log.hazard.lightningHit', { name: t.name }, { pos: t.pos, tributeIds: [t.id] });
+        if (natural) GM.log('hazard', 'log.hazard.lightningHit', { name: t.name }, { pos: t.pos, contestantIds: [t.id] });
       }
-      const ms = GM.state.mutts;
+      const ms = GM.state.beasts;
       for (let k = 0; k < ms.length; k++) {
         const m = ms[k];
         if (!m || !m.alive) continue;
         const dx = m.pos.x - x, dz = m.pos.z - z;
         const d = Math.sqrt(dx * dx + dz * dz);
         if (d > outer + (m.radius || 0.6)) continue;
-        hurtMutt(m, d <= 3 ? base : base * (25 / 70));
+        hurtBeast(m, d <= 3 ? base : base * (25 / 70));
       }
       if (opts.ignite !== false) {
         const ci = cellOf(x, z);
@@ -1357,7 +1357,7 @@
     shakeAt(x, z, 0.6, 0.6, 100);
     addScorch(x, z, Math.max(2, radius * 0.55), 0.04);
     let hits = 0;
-    const trs = GM.state.tributes;
+    const trs = GM.state.contestants;
     const now = GM.state.time;
     for (let k = 0; k < trs.length; k++) {
       const t = trs[k];
@@ -1374,18 +1374,18 @@
         if (f > 0.5) tribCall('stun', t, 0.8);
         if (!(lastBlastLog[t.id] > now - 4)) {
           lastBlastLog[t.id] = now;
-          GM.log('hazard', 'log.hazard.explosionHit', { name: t.name }, { pos: t.pos, tributeIds: [t.id] });
+          GM.log('hazard', 'log.hazard.explosionHit', { name: t.name }, { pos: t.pos, contestantIds: [t.id] });
         }
       }
     }
-    const ms = GM.state.mutts;
+    const ms = GM.state.beasts;
     for (let k = 0; k < ms.length; k++) {
       const m = ms[k];
       if (!m || !m.alive) continue;
       const dx = m.pos.x - x, dz = m.pos.z - z;
       const d = Math.sqrt(dx * dx + dz * dz);
       if (d > radius + (m.radius || 0.6)) continue;
-      hurtMutt(m, damage * (0.25 + 0.75 * U.clamp01(1 - d / radius)));
+      hurtBeast(m, damage * (0.25 + 0.75 * U.clamp01(1 - d / radius)));
     }
     GM.emit('hazard:explosion', { pos: P, radius: radius, cause: cause });
     interest({ pos: P, score: 8, duration: 5, kind: 'hazard', key: 'explosion', label: { key: 'hazard.interest.explosion' } });
@@ -1436,7 +1436,7 @@
     shakeAt(x, z, 0.8, 0.7, 120);
     const Tr = GM.Terrain;
     const r0 = Math.sqrt(x * x + z * z);
-    if (Tr && typeof Tr.deform === 'function' && r0 > CFG.CORNUCOPIA_RADIUS + 4 && waterDepthAt(x, z) < 0.2) {
+    if (Tr && typeof Tr.deform === 'function' && r0 > CFG.NEXUS_RADIUS + 4 && waterDepthAt(x, z) < 0.2) {
       try { Tr.deform(x, z, 3.5, 1.1, 'crater'); } catch (err) { GM.reportError('Hazards.deform', err); }
     }
   }
@@ -1566,7 +1566,7 @@
   }
 
   function quakeJolt(q, first) {
-    const trs = GM.state.tributes;
+    const trs = GM.state.contestants;
     for (let k = 0; k < trs.length; k++) {
       const t = trs[k];
       if (!t || !t.alive) continue;
@@ -1581,17 +1581,17 @@
           const a = GM.R.angle();
           tribCall('knockback', t, Math.sin(a), Math.cos(a), 2 + 3 * f);
           if (f > 0.45 && GM.R.chance(0.6)) applyMindStatus(t, 'panic', 4);
-          if (f > 0.3) GM.log('hazard', 'log.hazard.quakeHit', { name: t.name }, { pos: t.pos, tributeIds: [t.id] });
+          if (f > 0.3) GM.log('hazard', 'log.hazard.quakeHit', { name: t.name }, { pos: t.pos, contestantIds: [t.id] });
         }
       }
     }
     if (first) {
-      const ms = GM.state.mutts;
+      const ms = GM.state.beasts;
       for (let k = 0; k < ms.length; k++) {
         const m = ms[k];
         if (!m || !m.alive) continue;
         const dx = m.pos.x - q.x, dz = m.pos.z - q.z;
-        if (dx * dx + dz * dz <= q.radius * q.radius) hurtMutt(m, 8 * q.strength);
+        if (dx * dx + dz * dz <= q.radius * q.radius) hurtBeast(m, 8 * q.strength);
       }
     }
   }
@@ -1603,8 +1603,8 @@
       if (!q.deformed && q.t >= 0.5) {
         q.deformed = true;
         const Tr = GM.Terrain;
-        // never reshape the plaza: the Cornucopia and the pedestals stand there
-        const plazaSafe = Math.sqrt(q.x * q.x + q.z * q.z) - q.radius * 0.5 > CFG.CORNUCOPIA_RADIUS + 2;
+        // never reshape the plaza: the Nexus and the pedestals stand there
+        const plazaSafe = Math.sqrt(q.x * q.x + q.z * q.z) - q.radius * 0.5 > CFG.NEXUS_RADIUS + 2;
         if (Tr && typeof Tr.deform === 'function' && plazaSafe) {
           try {
             if (q.mode === 'crater') {
@@ -1614,7 +1614,7 @@
               for (let k = -1; k <= 1; k++) {
                 const px = q.x + sx * k * q.radius * 0.42, pz = q.z + sz * k * q.radius * 0.42;
                 if (!inArena(px, pz, 4)) continue;
-                if (Math.sqrt(px * px + pz * pz) - q.radius * 0.38 < CFG.CORNUCOPIA_RADIUS + 2) continue;
+                if (Math.sqrt(px * px + pz * pz) - q.radius * 0.38 < CFG.NEXUS_RADIUS + 2) continue;
                 Tr.deform(px, pz, q.radius * 0.38, (k === 0 ? 6 : 4.5) * q.strength, 'raise');
               }
             }
@@ -1741,7 +1741,7 @@
   }
 
   function aliveCount() {
-    const trs = GM.state.tributes;
+    const trs = GM.state.contestants;
     let n = 0;
     for (let i = 0; i < trs.length; i++) if (trs[i] && trs[i].alive) n++;
     return n;
@@ -1763,7 +1763,7 @@
       try { p = Tr.randomLandPoint({ minR: 0, maxR: 30 }); } catch (err) { p = null; }
     }
     if (!p) p = { x: 0, z: 0 };
-    // the Game Master may already have closed the field: then close it further
+    // the Showrunner may already have closed the field: then close it further
     const target = zone.radius > 45 ? 35 : Math.max(12, zone.radius * 0.6);
     if (target < zone.radius - 0.5) shrinkZone(p, target, (zone.radius > 45 ? 1.5 : 0.75) * CFG.DAY_LENGTH);
     GM.announce('ann.gm.suddenDeath', {}, { style: 'danger', duration: 6 });
@@ -1864,7 +1864,7 @@
   // ========================================================= DAMAGE TICK
   function damageTick() {
     const st = GM.state;
-    const trs = st.tributes;
+    const trs = st.contestants;
     const now = st.time;
     for (let k = 0; k < trs.length; k++) {
       const t = trs[k];
@@ -1877,7 +1877,7 @@
         if (t.alive) tribCall('setStatus', t, 'burning', 2.5);
         if (!(lastFireLog[t.id] > now - 25)) {
           lastFireLog[t.id] = now;
-          GM.log('hazard', 'log.hazard.caughtFire', { name: t.name }, { pos: t.pos, tributeIds: [t.id] });
+          GM.log('hazard', 'log.hazard.caughtFire', { name: t.name }, { pos: t.pos, contestantIds: [t.id] });
         }
       }
       // gas
@@ -1893,7 +1893,7 @@
           hurt(t, GAS_DPS * DAMAGE_TICK * dens, 'gas', t.pos);
           if (first && t.alive) {
             cl.hit.add(t.id);
-            GM.log('hazard', 'log.hazard.gasHit', { name: t.name }, { pos: t.pos, tributeIds: [t.id] });
+            GM.log('hazard', 'log.hazard.gasHit', { name: t.name }, { pos: t.pos, contestantIds: [t.id] });
             const brave = t.traits && typeof t.traits.bravery === 'number' ? t.traits.bravery : 0.5;
             if (brave < 0.55) applyMindStatus(t, 'panic', 3);
           }
@@ -1902,7 +1902,7 @@
           if (first || left < 8) applyMindStatus(t, 'madness', first ? 25 : 12);
           if (first) {
             cl.hit.add(t.id);
-            GM.log('hazard', 'log.hazard.madnessHit', { name: t.name }, { pos: t.pos, tributeIds: [t.id], important: true });
+            GM.log('hazard', 'log.hazard.madnessHit', { name: t.name }, { pos: t.pos, contestantIds: [t.id], important: true });
           }
         }
         interest({ pos: t.pos, score: 7, duration: 3, kind: 'hazard', key: 'gas:' + cl.id, followId: t.id, label: { key: 'hazard.interest.gas', params: { name: t.name } } });
@@ -1918,24 +1918,24 @@
           fx('burst', P3(x, t.pos.y + 1, z), { count: 6, color: 0xff5a8a, color2: 0xff2a4a, speed: 3, spread: 0.6, up: 1.5, gravity: -4, size: 0.18, life: 0.5, additive: true });
           if (lastZoneLog[t.id] !== zoneShrinkId) {
             lastZoneLog[t.id] = zoneShrinkId;
-            GM.log('hazard', 'log.hazard.outsideZone', { name: t.name }, { pos: t.pos, tributeIds: [t.id] });
+            GM.log('hazard', 'log.hazard.outsideZone', { name: t.name }, { pos: t.pos, contestantIds: [t.id] });
           }
           interest({ pos: t.pos, score: 7, duration: 3, kind: 'hazard', key: 'zone:' + t.id, followId: t.id, label: { key: 'hazard.interest.zone', params: { name: t.name } } });
         }
       }
     }
-    // mutts suffer from fire and poison too
-    const ms = st.mutts;
+    // beasts suffer from fire and poison too
+    const ms = st.beasts;
     for (let k = 0; k < ms.length; k++) {
       const m = ms[k];
       if (!m || !m.alive || !m.pos) continue;
       const ci = cellOf(m.pos.x, m.pos.z);
-      if (ci >= 0 && fstate[ci] === 1 && inten[ci] > 0.12) hurtMutt(m, FIRE_DPS * DAMAGE_TICK * (0.6 + 0.6 * inten[ci]));
+      if (ci >= 0 && fstate[ci] === 1 && inten[ci] > 0.12) hurtBeast(m, FIRE_DPS * DAMAGE_TICK * (0.6 + 0.6 * inten[ci]));
       for (let c = 0; c < clouds.length && m.alive; c++) {
         const cl = clouds[c];
         if (cl.kind !== 'poison' || cl.alpha < 0.25) continue;
         const dx = m.pos.x - cl.x, dz = m.pos.z - cl.z;
-        if (dx * dx + dz * dz <= cl.r * cl.r) hurtMutt(m, GAS_DPS * DAMAGE_TICK * cl.alpha);
+        if (dx * dx + dz * dz <= cl.r * cl.r) hurtBeast(m, GAS_DPS * DAMAGE_TICK * cl.alpha);
       }
     }
   }
@@ -1946,7 +1946,7 @@
       interest({ pos: P3(c.x, groundY(c.x, c.z), c.z), score: 5 + Math.min(2, c.count / 20), duration: 4, kind: 'hazard', key: 'fire', label: { key: 'hazard.interest.fire' } });
     }
     if (burnCount > 0) {
-      const trs = GM.state.tributes;
+      const trs = GM.state.contestants;
       for (let k = 0; k < trs.length; k++) {
         const t = trs[k];
         if (!t || !t.alive) continue;

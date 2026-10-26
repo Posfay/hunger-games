@@ -1,5 +1,5 @@
 /* ==========================================================================
- * tributes.js — GM.Tributes: roster, tribute objects, low-poly animated
+ * contestants.js — GM.Contestants: roster, contestant objects, low-poly animated
  * meshes, locomotion (budgeted A* path queue + steering), needs, status
  * effects, damage / death / kill credit and the hovercraft body pickup.
  *
@@ -11,7 +11,7 @@
  *   extras: flash, playAttack, gesture, refreshGear, statusList, speedOf,
  *           headPos, canAct, list
  *
- * Tribute rig (5 meshes): one skinned body per tribute (clothes, face, hair
+ * Contestant rig (5 meshes): one skinned body per contestant (clothes, face, hair
  * and skin in a vertex-coloured geometry on a 17-bone skeleton with knees,
  * elbows, feet, spine and neck) plus rigid gear (vest, backpack, back weapon,
  * held weapon). Procedural animation: walk/run cycle with knee flex, pelvis
@@ -20,7 +20,7 @@
  * dust / splashes. Name tag + status icon are sprites (overlay layer) whose
  * size is adjusted per camera in onBeforeRender so they stay readable.
  *
- * Owner: TRIBUTES.
+ * Owner: CONTESTANTS.
  * ========================================================================== */
 (function () {
   'use strict';
@@ -33,21 +33,21 @@
   // ================================================================ strings
   GM.i18n.add({
     en: {
-      'tribute.interest.death': '{name} has fallen',
-      'tribute.interest.fight': '{a} vs {b}',
-      'tribute.interest.body': 'A hovercraft takes {name}',
-      'tribute.hovercraft': 'Hovercraft',
-      'tribute.gender.f': 'Girl',
-      'tribute.gender.m': 'Boy',
-      'tribute.placement': '#{n}',
-      'tribute.ammo': 'Ammo: {n}',
-      'tribute.stat.health': 'Health',
-      'tribute.stat.stamina': 'Stamina',
-      'tribute.stat.hunger': 'Hunger',
-      'tribute.stat.thirst': 'Thirst',
-      'tribute.stat.energy': 'Energy',
-      'tribute.stat.kills': 'Kills',
-      'tribute.stat.damage': 'Damage dealt',
+      'contestant.interest.death': '{name} has fallen',
+      'contestant.interest.fight': '{a} vs {b}',
+      'contestant.interest.body': 'A hovercraft takes {name}',
+      'contestant.hovercraft': 'Hovercraft',
+      'contestant.gender.f': 'Girl',
+      'contestant.gender.m': 'Boy',
+      'contestant.placement': '#{n}',
+      'contestant.ammo': 'Ammo: {n}',
+      'contestant.stat.health': 'Health',
+      'contestant.stat.stamina': 'Stamina',
+      'contestant.stat.hunger': 'Hunger',
+      'contestant.stat.thirst': 'Thirst',
+      'contestant.stat.energy': 'Energy',
+      'contestant.stat.kills': 'Kills',
+      'contestant.stat.damage': 'Damage dealt',
 
       'status.stun': 'Stunned',
       'status.poison': 'Poisoned',
@@ -72,7 +72,7 @@
       'status.madness.desc': 'Sees enemies everywhere and attacks anyone.',
       'status.panic.desc': 'Runs away from everything.',
       'status.burning.desc': 'On fire! Water puts it out.',
-      'status.stung.desc': 'Tracker jacker poison. Sees strange things.',
+      'status.stung.desc': 'Killer wasp poison. Sees strange things.',
       'status.bleeding.desc': 'Loses health. A medical kit stops it.',
       'status.asleep.desc': 'Sleeping. Easy to attack.',
       'status.swimming.desc': 'Swimming uses a lot of stamina.',
@@ -93,9 +93,9 @@
       'log.death.explosion.1': '{victim} died in an explosion.',
       'log.death.lightning.1': 'Lightning struck {victim}.',
       'log.death.lightning.2': '{victim} died in the storm.',
-      'log.death.mutt.1': 'The mutts killed {victim}.',
-      'log.death.mutt.2': 'The wolves caught {victim}.',
-      'log.death.wasps.1': '{victim} died from tracker jacker stings.',
+      'log.death.beast.1': 'The beasts killed {victim}.',
+      'log.death.beast.2': 'The wolves caught {victim}.',
+      'log.death.wasps.1': '{victim} died from killer wasp stings.',
       'log.death.gas.1': '{victim} died in the poison fog.',
       'log.death.gas.2': '{victim} could not get out of the poison fog.',
       'log.death.drown.1': '{victim} drowned.',
@@ -110,7 +110,7 @@
       'log.death.poison.1': '{victim} ate poison berries and died.',
       'log.death.quake.1': '{victim} died in the earthquake.',
       'log.death.fall.1': '{victim} fell and died.',
-      'log.death.smite.1': 'The Game Master struck down {victim}.',
+      'log.death.smite.1': 'The Showrunner struck down {victim}.',
       'log.death.weapon.1': '{victim} bled to death.',
       'log.death.fists.1': '{victim} died from the beating.',
       'log.death.unknown.1': '{victim} died.',
@@ -133,24 +133,24 @@
       'log.kill.firstBlood': 'First blood!',
       'log.kill.streak': '{killer} has {n} kills now.',
       'log.kill.revenge': '{killer} took revenge for {partner}.',
-      'log.kill.partner': '{killer} killed {victim}, a tribute from the same district!',
+      'log.kill.partner': '{killer} killed {victim}, a contestant from the same team!',
     },
     hu: {
-      'tribute.interest.death': 'Elesett: {name}',
-      'tribute.interest.fight': '{a} – {b}',
-      'tribute.interest.body': 'A légpárnás elviszi: {name}',
-      'tribute.hovercraft': 'Légpárnás',
-      'tribute.gender.f': 'Lány',
-      'tribute.gender.m': 'Fiú',
-      'tribute.placement': '{n}. hely',
-      'tribute.ammo': 'Lőszer: {n}',
-      'tribute.stat.health': 'Életerő',
-      'tribute.stat.stamina': 'Állóképesség',
-      'tribute.stat.hunger': 'Éhség',
-      'tribute.stat.thirst': 'Szomjúság',
-      'tribute.stat.energy': 'Energia',
-      'tribute.stat.kills': 'Ölések',
-      'tribute.stat.damage': 'Okozott sebzés',
+      'contestant.interest.death': 'Elesett: {name}',
+      'contestant.interest.fight': '{a} – {b}',
+      'contestant.interest.body': 'A légpárnás elviszi: {name}',
+      'contestant.hovercraft': 'Légpárnás',
+      'contestant.gender.f': 'Lány',
+      'contestant.gender.m': 'Fiú',
+      'contestant.placement': '{n}. hely',
+      'contestant.ammo': 'Lőszer: {n}',
+      'contestant.stat.health': 'Életerő',
+      'contestant.stat.stamina': 'Állóképesség',
+      'contestant.stat.hunger': 'Éhség',
+      'contestant.stat.thirst': 'Szomjúság',
+      'contestant.stat.energy': 'Energia',
+      'contestant.stat.kills': 'Ölések',
+      'contestant.stat.damage': 'Okozott sebzés',
 
       'status.stun': 'Kábult',
       'status.poison': 'Mérgezett',
@@ -175,7 +175,7 @@
       'status.madness.desc': 'Mindenhol ellenséget lát, és bárkit megtámad.',
       'status.panic.desc': 'Mindenki elől elfut.',
       'status.burning.desc': 'Lángol! A víz eloltja.',
-      'status.stung.desc': 'Vérdarázsméreg. Furcsa dolgokat lát.',
+      'status.stung.desc': 'Gyilkosdarázsméreg. Furcsa dolgokat lát.',
       'status.bleeding.desc': 'Életerőt veszít. Az elsősegélycsomag megállítja.',
       'status.asleep.desc': 'Alszik. Könnyű megtámadni.',
       'status.swimming.desc': 'Az úszás nagyon fárasztó.',
@@ -196,9 +196,9 @@
       'log.death.explosion.1': '{victim} meghalt egy robbanásban.',
       'log.death.lightning.1': 'Villám sújtotta: {victim}.',
       'log.death.lightning.2': '{victim} meghalt a viharban.',
-      'log.death.mutt.1': 'A mutánsok megölték: {victim}.',
-      'log.death.mutt.2': 'A farkasok elkapták: {victim}.',
-      'log.death.wasps.1': '{victim} belehalt a vérdarázscsípésekbe.',
+      'log.death.beast.1': 'A fenevadak megölték: {victim}.',
+      'log.death.beast.2': 'A farkasok elkapták: {victim}.',
+      'log.death.wasps.1': '{victim} belehalt a gyilkosdarázscsípésekbe.',
       'log.death.gas.1': '{victim} meghalt a mérges ködben.',
       'log.death.gas.2': '{victim} nem jutott ki a mérges ködből.',
       'log.death.drown.1': '{victim} vízbe fulladt.',
@@ -213,7 +213,7 @@
       'log.death.poison.1': '{victim} mérges bogyót evett, és meghalt.',
       'log.death.quake.1': '{victim} meghalt a földrengésben.',
       'log.death.fall.1': '{victim} lezuhant, és meghalt.',
-      'log.death.smite.1': 'A Játékmester lesújtott: {victim}.',
+      'log.death.smite.1': 'A Showrunner lesújtott: {victim}.',
       'log.death.weapon.1': '{victim} elvérzett.',
       'log.death.fists.1': '{victim} belehalt a verésbe.',
       'log.death.unknown.1': '{victim} meghalt.',
@@ -236,13 +236,13 @@
       'log.kill.firstBlood': 'Az első vér!',
       'log.kill.streak': '{killer} már {n} ellenfelet ölt meg.',
       'log.kill.revenge': '{killer} bosszút állt {partner} haláláért.',
-      'log.kill.partner': '{killer} megölte: {victim}. Ugyanabból a körzetből jöttek!',
+      'log.kill.partner': '{killer} megölte: {victim}. Ugyanabból a csapatből jöttek!',
     },
   });
   // number of variants per message family (keys end in .1 .. .n)
   const VARIANTS = {
     'log.death.fire': 2, 'log.death.fireball': 2, 'log.death.explosion': 1, 'log.death.lightning': 2,
-    'log.death.mutt': 2, 'log.death.wasps': 1, 'log.death.gas': 2, 'log.death.drown': 2,
+    'log.death.beast': 2, 'log.death.wasps': 1, 'log.death.gas': 2, 'log.death.drown': 2,
     'log.death.starve': 1, 'log.death.thirst': 1, 'log.death.cold': 2, 'log.death.forcefield': 2,
     'log.death.trap': 1, 'log.death.poison': 1, 'log.death.quake': 1, 'log.death.fall': 1,
     'log.death.smite': 1, 'log.death.weapon': 1, 'log.death.fists': 1, 'log.death.unknown': 1,
@@ -272,16 +272,16 @@
     'Máté', 'Gergő', 'Zsolt', 'Ádám',
   ];
 
-  const ARCH_IDS = ['career', 'survivor', 'scavenger', 'opportunist', 'strategist', 'berserker', 'protector', 'lonewolf'];
+  const ARCH_IDS = ['elite', 'survivor', 'scavenger', 'opportunist', 'strategist', 'berserker', 'protector', 'lonewolf'];
   const MIX_WEIGHTS = {
-    balanced: { career: 1.25, survivor: 1, scavenger: 1, opportunist: 1, strategist: 1, berserker: 0.9, protector: 1, lonewolf: 0.9 },
-    bloodthirsty: { career: 3, survivor: 0.6, scavenger: 0.5, opportunist: 1.2, strategist: 1, berserker: 2.5, protector: 0.5, lonewolf: 2 },
-    peaceful: { career: 0.5, survivor: 3, scavenger: 2.5, opportunist: 0.8, strategist: 1.2, berserker: 0.3, protector: 2.5, lonewolf: 0.5 },
-    chaos: { career: 1, survivor: 1, scavenger: 1, opportunist: 1, strategist: 1, berserker: 1, protector: 1, lonewolf: 1 },
+    balanced: { elite: 1.25, survivor: 1, scavenger: 1, opportunist: 1, strategist: 1, berserker: 0.9, protector: 1, lonewolf: 0.9 },
+    bloodthirsty: { elite: 3, survivor: 0.6, scavenger: 0.5, opportunist: 1.2, strategist: 1, berserker: 2.5, protector: 0.5, lonewolf: 2 },
+    peaceful: { elite: 0.5, survivor: 3, scavenger: 2.5, opportunist: 0.8, strategist: 1.2, berserker: 0.3, protector: 2.5, lonewolf: 0.5 },
+    chaos: { elite: 1, survivor: 1, scavenger: 1, opportunist: 1, strategist: 1, berserker: 1, protector: 1, lonewolf: 1 },
   };
   // fallback personality when the AI module is missing (SPEC 9.1)
   const FALLBACK_TRAITS = {
-    career: [0.85, 0.8, 0.5, 0.6, 0.45, 0.5, 0.4, 0.6],
+    elite: [0.85, 0.8, 0.5, 0.6, 0.45, 0.5, 0.4, 0.6],
     survivor: [0.2, 0.5, 0.4, 0.4, 0.6, 0.6, 0.8, 0.75],
     scavenger: [0.15, 0.2, 0.9, 0.35, 0.4, 0.6, 0.6, 0.55],
     opportunist: [0.55, 0.45, 0.6, 0.4, 0.2, 0.9, 0.7, 0.6],
@@ -292,7 +292,7 @@
   };
   const TRAIT_NAMES = ['aggression', 'bravery', 'greed', 'sociability', 'loyalty', 'cunning', 'patience', 'stability'];
   const FALLBACK_SKILL_BIAS = {
-    career: { strength: 0.2, aim: 0.1 }, survivor: { survival: 0.25, stealth: 0.1 }, scavenger: { speed: 0.15, stealth: 0.1 },
+    elite: { strength: 0.2, aim: 0.1 }, survivor: { survival: 0.25, stealth: 0.1 }, scavenger: { speed: 0.15, stealth: 0.1 },
     opportunist: { stealth: 0.1, aim: 0.1 }, strategist: { survival: 0.1, aim: 0.1 }, berserker: { strength: 0.2, speed: 0.05 },
     protector: { strength: 0.1, survival: 0.1 }, lonewolf: { stealth: 0.25, aim: 0.15 },
   };
@@ -345,13 +345,13 @@
     const w = MIX_WEIGHTS[mix] || MIX_WEIGHTS.balanced;
     const out = [];
     if (mix === 'balanced') {
-      // even spread: shuffled bags of all archetypes, careers capped at ~15 %
-      const maxCareers = Math.max(1, Math.round(n * 0.15));
-      let careers = 0;
+      // even spread: shuffled bags of all archetypes, elites capped at ~15 %
+      const maxElites = Math.max(1, Math.round(n * 0.15));
+      let elites = 0;
       while (out.length < n) {
         const bag = rng.shuffle(ARCH_IDS.slice());
         for (let i = 0; i < bag.length && out.length < n; i++) {
-          if (bag[i] === 'career') { if (careers >= maxCareers) continue; careers++; }
+          if (bag[i] === 'elite') { if (elites >= maxElites) continue; elites++; }
           out.push(bag[i]);
         }
       }
@@ -361,34 +361,34 @@
     return out;
   }
 
-  const Tributes = (GM.Tributes = {});
+  const Contestants = (GM.Contestants = {});
 
   /**
-   * Build a roster: 2 tributes per district (girl, boy), unique names,
-   * archetypes from GM.AI.pickArchetypes (local fallback). Careers are
-   * placed in the classic career districts (1, 2, 4) first.
+   * Build a roster: 2 contestants per team (girl, boy), unique names,
+   * archetypes from GM.AI.pickArchetypes (local fallback). Elites are
+   * placed in the classic elite teams (1, 2, 4) first.
    */
-  Tributes.generateRoster = function (count, mix, seed) {
-    count = U.clamp((count | 0) || CFG.DEFAULT_TRIBUTES, CFG.MIN_TRIBUTES, CFG.MAX_TRIBUTES);
+  Contestants.generateRoster = function (count, mix, seed) {
+    count = U.clamp((count | 0) || CFG.DEFAULT_CONTESTANTS, CFG.MIN_CONTESTANTS, CFG.MAX_CONTESTANTS);
     mix = MIX_WEIGHTS[mix] ? mix : 'balanced';
     const rng = makeRng(((seed >>> 0) ^ 0x9e3779b9) >>> 0);
     let archs = null;
     if (GM.AI && typeof GM.AI.pickArchetypes === 'function') {
-      try { archs = GM.AI.pickArchetypes(count, mix, rng); } catch (err) { GM.reportError('Tributes.pickArchetypes', err); archs = null; }
+      try { archs = GM.AI.pickArchetypes(count, mix, rng); } catch (err) { GM.reportError('Contestants.pickArchetypes', err); archs = null; }
     }
     const valid = archIds();
     if (!Array.isArray(archs) || archs.length < count) archs = localPickArchetypes(count, mix, rng);
     archs = archs.slice(0, count).map(function (a) { return valid.indexOf(a) >= 0 ? a : rng.pick(valid); });
 
-    // careers prefer districts 1, 2 and 4
+    // elites prefer teams 1, 2 and 4
     const pref = [0, 1, 2, 3, 6, 7].filter(function (i) { return i < count; });
-    const careers = archs.filter(function (a) { return a === 'career'; });
-    const others = archs.filter(function (a) { return a !== 'career'; });
+    const elites = archs.filter(function (a) { return a === 'elite'; });
+    const others = archs.filter(function (a) { return a !== 'elite'; });
     const slots = new Array(count).fill(null);
-    for (let i = 0; i < pref.length && careers.length; i++) slots[pref[i]] = careers.shift();
+    for (let i = 0; i < pref.length && elites.length; i++) slots[pref[i]] = elites.shift();
     for (let i = 0; i < count; i++) {
       if (slots[i]) continue;
-      slots[i] = others.length ? others.shift() : careers.shift();
+      slots[i] = others.length ? others.shift() : elites.shift();
     }
 
     const fNames = rng.shuffle(F_NAMES.slice());
@@ -398,9 +398,9 @@
     for (let i = 0; i < count; i++) {
       const gender = i % 2 === 0 ? 'f' : 'm';
       let name;
-      if (gender === 'f') name = fi < fNames.length ? fNames[fi++] : 'Tribute ' + (i + 1);
-      else name = mi < mNames.length ? mNames[mi++] : 'Tribute ' + (i + 1);
-      roster.push({ name: name, district: Math.floor(i / 2) + 1, gender: gender, archetype: slots[i] || 'survivor' });
+      if (gender === 'f') name = fi < fNames.length ? fNames[fi++] : 'Contestant ' + (i + 1);
+      else name = mi < mNames.length ? mNames[mi++] : 'Contestant ' + (i + 1);
+      roster.push({ name: name, team: Math.floor(i / 2) + 1, gender: gender, archetype: slots[i] || 'survivor' });
     }
     return roster;
   };
@@ -422,7 +422,7 @@
   const THIRST_RATE = 100 / (1.5 * DAY);
   const ENERGY_DRAIN = 100 / (1.2 * DAY);
   const SLEEP_GAIN = 100 / (0.3 * DAY);
-  const ARMOR_CAUSES = { weapon: 1, fists: 1, mutt: 1, explosion: 1, fireball: 1, trap: 1 };
+  const ARMOR_CAUSES = { weapon: 1, fists: 1, beast: 1, explosion: 1, fireball: 1, trap: 1 };
   const DIRECT_CAUSES = { weapon: 1, fists: 1 };
   const STATUS_NAMES = ['stun', 'poison', 'madness', 'panic', 'burning', 'stung', 'bleeding'];
 
@@ -500,17 +500,17 @@
   function sfx(name, pos, volume, rate) {
     const A = GM.Audio;
     if (!A || typeof A.play !== 'function') return;
-    try { A.play(name, { pos: pos, volume: volume == null ? 1 : volume, rate: rate || 1 }); } catch (err) { GM.reportError('Tributes.audio', err); }
+    try { A.play(name, { pos: pos, volume: volume == null ? 1 : volume, rate: rate || 1 }); } catch (err) { GM.reportError('Contestants.audio', err); }
   }
   function fx(method, a, b, c, d, e) {
     const F = GM.FX;
     if (!F || typeof F[method] !== 'function') return;
-    try { F[method](a, b, c, d, e); } catch (err) { GM.reportError('Tributes.FX.' + method, err); }
+    try { F[method](a, b, c, d, e); } catch (err) { GM.reportError('Contestants.FX.' + method, err); }
   }
   function aiNoise(pos, radius, kind, src) {
     const AI = GM.AI;
     if (!AI || typeof AI.noise !== 'function') return;
-    try { AI.noise(pos, radius, kind, src == null ? null : src); } catch (err) { GM.reportError('Tributes.noise', err); }
+    try { AI.noise(pos, radius, kind, src == null ? null : src); } catch (err) { GM.reportError('Contestants.noise', err); }
   }
   function num(v, d) { return typeof v === 'number' && v === v ? v : d; }
   function skill(t, name) { const s = t.skills; return s && typeof s[name] === 'number' ? s[name] : 0.5; }
@@ -600,7 +600,7 @@
   }
 
   /**
-   * Per-tribute body material (skinned). Per-vertex roughness, wet sheen
+   * Per-contestant body material (skinned). Per-vertex roughness, wet sheen
    * after swimming, hit flash (emissive), grey-out after death.
    * uBody: x wet 0..1, y dead 0..1, z flash 0..1
    */
@@ -610,7 +610,7 @@
     const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 });
     if (Gfx && Gfx.patch) {
       Gfx.patch(m, {
-        key: 'tribute',
+        key: 'contestant',
         uniforms: u,
         vertexPre: 'attribute float aRough;\nvarying float vRough;\n',
         fragmentPre: 'uniform vec4 uBody;\nvarying float vRough;\n',
@@ -781,7 +781,7 @@
     const look = t.look, female = t.gender === 'f';
     const G = new CharGeo();
     const sw = shoulderW(female);
-    const shirt = GM.districtColor(t.district);
+    const shirt = GM.teamColor(t.team);
     const shirtD = shade(shirt, 0.62), shirtL = shade(shirt, 1.12);
     const skin = SKIN[look.skin % SKIN.length], skinD = shade(skin, 0.82);
     const pants = PANTS[look.pants % PANTS.length];
@@ -790,7 +790,7 @@
     const TP = female ? TORSO_F : TORSO_M;
     const chestZ = function (y) { return (female ? 0.012 : 0.006) * U.smoothstep(1.12, 1.26, y) * (1 - U.smoothstep(1.34, 1.45, y)); };
 
-    // --- torso: pants / belt / jacket (district colour) with darker side panels and collar
+    // --- torso: pants / belt / jacket (team colour) with darker side panels and collar
     const torsoCol = function (x, y, z, o) {
       const pr = profile(TP, y);
       const side = Math.abs(x) / Math.max(0.01, pr[0]);
@@ -975,7 +975,7 @@
 
   // =========================================================== the rig
   /**
-   * Build the tribute's scene graph: a skinned body on a 17-bone skeleton
+   * Build the contestant's scene graph: a skinned body on a 17-bone skeleton
    * plus rigid gear (vest, backpack, back weapon, held weapon). Returns the
    * root Group (at the feet); parts are kept in t.rig for posing.
    */
@@ -987,8 +987,8 @@
     const shadows = quality !== 'low';
 
     const root = new THREE.Group();
-    root.name = 'tribute:' + t.id;
-    root.userData.tributeId = t.id;
+    root.name = 'contestant:' + t.id;
+    root.userData.contestantId = t.id;
     const body = new THREE.Group();
     root.add(body);
 
@@ -1008,7 +1008,7 @@
     skinned.name = 'body';
     skinned.castShadow = shadows;
     skinned.frustumCulled = false;
-    skinned.userData.tributeId = t.id;
+    skinned.userData.contestantId = t.id;
     body.add(skinned);
     root.updateMatrixWorld(true);
     skinned.bind(new THREE.Skeleton(bones));
@@ -1030,7 +1030,7 @@
     bones[B_HANDR].add(weapon);
 
     const gear = [vest, pack, weapon, back];
-    for (let i = 0; i < gear.length; i++) { gear[i].castShadow = shadows; gear[i].userData.tributeId = t.id; }
+    for (let i = 0; i < gear.length; i++) { gear[i].castShadow = shadows; gear[i].userData.contestantId = t.id; }
     root.scale.setScalar(look.height);
 
     t.rig = {
@@ -1134,7 +1134,7 @@
     c.lineWidth = sel ? 4 : 2;
     c.strokeStyle = sel ? '#ffd257' : 'rgba(255, 255, 255, 0.16)';
     c.stroke();
-    // district chip
+    // team chip
     const col = alive ? t.color : '#6b6b6b';
     roundRect(c, x0 + 6, y0 + 7, chipW - 4, bh - 14, 7);
     c.fillStyle = col;
@@ -1143,7 +1143,7 @@
     c.textAlign = 'center';
     c.textBaseline = 'middle';
     c.fillStyle = lumOf(col) > 0.6 ? '#101216' : '#ffffff';
-    c.fillText(String(t.district), x0 + 6 + (chipW - 4) / 2, y0 + bh / 2 + 1);
+    c.fillText(String(t.team), x0 + 6 + (chipW - 4) / 2, y0 + bh / 2 + 1);
     // name
     c.font = TAG_FONT;
     c.textAlign = 'left';
@@ -1283,14 +1283,14 @@
     });
     selRing = new THREE.Mesh(g, m);
     selRing.layers.set(overlayLayer());
-    selRing.name = 'tribute-selection';
+    selRing.name = 'contestant-selection';
     selRing.renderOrder = 4;
     selRing.visible = false;
     return selRing;
   }
   function updateRing() {
     const st = GM.state;
-    const t = st.selectedId == null ? null : st.tributes[st.selectedId];
+    const t = st.selectedId == null ? null : st.contestants[st.selectedId];
     if (!t || !t.mesh || !t.mesh.parent || (t.body && t.body.stage >= 2)) {
       if (selRing) selRing.visible = false;
       return;
@@ -1347,14 +1347,14 @@
     t.emotion = { fear: 0.2, rage: 0.05, confidence: 0.5, sanity: 1 };
     t.mood = 'calm';
     t.action = 'idle';
-    t.thought = { key: 'tribute.thought.none', params: {} };
+    t.thought = { key: 'contestant.thought.none', params: {} };
     t.mind = t.mind || {};
   }
 
-  function createTribute(entry, id, ped) {
+  function createContestant(entry, id, ped) {
     const R = GM.R;
     entry = entry || {};
-    const district = (entry.district | 0) > 0 ? (entry.district | 0) : Math.floor(id / 2) + 1;
+    const team = (entry.team | 0) > 0 ? (entry.team | 0) : Math.floor(id / 2) + 1;
     const gender = entry.gender === 'm' ? 'm' : entry.gender === 'f' ? 'f' : (id % 2 ? 'm' : 'f');
     const x = num(ped.x, 0), z = num(ped.z, 0);
     const y = num(ped.y, groundY(x, z));
@@ -1364,12 +1364,12 @@
     const status = {};
     for (let i = 0; i < STATUS_NAMES.length; i++) status[STATUS_NAMES[i]] = 0;
     const t = {
-      kind: 'tribute',
+      kind: 'contestant',
       id: id,
-      name: String(entry.name || ('Tribute ' + (id + 1))).slice(0, 24),
-      district: district,
+      name: String(entry.name || ('Contestant ' + (id + 1))).slice(0, 24),
+      team: team,
       gender: gender,
-      color: GM.districtColor(district),
+      color: GM.teamColor(team),
       archetype: entry.archetype || 'survivor',
       traits: {},
       skills: skills,
@@ -1398,7 +1398,7 @@
         onPed: true, pedX: x, pedY: y, pedZ: z,
       },
       action: 'idle',
-      thought: { key: 'tribute.thought.none', params: {} },
+      thought: { key: 'contestant.thought.none', params: {} },
       targetId: null,
       allianceId: null,
       mind: {},
@@ -1446,11 +1446,11 @@
     root.position.copy(t.pos);
     root.rotation.y = t.heading;
     buildTag(t);
-    Tributes.refreshGear(t);
+    Contestants.refreshGear(t);
     addToScene(root);
   }
 
-  function disposeTribute(t) {
+  function disposeContestant(t) {
     if (!t) return;
     if (t.mesh) removeFromScene(t.mesh);
     const rig = t.rig;
@@ -1462,7 +1462,7 @@
       rig.tag = null;
     }
     if (rig && rig.skinned) {
-      // the body geometry and material are per tribute
+      // the body geometry and material are per contestant
       try {
         rig.skinned.geometry.dispose();
         rig.mat.dispose();
@@ -1474,67 +1474,67 @@
   }
 
   /**
-   * Create tribute objects + meshes on the pedestals (World.pedestals(n)),
-   * give each a mind (GM.AI.initMind) and store them in GM.state.tributes.
+   * Create contestant objects + meshes on the pedestals (World.pedestals(n)),
+   * give each a mind (GM.AI.initMind) and store them in GM.state.contestants.
    */
-  Tributes.spawnAll = function (roster) {
+  Contestants.spawnAll = function (roster) {
     const st = GM.state;
     if (!hasThree()) return [];
-    const old = st.tributes || [];
-    for (let i = 0; i < old.length; i++) disposeTribute(old[i]);
+    const old = st.contestants || [];
+    for (let i = 0; i < old.length; i++) disposeContestant(old[i]);
     pathQueue.length = 0;
     removePickups();
-    if (!Array.isArray(roster) || roster.length < CFG.MIN_TRIBUTES) {
-      roster = Tributes.generateRoster(CFG.DEFAULT_TRIBUTES, 'balanced', st.seed);
+    if (!Array.isArray(roster) || roster.length < CFG.MIN_CONTESTANTS) {
+      roster = Contestants.generateRoster(CFG.DEFAULT_CONTESTANTS, 'balanced', st.seed);
     }
-    const n = Math.min(roster.length, CFG.MAX_TRIBUTES);
+    const n = Math.min(roster.length, CFG.MAX_CONTESTANTS);
     let peds = null;
     if (GM.World && typeof GM.World.pedestals === 'function') {
-      try { peds = GM.World.pedestals(n); } catch (err) { GM.reportError('Tributes.pedestals', err); peds = null; }
+      try { peds = GM.World.pedestals(n); } catch (err) { GM.reportError('Contestants.pedestals', err); peds = null; }
     }
     if (!Array.isArray(peds) || peds.length < n) peds = fallbackPedestals(n);
-    const list = st.tributes || (st.tributes = []);
+    const list = st.contestants || (st.contestants = []);
     list.length = 0;
-    for (let i = 0; i < n; i++) list.push(createTribute(roster[i], i, peds[i] || {}));
+    for (let i = 0; i < n; i++) list.push(createContestant(roster[i], i, peds[i] || {}));
     const AI = GM.AI;
     for (let i = 0; i < n; i++) {
       const t = list[i];
       let ok = false;
       if (AI && typeof AI.initMind === 'function') {
-        try { AI.initMind(t); ok = true; } catch (err) { GM.reportError('Tributes.initMind', err); }
+        try { AI.initMind(t); ok = true; } catch (err) { GM.reportError('Contestants.initMind', err); }
       }
       if (!ok) fallbackMind(t);
-      if (!t.thought) t.thought = { key: 'tribute.thought.none', params: {} };
+      if (!t.thought) t.thought = { key: 'contestant.thought.none', params: {} };
     }
     for (let i = 0; i < n; i++) buildMesh(list[i]);
     return list;
   };
 
   // ================================================================ queries
-  /** Tribute by id, or null. */
-  Tributes.get = function (id) {
+  /** Contestant by id, or null. */
+  Contestants.get = function (id) {
     if (id == null) return null;
-    return GM.state.tributes[id] || null;
+    return GM.state.contestants[id] || null;
   };
-  /** All tribute objects (the live GM.state.tributes array). */
-  Tributes.list = function () { return GM.state.tributes; };
-  /** Living tributes (new array). */
-  Tributes.alive = function () {
+  /** All contestant objects (the live GM.state.contestants array). */
+  Contestants.list = function () { return GM.state.contestants; };
+  /** Living contestants (new array). */
+  Contestants.alive = function () {
     const out = [];
-    const list = GM.state.tributes;
+    const list = GM.state.contestants;
     for (let i = 0; i < list.length; i++) if (list[i] && list[i].alive) out.push(list[i]);
     return out;
   };
-  Tributes.aliveCount = function () {
+  Contestants.aliveCount = function () {
     let n = 0;
-    const list = GM.state.tributes;
+    const list = GM.state.contestants;
     for (let i = 0; i < list.length; i++) if (list[i] && list[i].alive) n++;
     return n;
   };
-  /** Nearest living tribute within maxDist (optional filter(t) → bool). */
-  Tributes.nearest = function (pos, maxDist, filter) {
+  /** Nearest living contestant within maxDist (optional filter(t) → bool). */
+  Contestants.nearest = function (pos, maxDist, filter) {
     if (!pos) return null;
-    const list = GM.state.tributes;
+    const list = GM.state.contestants;
     let best = null;
     let bd = maxDist == null ? Infinity : maxDist * maxDist;
     for (let i = 0; i < list.length; i++) {
@@ -1549,11 +1549,11 @@
     }
     return best;
   };
-  /** Living tributes within r (optional filter). */
-  Tributes.inRadius = function (pos, r, filter) {
+  /** Living contestants within r (optional filter). */
+  Contestants.inRadius = function (pos, r, filter) {
     const out = [];
     if (!pos) return out;
-    const list = GM.state.tributes;
+    const list = GM.state.contestants;
     const r2 = r * r;
     for (let i = 0; i < list.length; i++) {
       const t = list[i];
@@ -1565,12 +1565,12 @@
     }
     return out;
   };
-  /** Can the tribute act right now (alive, awake, not stunned)? */
-  Tributes.canAct = function (t) {
+  /** Can the contestant act right now (alive, awake, not stunned)? */
+  Contestants.canAct = function (t) {
     return !!(t && t.alive && !t.sleeping && !(t.status && t.status.stun > 0));
   };
   /** Head position (projectile aim / FX), written into out (or a new Vector3). */
-  Tributes.headPos = function (t, out) {
+  Contestants.headPos = function (t, out) {
     out = out || new THREE.Vector3();
     const h = t.look ? t.look.height : 1;
     let y = t.pos.y + 1.62 * h;
@@ -1580,7 +1580,7 @@
     return out.set(t.pos.x, y, t.pos.z);
   };
   /** Chest position (where hits land). */
-  Tributes.chestPos = function (t, out) {
+  Contestants.chestPos = function (t, out) {
     out = out || new THREE.Vector3();
     const h = t.look ? t.look.height : 1;
     let y = t.pos.y + 1.22 * h;
@@ -1602,10 +1602,10 @@
 
   /**
    * Sync the visible gear with the inventory: weapon in hand (ranged when the
-   * tribute is shooting, else melee), the other weapon on the back, armor
+   * contestant is shooting, else melee), the other weapon on the back, armor
    * vest, backpack when carrying supplies. Called by Items after pickups.
    */
-  Tributes.refreshGear = function (t) {
+  Contestants.refreshGear = function (t) {
     const rig = t && t.rig;
     if (!rig) return;
     const inv = t.inv || {};
@@ -1649,7 +1649,7 @@
   };
 
   // ============================================================ locomotion
-  const pathQueue = [];          // tribute ids waiting for an A* run
+  const pathQueue = [];          // contestant ids waiting for an A* run
   let pathsThisFrame = 0;
   let animClock = 0;             // sim seconds (freezes while paused)
   const SEP = { x: 0, z: 0 };
@@ -1665,7 +1665,7 @@
   function processPaths() {
     let budget = MAX_PATHS_PER_STEP;
     const T = Ter();
-    const list = GM.state.tributes;
+    const list = GM.state.contestants;
     while (pathQueue.length && budget > 0 && pathsThisFrame < MAX_PATHS_PER_FRAME) {
       const t = list[pathQueue.shift()];
       if (!t || !t.nav) continue;
@@ -1680,7 +1680,7 @@
     const nav = t.nav;
     let path = null;
     if (T && typeof T.findPath === 'function') {
-      try { path = T.findPath(t.pos.x, t.pos.z, nav.gx, nav.gz, { maxNodes: 4000 }); } catch (err) { GM.reportError('Tributes.findPath', err); path = null; }
+      try { path = T.findPath(t.pos.x, t.pos.z, nav.gx, nav.gz, { maxNodes: 4000 }); } catch (err) { GM.reportError('Contestants.findPath', err); path = null; }
     }
     nav.planAt = now();
     nav.planGX = nav.gx;
@@ -1729,11 +1729,11 @@
    * budgeted queue when the goal is far or blocked, else steers directly.
    * Cheap to call every tick: no re-plan while the goal moved < 2 m.
    */
-  Tributes.moveTo = function (t, x, z, mode) {
+  Contestants.moveTo = function (t, x, z, mode) {
     if (!t || !t.alive || !t.nav || !(x === x) || !(z === z)) return false;
     const nav = t.nav;
     mode = SPEEDS[mode] ? mode : 'walk';
-    if (t.sleeping) Tributes.setSleeping(t, false);
+    if (t.sleeping) Contestants.setSleeping(t, false);
     nav.mode = mode;
     t.sneaking = mode === 'sneak';
     const r = Math.sqrt(x * x + z * z), maxR = CFG.ARENA_RADIUS - 2.5;
@@ -1760,7 +1760,7 @@
   };
 
   /** Stop moving (keeps facing). */
-  Tributes.stop = function (t) {
+  Contestants.stop = function (t) {
     if (!t || !t.nav) return;
     stopNav(t);
     t.nav.hasGoal = false;
@@ -1769,7 +1769,7 @@
   };
 
   /** Turn to face a point (x, z) or a position object. */
-  Tributes.faceToward = function (t, x, z) {
+  Contestants.faceToward = function (t, x, z) {
     if (!t || !t.pos) return;
     if (x && typeof x === 'object') { z = x.z; x = x.x; }
     const dx = x - t.pos.x, dz = z - t.pos.z;
@@ -1778,8 +1778,8 @@
     if (t.nav) t.nav.faceUntil = now() + 0.6;
   };
 
-  /** Is the tribute within dist of its current move goal (true when it has none)? */
-  Tributes.arrived = function (t, dist) {
+  /** Is the contestant within dist of its current move goal (true when it has none)? */
+  Contestants.arrived = function (t, dist) {
     if (!t || !t.nav) return true;
     const nav = t.nav;
     if (!nav.hasGoal) return true;
@@ -1789,7 +1789,7 @@
   };
 
   /** Movement speed (m/s) for a mode right now (skills, stamina, wounds, terrain, weather). */
-  Tributes.speedOf = function (t, mode, depth) {
+  Contestants.speedOf = function (t, mode, depth) {
     if (!t) return 0;
     mode = mode || (t.nav ? t.nav.mode : 'walk');
     if (depth == null) depth = waterDepth(t.pos.x, t.pos.z);
@@ -1811,7 +1811,7 @@
   };
 
   function separation(t) {
-    const list = GM.state.tributes;
+    const list = GM.state.contestants;
     let sx = 0, sz = 0;
     for (let i = 0; i < list.length; i++) {
       const o = list[i];
@@ -1835,7 +1835,7 @@
     const depth = waterDepth(pos.x, pos.z);
     t.inWater = depth > WADE_DEPTH;
     t.swimming = depth > SWIM_DEPTH;
-    if (t.swimming && t.sleeping) Tributes.setSleeping(t, false);
+    if (t.swimming && t.sleeping) Contestants.setSleeping(t, false);
     const stunned = t.status.stun > 0;
     const counting = phase === 'countdown';
     const canMove = !stunned && !t.sleeping && !counting;
@@ -1864,7 +1864,7 @@
       if (final && d < 0.45) {
         stopNav(t);
       } else if (d > 1e-4) {
-        let spd = Tributes.speedOf(t, nav.mode, depth);
+        let spd = Contestants.speedOf(t, nav.mode, depth);
         if (final && d < 1.5) spd *= Math.max(0.35, d / 1.5);
         dx /= d; dz /= d;
         if (nav.sideT > 0) {
@@ -2011,8 +2011,8 @@
       t.health = Math.min(t.maxHealth, t.health + (sl ? 0.12 : 0.035) * dt);
     }
     // collapse from exhaustion (unless just attacked); wake up when rested
-    if (!sl && t.energy <= 0 && !t.swimming && now() - t.lastAttackedAt > 8) Tributes.setSleeping(t, true);
-    else if (sl && t.energy >= 100 && now() - t.sleepAt > 20) Tributes.setSleeping(t, false);
+    if (!sl && t.energy <= 0 && !t.swimming && now() - t.lastAttackedAt > 8) Contestants.setSleeping(t, true);
+    else if (sl && t.energy >= 100 && now() - t.sleepAt > 20) Contestants.setSleeping(t, false);
   }
 
   /** Status timers tick down; poison / bleeding / burning add damage over time. */
@@ -2064,8 +2064,8 @@
       if (!(v > 0)) continue;
       d[k] = 0;
       const bleed = k === 'bleeding';
-      Tributes.damage(t, v, {
-        cause: DOT_CAUSE[k], attacker: null, mutt: null, weapon: null, pos: t.pos,
+      Contestants.damage(t, v, {
+        cause: DOT_CAUSE[k], attacker: null, beast: null, weapon: null, pos: t.pos,
         dot: true, bleed: bleed, bleedBy: bleed ? t.woundBy : null,
       });
     }
@@ -2073,11 +2073,11 @@
 
   // ======================================================= damage and death
   /**
-   * Damage a tribute. info {cause, attacker, mutt, weapon, pos, sneak, trapOwnerId, dot}.
-   * Armor reduces weapon / mutt / explosion damage. Ignored when the Games ended.
+   * Damage a contestant. info {cause, attacker, beast, weapon, pos, sneak, trapOwnerId, dot}.
+   * Armor reduces weapon / beast / explosion damage. Ignored when the Show ended.
    * Returns the damage actually dealt.
    */
-  Tributes.damage = function (t, amount, info) {
+  Contestants.damage = function (t, amount, info) {
     if (!t || !t.alive || !(amount > 0)) return 0;
     const phase = GM.state.phase;
     if (phase === 'ended' || phase === 'setup') return 0;
@@ -2093,34 +2093,34 @@
     if (!(dmg > 0)) return 0;
     if (info.wasAsleep == null) info.wasAsleep = t.sleeping;
     t.health -= dmg;
-    const atk = info.attacker && info.attacker.kind === 'tribute' && info.attacker !== t ? info.attacker : null;
+    const atk = info.attacker && info.attacker.kind === 'contestant' && info.attacker !== t ? info.attacker : null;
     if (atk) {
       t.lastAttackedBy = atk.id;
       t.lastAttackedAt = now();
       atk.damageDealt = (atk.damageDealt || 0) + dmg;
     }
-    if (t.sleeping && !(info.dot && (cause === 'starve' || cause === 'thirst' || cause === 'cold'))) Tributes.setSleeping(t, false);
+    if (t.sleeping && !(info.dot && (cause === 'starve' || cause === 'thirst' || cause === 'cold'))) Contestants.setSleeping(t, false);
     if (!info.dot || dmg >= 3) {
       t.anim.flash = Math.max(t.anim.flash, info.dot ? 0.08 : 0.14);
-      if (!info.dot && dmg >= 6 && t.health > 0 && !t.anim.atk.on) Tributes.gesture(t, 'flinch', 0.35);
+      if (!info.dot && dmg >= 6 && t.health > 0 && !t.anim.atk.on) Contestants.gesture(t, 'flinch', 0.35);
     }
     const AI = GM.AI;
     if (AI && typeof AI.onDamaged === 'function') {
-      try { AI.onDamaged(t, info); } catch (err) { GM.reportError('Tributes.onDamaged', err); }
+      try { AI.onDamaged(t, info); } catch (err) { GM.reportError('Contestants.onDamaged', err); }
     }
-    GM.emit('tribute:damaged', { tribute: t, amount: dmg, cause: cause, attacker: atk, pos: t.pos });
+    GM.emit('contestant:damaged', { contestant: t, amount: dmg, cause: cause, attacker: atk, pos: t.pos });
     if (t.alive && t.health <= 0.001) {
       t.health = 0;
-      Tributes.kill(t, info);
+      Contestants.kill(t, info);
     }
     return dmg;
   };
 
-  function districtPartner(t) {
-    const list = GM.state.tributes;
+  function teamPartner(t) {
+    const list = GM.state.contestants;
     for (let i = 0; i < list.length; i++) {
       const o = list[i];
-      if (o && o !== t && o.district === t.district) return o;
+      if (o && o !== t && o.team === t.team) return o;
     }
     return null;
   }
@@ -2138,7 +2138,7 @@
       if (credit === 'trap') key = variant('log.kill.trap');
       else if (credit === 'bleed') key = variant('log.kill.bleed');
       else if (credit === 'env') key = variant('log.kill.env');
-      else if (killer.district === t.district) key = 'log.kill.partner';
+      else if (killer.team === t.team) key = 'log.kill.partner';
       else if (wasAsleep) key = variant('log.kill.sleep');
       else if (info.sneak) key = variant('log.kill.sneak');
       else if (weapon === 'bow') key = variant('log.kill.bow');
@@ -2146,25 +2146,25 @@
       else if (!weapon || cause === 'fists') key = variant('log.kill.fists');
       else key = variant('log.kill.melee');
       const ids = [killer.id, t.id];
-      GM.log('kill', key, p, { pos: pos, tributeIds: ids, important: true });
-      if (firstBlood) GM.log('kill', 'log.kill.firstBlood', {}, { pos: pos, tributeIds: ids, important: true });
-      const partner = districtPartner(killer);
+      GM.log('kill', key, p, { pos: pos, contestantIds: ids, important: true });
+      if (firstBlood) GM.log('kill', 'log.kill.firstBlood', {}, { pos: pos, contestantIds: ids, important: true });
+      const partner = teamPartner(killer);
       if (partner && partner !== t && !partner.alive && partner.killedBy === t.id) {
-        GM.log('kill', 'log.kill.revenge', { killer: killer.name, partner: partner.name }, { pos: pos, tributeIds: ids });
+        GM.log('kill', 'log.kill.revenge', { killer: killer.name, partner: partner.name }, { pos: pos, contestantIds: ids });
       }
-      if (killer.kills >= 3) GM.log('kill', 'log.kill.streak', { killer: killer.name, n: killer.kills }, { pos: pos, tributeIds: [killer.id] });
+      if (killer.kills >= 3) GM.log('kill', 'log.kill.streak', { killer: killer.name, n: killer.kills }, { pos: pos, contestantIds: [killer.id] });
     } else {
       const base = 'log.death.' + cause;
-      GM.log('death', VARIANTS[base] ? variant(base) : variant('log.death.unknown'), { victim: t.name }, { pos: pos, tributeIds: [t.id], important: true });
+      GM.log('death', VARIANTS[base] ? variant(base) : variant('log.death.unknown'), { victim: t.name }, { pos: pos, contestantIds: [t.id], important: true });
     }
   }
 
   /**
    * Death: fall animation, inventory dropped, kill credit (direct attacker,
    * trap owner, bleeding wound, or whoever hit t in the last 8 s before an
-   * environmental death), placement, log, 'tribute:died', interest.
+   * environmental death), placement, log, 'contestant:died', interest.
    */
-  Tributes.kill = function (t, info) {
+  Contestants.kill = function (t, info) {
     if (!t || !t.alive) return;
     const st = GM.state;
     info = info || {};
@@ -2188,18 +2188,18 @@
     t.healLeft = 0;
 
     // kill credit
-    let killer = info.attacker && info.attacker.kind === 'tribute' && info.attacker !== t ? info.attacker : null;
+    let killer = info.attacker && info.attacker.kind === 'contestant' && info.attacker !== t ? info.attacker : null;
     let credit = killer ? 'direct' : null;
     if (!killer && info.trapOwnerId != null) {
-      const o = Tributes.get(info.trapOwnerId);
+      const o = Contestants.get(info.trapOwnerId);
       if (o && o !== t) { killer = o; credit = 'trap'; }
     }
     if (!killer && info.bleed && info.bleedBy != null) {
-      const o = Tributes.get(info.bleedBy);
+      const o = Contestants.get(info.bleedBy);
       if (o && o !== t) { killer = o; credit = 'bleed'; }
     }
     if (!killer && !DIRECT_CAUSES[cause] && cause !== 'smite' && t.lastAttackedBy != null && now() - t.lastAttackedAt <= KILL_CREDIT_WINDOW) {
-      const o = Tributes.get(t.lastAttackedBy);
+      const o = Contestants.get(t.lastAttackedBy);
       if (o && o !== t) { killer = o; credit = 'env'; }
     }
     if (killer) killer.kills = (killer.kills || 0) + 1;
@@ -2208,7 +2208,7 @@
     t.deathWeapon = info.weapon || null;
     t.deathTime = now();
     t.deathDay = st.day;
-    t.placement = Tributes.aliveCount() + 1;
+    t.placement = Contestants.aliveCount() + 1;
 
     // fall away from whatever killed us
     const a = t.anim;
@@ -2217,7 +2217,7 @@
     a.gest.on = false;
     a.flash = 0.2;
     let dir = -1;
-    const src = (killer && credit === 'direct' ? killer.pos : null) || (info.mutt && info.mutt.pos) || info.pos || null;
+    const src = (killer && credit === 'direct' ? killer.pos : null) || (info.beast && info.beast.pos) || info.pos || null;
     if (src) {
       const hx = src.x - t.pos.x, hz = src.z - t.pos.z;
       if (hx * hx + hz * hz > 0.01) dir = Math.abs(U.angleDiff(t.heading, Math.atan2(hx, hz))) < HP ? -1 : 1;
@@ -2226,35 +2226,35 @@
     a.deathTwist = Math.random() < 0.5 ? -1 : 1;
 
     if (GM.Items && typeof GM.Items.dropAll === 'function') {
-      try { GM.Items.dropAll(t); } catch (err) { GM.reportError('Tributes.dropAll', err); }
+      try { GM.Items.dropAll(t); } catch (err) { GM.reportError('Contestants.dropAll', err); }
     } else {
       t.inv = emptyInv();
     }
-    Tributes.refreshGear(t);
+    Contestants.refreshGear(t);
 
-    try { logDeath(t, killer, credit, cause, info, wasAsleep, firstBlood); } catch (err) { GM.reportError('Tributes.logDeath', err); }
-    GM.emit('tribute:died', { tribute: t, killer: killer, cause: cause, weapon: info.weapon || null, pos: t.pos });
+    try { logDeath(t, killer, credit, cause, info, wasAsleep, firstBlood); } catch (err) { GM.reportError('Contestants.logDeath', err); }
+    GM.emit('contestant:died', { contestant: t, killer: killer, cause: cause, weapon: info.weapon || null, pos: t.pos });
     GM.addInterest({
       pos: t.pos, score: 10, duration: 12, kind: 'death', key: 'death:' + t.id,
-      label: { key: 'tribute.interest.death', params: { name: t.name } },
+      label: { key: 'contestant.interest.death', params: { name: t.name } },
       followId: killer && killer.alive ? killer.id : null,
     });
     aiNoise(t.pos, 35, 'scream', t.id);
     sfx('scream', t.pos, 0.7);
   };
 
-  /** Heal (clamped to maxHealth). Emits 'tribute:healed'. Returns the amount healed. */
-  Tributes.heal = function (t, amount) {
+  /** Heal (clamped to maxHealth). Emits 'contestant:healed'. Returns the amount healed. */
+  Contestants.heal = function (t, amount) {
     if (!t || !t.alive || !(amount > 0)) return 0;
     const h = Math.min(amount, t.maxHealth - t.health);
     if (!(h > 0)) return 0;
     t.health += h;
-    GM.emit('tribute:healed', { tribute: t, amount: h });
+    GM.emit('contestant:healed', { contestant: t, amount: h });
     return h;
   };
 
   // ======================================================== status + sleep
-  Tributes.setSleeping = function (t, on) {
+  Contestants.setSleeping = function (t, on) {
     if (!t || !t.alive) return false;
     on = !!on;
     if (t.sleeping === on) return true;
@@ -2273,25 +2273,25 @@
   };
 
   /** Set a status timer (sim s): max of old and new; seconds <= 0 clears it. */
-  Tributes.setStatus = function (t, name, seconds) {
+  Contestants.setStatus = function (t, name, seconds) {
     if (!t || !t.alive || !t.status || !name) return;
     seconds = +seconds || 0;
     if (seconds <= 0) { t.status[name] = 0; return; }
     if (name === 'burning' && t.inWater) return;
     t.status[name] = Math.max(t.status[name] || 0, seconds);
     if (name === 'stun') {
-      if (t.sleeping) Tributes.setSleeping(t, false);
+      if (t.sleeping) Contestants.setSleeping(t, false);
       t.anim.atk.on = false;
     }
   };
 
-  Tributes.stun = function (t, seconds) {
+  Contestants.stun = function (t, seconds) {
     if (!t || !t.alive || !(seconds > 0)) return;
-    Tributes.setStatus(t, 'stun', seconds);
+    Contestants.setStatus(t, 'stun', seconds);
   };
 
-  /** Push a tribute (force ≈ initial m/s, decays quickly). */
-  Tributes.knockback = function (t, dirX, dirZ, force) {
+  /** Push a contestant (force ≈ initial m/s, decays quickly). */
+  Contestants.knockback = function (t, dirX, dirZ, force) {
     if (!t || !t.alive || !t.nav) return;
     const l = Math.sqrt(dirX * dirX + dirZ * dirZ);
     if (!(l > 1e-6) || !(force > 0)) return;
@@ -2301,16 +2301,16 @@
     nav.kz += dirZ / l * f;
     const m = Math.sqrt(nav.kx * nav.kx + nav.kz * nav.kz);
     if (m > 14) { nav.kx *= 14 / m; nav.kz *= 14 / m; }
-    if (t.sleeping) Tributes.setSleeping(t, false);
+    if (t.sleeping) Contestants.setSleeping(t, false);
   };
 
   /** Short red hit flash on the body. */
-  Tributes.flash = function (t, seconds) {
+  Contestants.flash = function (t, seconds) {
     if (!t || !t.anim) return;
     t.anim.flash = Math.max(t.anim.flash, seconds || 0.12);
   };
   /** Body gesture: pickup, forage, trap, drink, eat, heal, victory, wave, flinch. */
-  Tributes.gesture = function (t, type, seconds) {
+  Contestants.gesture = function (t, type, seconds) {
     if (!t || !t.alive || !t.anim) return;
     if (t.sleeping && type !== 'flinch') return;
     const g = t.anim.gest;
@@ -2320,7 +2320,7 @@
     g.dur = seconds || 0.8;
   };
   /** Attack animation: slash, chop, stab, thrust, punch, draw (bow), throw. */
-  Tributes.playAttack = function (t, type, seconds) {
+  Contestants.playAttack = function (t, type, seconds) {
     if (!t || !t.alive || !t.anim) return;
     const k = t.anim.atk;
     k.on = true;
@@ -2331,7 +2331,7 @@
   };
 
   /** Active effects for the UI: [{id, key, descKey, icon, time}]. */
-  Tributes.statusList = function (t) {
+  Contestants.statusList = function (t) {
     const out = [];
     if (!t || !t.alive) return out;
     const s = t.status || {};
@@ -2353,23 +2353,23 @@
 
   // ============================================================ survival
   /** Use one carried supply: 'food' | 'water' | 'medkit' | 'berries'. */
-  Tributes.consume = function (t, what) {
+  Contestants.consume = function (t, what) {
     if (!t || !t.alive || !t.inv || !(t.inv[what] > 0)) return false;
     const D = GM.ItemDefs || {};
     const def = D[what] || {};
     const inv = t.inv;
-    if (t.sleeping) Tributes.setSleeping(t, false);
+    if (t.sleeping) Contestants.setSleeping(t, false);
     switch (what) {
       case 'food':
         inv.food--;
         t.hunger = Math.max(0, t.hunger - num(def.hunger, 45));
-        Tributes.gesture(t, 'eat', 1.1);
+        Contestants.gesture(t, 'eat', 1.1);
         sfx('eat', t.pos, 0.7);
         break;
       case 'water':
         inv.water--;
         t.thirst = Math.max(0, t.thirst - num(def.thirst, 50));
-        Tributes.gesture(t, 'eat', 1.0);
+        Contestants.gesture(t, 'eat', 1.0);
         sfx('eat', t.pos, 0.5, 1.3);
         break;
       case 'medkit': {
@@ -2380,8 +2380,8 @@
         t.status.bleeding = 0;
         t.status.poison = 0;
         t.woundBy = null;
-        if (expected > 0) GM.emit('tribute:healed', { tribute: t, amount: expected });
-        Tributes.gesture(t, 'heal', 1.6);
+        if (expected > 0) GM.emit('contestant:healed', { contestant: t, amount: expected });
+        Contestants.gesture(t, 'heal', 1.6);
         sfx('heal', t.pos, 0.8);
         FXP.x = t.pos.x; FXP.y = t.pos.y + 1.1; FXP.z = t.pos.z;
         fx('burst', FXP, { count: 10, color: 0x7dff9a, color2: 0xffffff, speed: 1.2, up: 1.5, gravity: 0.5, size: 0.18, life: 0.9, additive: true });
@@ -2390,15 +2390,15 @@
       case 'berries': {
         inv.berries--;
         t.hunger = Math.max(0, t.hunger - num(def.hunger, 20));
-        Tributes.gesture(t, 'eat', 0.9);
+        Contestants.gesture(t, 'eat', 0.9);
         sfx('eat', t.pos, 0.6, 1.2);
-        const p = num(def.nightlock, 0.1) * (1 - skill(t, 'survival'));
+        const p = num(def.toxin, 0.1) * (1 - skill(t, 'survival'));
         if (GM.R.chance(p)) {
-          Tributes.setStatus(t, 'poison', 22);
-          GM.log('item', 'log.item.nightlock', { name: t.name }, { pos: t.pos, tributeIds: [t.id], important: true });
+          Contestants.setStatus(t, 'poison', 22);
+          GM.log('item', 'log.item.toxin', { name: t.name }, { pos: t.pos, contestantIds: [t.id], important: true });
           GM.addInterest({
-            pos: t.pos, score: 4, duration: 8, followId: t.id, kind: 'poison', key: 'nightlock:' + t.id,
-            label: { key: 'tribute.interest.poison', params: { name: t.name } },
+            pos: t.pos, score: 4, duration: 8, followId: t.id, kind: 'poison', key: 'toxin:' + t.id,
+            label: { key: 'contestant.interest.poison', params: { name: t.name } },
           });
         }
         break;
@@ -2406,13 +2406,13 @@
       default:
         return false;
     }
-    Tributes.refreshGear(t);
-    GM.emit('item:used', { tribute: t, type: what });
+    Contestants.refreshGear(t);
+    GM.emit('item:used', { contestant: t, type: what });
     return true;
   };
 
   /** Drink from nearby water (must be within ~3 m of it). */
-  Tributes.drink = function (t) {
+  Contestants.drink = function (t) {
     if (!t || !t.alive) return false;
     const p = t.pos;
     let ok = t.inWater || isWater(p.x, p.z);
@@ -2428,10 +2428,10 @@
       }
     }
     if (!ok) return false;
-    if (t.sleeping) Tributes.setSleeping(t, false);
+    if (t.sleeping) Contestants.setSleeping(t, false);
     t.thirst = Math.max(0, t.thirst - 60);
     if (t.status.burning > 0) t.status.burning = 0;
-    Tributes.gesture(t, 'drink', 1.6);
+    Contestants.gesture(t, 'drink', 1.6);
     sfx('splash', p, 0.45);
     return true;
   };
@@ -2440,7 +2440,7 @@
    * Search for food (call repeatedly with dt). Chance by survival skill and
    * cover; returns 'berries' | 'food' when something was found, else null.
    */
-  Tributes.forage = function (t, dt) {
+  Contestants.forage = function (t, dt) {
     if (!t || !t.alive || t.swimming || !t.inv) return null;
     dt = num(dt, 0.5);
     const p = t.pos;
@@ -2451,7 +2451,7 @@
     t.forageT += dt;
     if (t.forageT > 1.6) {
       t.forageT = 0;
-      Tributes.gesture(t, 'forage', 1.3);
+      Contestants.gesture(t, 'forage', 1.3);
     }
     if (!GM.R.chance(Math.min(0.5, rate * dt))) return null;
     const D = GM.ItemDefs || {};
@@ -2460,9 +2460,9 @@
     if ((t.inv[type] || 0) >= capOf(type)) type = type === 'berries' ? 'food' : 'berries';
     if ((t.inv[type] || 0) >= capOf(type)) return null;
     t.inv[type] = (t.inv[type] || 0) + 1;
-    Tributes.gesture(t, 'pickup', 0.7);
-    Tributes.refreshGear(t);
-    GM.emit('item:pickup', { tribute: t, type: type, source: 'forage' });
+    Contestants.gesture(t, 'pickup', 0.7);
+    Contestants.refreshGear(t);
+    GM.emit('item:pickup', { contestant: t, type: type, source: 'forage' });
     return type;
   };
 
@@ -2746,7 +2746,7 @@
       P.nX += Math.sin(ip * 0.23 + 1.3) * 0.08 * idle;
       // --- look at the current target
       if (t.targetId != null && !busy) {
-        const o = GM.state.tributes[t.targetId];
+        const o = GM.state.contestants[t.targetId];
         if (o && o.alive && o.pos) {
           const dx = o.pos.x - t.pos.x, dz = o.pos.z - t.pos.z;
           if (dx * dx + dz * dz < 900) {
@@ -2833,7 +2833,7 @@
     a.sleep += ((t.sleeping ? 1 : 0) - a.sleep) * (1 - Math.exp(-3 * dt));
     a.crouch += ((t.sneaking ? 1 : t.hidden ? 0.75 : 0) - a.crouch) * (1 - Math.exp(-6 * dt));
     a.stun += ((t.status.stun > 0 ? 1 : 0) - a.stun) * k8;
-    const fighting = (t.action === 'fight' || t.action === 'berserk' || t.action === 'bloodbath' || t.action === 'mad') &&
+    const fighting = (t.action === 'fight' || t.action === 'berserk' || t.action === 'kickoff' || t.action === 'mad') &&
       t.nav.speed < 3 && !t.swimming && !t.sleeping;
     a.guard = (a.guard || 0) + ((fighting ? 1 : 0) - (a.guard || 0)) * (1 - Math.exp(-4 * dt));
     // footfalls (each time the stride crosses over)
@@ -2845,7 +2845,7 @@
   }
 
   const FOOT = { count: 3, color: 0x9a8f80, color2: 0xc2b8a8, speed: 0.7, spread: 0.12, up: 0.9, gravity: -1.2, size: 0.34, life: 0.7, alpha: 0.5 };
-  /** Dust, snow puffs or splashes under a running tribute (only close to the main camera). */
+  /** Dust, snow puffs or splashes under a running contestant (only close to the main camera). */
   function footfall(t, side) {
     const cam = GM.Cameras && GM.Cameras.main;
     if (!cam) return;
@@ -2957,7 +2957,7 @@
     }
     GM.addInterest({
       pos: pos, score: 3, duration: 14, kind: 'hovercraft', key: 'body:' + t.id,
-      label: { key: 'tribute.interest.body', params: { name: t.name } },
+      label: { key: 'contestant.interest.body', params: { name: t.name } },
     });
     pickups.push(pk);
   }
@@ -3038,7 +3038,7 @@
   // ================================================================ system
   function update(dt) {
     const st = GM.state;
-    const list = st.tributes;
+    const list = st.contestants;
     if (!list || !list.length) return;
     animClock += dt;
     const phase = st.phase;
@@ -3057,7 +3057,7 @@
         t.cheerT -= dt;
         if (t.cheerT <= 0 && !t.nav.moving && !t.anim.gest.on && !t.sleeping) {
           t.cheerT = 5 + Math.random() * 3;
-          Tributes.gesture(t, 'victory', 2.2);
+          Contestants.gesture(t, 'victory', 2.2);
         }
       }
     }
@@ -3067,7 +3067,7 @@
   function frame(realDt) {
     pathsThisFrame = 0;
     const st = GM.state;
-    const list = st.tributes;
+    const list = st.contestants;
     if (list && list.length) {
       const show = tagsOn();
       for (let i = 0; i < list.length; i++) {
@@ -3085,8 +3085,8 @@
   }
 
   function clear() {
-    const list = GM.state.tributes || [];
-    for (let i = 0; i < list.length; i++) disposeTribute(list[i]);
+    const list = GM.state.contestants || [];
+    for (let i = 0; i < list.length; i++) disposeContestant(list[i]);
     removePickups();
     pathQueue.length = 0;
     pathsThisFrame = 0;
@@ -3098,11 +3098,11 @@
   }
 
   function reset(settings) {
-    Tributes.spawnAll(settings && settings.roster);
+    Contestants.spawnAll(settings && settings.roster);
   }
 
   GM.registerSystem({
-    name: 'Tributes',
+    name: 'Contestants',
     order: 50,
     clear: clear,
     reset: reset,

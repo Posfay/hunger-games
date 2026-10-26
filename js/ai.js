@@ -1,9 +1,9 @@
 /* ==========================================================================
- * ai.js — the minds of the tributes: archetypes, perception, emotions,
+ * ai.js — the minds of the contestants: archetypes, perception, emotions,
  * utility-based decisions, action execution, alliances and betrayal.
  *
  *   GM.Archetypes[id]         {id, icon, color, nameKey, descKey, traits, skillBias, ...}
- *   GM.ARCHETYPE_IDS          ['career','survivor','scavenger','opportunist',
+ *   GM.ARCHETYPE_IDS          ['elite','survivor','scavenger','opportunist',
  *                              'strategist','berserker','protector','lonewolf']
  *   GM.AI.pickArchetypes(n, mix, rng)   -> [archetype ids]
  *   GM.AI.initMind(t)                   traits, skills, emotions, memory, relations
@@ -15,21 +15,21 @@
  *   extras: GM.AI.MOODS, TRAITS, EMOTIONS, relation(a, b), tension(), describe(t)
  *
  * Design (SPEC section 9):
- *   - Every tribute has a private mind (t.mind): memory of other tributes
+ *   - Every contestant has a private mind (t.mind): memory of other contestants
  *     (last seen position / time), known items, water, dangers, heard noises,
  *     relations (trust, grudges), timers and the current plan.
- *   - Perception runs every ~0.35-0.5 sim s per tribute (staggered): sight
- *     cone, night / fog / forest cover / sneaking, mutts, items, crates,
+ *   - Perception runs every ~0.35-0.5 sim s per contestant (staggered): sight
+ *     cone, night / fog / forest cover / sneaking, beasts, items, crates,
  *     hazards, the force field and floods.
  *   - Emotions (fear, rage, confidence, sanity) move every tick toward
  *     baselines computed by perception, plus impulses from events.
  *   - Decisions every ~0.3-0.6 sim s: a utility score for every candidate
  *     action (needs x traits x emotions x situation), hysteresis for the
  *     current plan and erratic noise when sanity is low.
- *   - The chosen plan is executed every tick through GM.Tributes / GM.Combat /
+ *   - The chosen plan is executed every tick through GM.Contestants / GM.Combat /
  *     GM.Items; movement orders are only re-issued when the goal changes.
  *   - Pacing: tension rises every day and with every quiet minute; late in
- *     the Games everybody drifts toward the centre and the last known enemies.
+ *     the Show everybody drifts toward the centre and the last known enemies.
  *
  * Every cross-module call is feature-detected: the AI never crashes when a
  * module is missing or broken.
@@ -43,7 +43,7 @@
   const U = GM.U;
   const R = GM.R;
   const TAU = Math.PI * 2;
-  const MAXN = Math.max(48, CFG.MAX_TRIBUTES | 0);
+  const MAXN = Math.max(48, CFG.MAX_CONTESTANTS | 0);
   const ARENA_R = CFG.ARENA_RADIUS;
 
   // ======================================================================
@@ -53,12 +53,12 @@
   GM.i18n.add({
     en: {
       // ---- archetypes
-      'arch.career': 'Career',
-      'arch.career.desc': 'A trained killer. Runs to the Cornucopia, hunts in a pack with the other Careers, and trusts no one at the end.',
+      'arch.elite': 'Elite',
+      'arch.elite.desc': 'A trained killer. Runs to the Nexus, hunts in a pack with the other Elites, and trusts no one at the end.',
       'arch.survivor': 'Survivor',
       'arch.survivor.desc': 'Careful and clever. Finds food and water, hides well, and fights only when there is no way out.',
       'arch.scavenger': 'Scavenger',
-      'arch.scavenger.desc': 'A scared looter. Runs from everyone, takes things from bodies and sleeping tributes, and loves supply drops.',
+      'arch.scavenger.desc': 'A scared looter. Runs from everyone, takes things from bodies and sleeping contestants, and loves supply drops.',
       'arch.opportunist': 'Opportunist',
       'arch.opportunist.desc': 'Lets the others fight first. Follows the sound of fights, finishes the wounded, and betrays friends.',
       'arch.strategist': 'Strategist',
@@ -68,7 +68,7 @@
       'arch.protector': 'Protector',
       'arch.protector.desc': 'Loyal and kind. Makes friends, defends them, shares food, and never betrays anyone.',
       'arch.lonewolf': 'Lone wolf',
-      'arch.lonewolf.desc': 'Hunts alone. Moves quietly, follows lonely tributes, and likes to hunt at night.',
+      'arch.lonewolf.desc': 'Hunts alone. Moves quietly, follows lonely contestants, and likes to hunt at night.',
 
       // ---- traits
       'trait.aggression': 'Aggression',
@@ -79,13 +79,13 @@
       'trait.cunning': 'Cunning',
       'trait.patience': 'Patience',
       'trait.stability': 'Stability',
-      'trait.aggression.desc': 'How much this tribute wants to attack others.',
-      'trait.bravery.desc': 'How well this tribute controls fear.',
-      'trait.greed.desc': 'How much this tribute wants loot and supply drops.',
-      'trait.sociability.desc': 'How easily this tribute makes friends.',
-      'trait.loyalty.desc': 'How long this tribute stays true to allies.',
+      'trait.aggression.desc': 'How much this contestant wants to attack others.',
+      'trait.bravery.desc': 'How well this contestant controls fear.',
+      'trait.greed.desc': 'How much this contestant wants loot and supply drops.',
+      'trait.sociability.desc': 'How easily this contestant makes friends.',
+      'trait.loyalty.desc': 'How long this contestant stays true to allies.',
       'trait.cunning.desc': 'Tricks, traps, ambushes and betrayal.',
-      'trait.patience.desc': 'How long this tribute can wait for the right moment.',
+      'trait.patience.desc': 'How long this contestant can wait for the right moment.',
       'trait.stability.desc': 'How well the mind holds up under stress.',
 
       // ---- moods and emotions
@@ -130,17 +130,17 @@
       'act.panic': 'Panic',
       'act.mad': 'Madness',
       'act.berserk': 'Blind rage',
-      'act.bloodbath': 'Bloodbath',
+      'act.kickoff': 'Opening rush',
       'act.scatter': 'Running away',
 
       // ---- thoughts
-      'thought.pedestalRush': 'Looking at the weapons in the Cornucopia',
+      'thought.pedestalRush': 'Looking at the weapons in the Nexus',
       'thought.pedestalEdge': 'Plan: grab something and run',
       'thought.pedestalScatter': 'Looking for a way out',
-      'thought.pedestalCareer': 'Smiling at the other Careers',
-      'thought.bloodbath': 'Running to the Cornucopia',
+      'thought.pedestalElite': 'Smiling at the other Elites',
+      'thought.kickoff': 'Running to the Nexus',
       'thought.grab': 'Grabbing {item}',
-      'thought.scatter': 'Getting away from the bloodbath',
+      'thought.scatter': 'Getting away from the opening rush',
       'thought.wander': 'Looking around',
       'thought.explore': 'Exploring the arena',
       'thought.drift': 'Going to the center. This must end.',
@@ -153,9 +153,9 @@
       'thought.fleeHurt': 'Badly hurt — getting away from {target}',
       'thought.fleeSight': 'Someone is here! Running from {target}',
       'thought.fleeNoise': 'Fighting nearby. Moving away.',
-      'thought.fleeWolves': 'Running from the wolf mutts',
-      'thought.fleeWasps': 'Tracker jackers! Running to the water',
-      'thought.fleeWaspsDry': 'Running from the tracker jackers',
+      'thought.fleeWolves': 'Running from the wolf beasts',
+      'thought.fleeWasps': 'Killer wasps! Running to the water',
+      'thought.fleeWaspsDry': 'Running from the killer wasps',
       'thought.hide': 'Hiding in the forest',
       'thought.hideRocks': 'Hiding between the rocks',
       'thought.hideQuiet': 'Staying very quiet',
@@ -171,7 +171,7 @@
       'thought.fight': 'Fighting {target}',
       'thought.fightCornered': 'Cornered! Fighting {target}',
       'thought.fightBack': 'Fighting back against {target}',
-      'thought.fightWolf': 'Fighting a wolf mutt',
+      'thought.fightWolf': 'Fighting a wolf beast',
       'thought.defend': 'Defending {ally}',
       'thought.finalFight': 'Only one of us can go home. Fighting {target}',
       'thought.ambushStrike': 'Now! Attacking {target} from hiding',
@@ -194,7 +194,7 @@
       'thought.ally': 'Asking {target} to team up',
       'thought.follow': 'Following {leader}',
       'thought.stayClose': 'Staying close to {leader}',
-      'thought.guard': 'Guarding the Cornucopia supplies',
+      'thought.guard': 'Guarding the Nexus supplies',
       'thought.watch': 'Keeping watch while {ally} sleeps',
       'thought.trap': 'Setting a trap',
       'thought.trapWater': 'Setting a trap near the water',
@@ -235,7 +235,7 @@
       // ---- log: alliances
       'log.alliance.formed': '{a} and {b} form an alliance.',
       'log.alliance.joined': '{name} joins the alliance of {leader}.',
-      'log.alliance.careers': 'The Careers form a pack: {names}.',
+      'log.alliance.elites': 'The Elites form a pack: {names}.',
       'log.alliance.left': '{name} leaves the alliance. Only one can win.',
       'log.alliance.dissolved': 'The alliance of {leader} breaks apart.',
       'log.alliance.alone': '{name} is alone again.',
@@ -277,8 +277,8 @@
     },
     hu: {
       // ---- archetypes
-      'arch.career': 'Hivatásos',
-      'arch.career.desc': 'Kiképzett gyilkos. A Bőségszaruhoz rohan, a többi hivatásossal falkában vadászik, de a végén senkiben sem bízik.',
+      'arch.elite': 'Elit',
+      'arch.elite.desc': 'Kiképzett gyilkos. A Nexushoz rohan, a többi elittel falkában vadászik, de a végén senkiben sem bízik.',
       'arch.survivor': 'Túlélő',
       'arch.survivor.desc': 'Óvatos és ügyes. Ételt és vizet talál, jól elbújik, és csak akkor harcol, ha nincs más út.',
       'arch.scavenger': 'Fosztogató',
@@ -292,7 +292,7 @@
       'arch.protector': 'Védelmező',
       'arch.protector.desc': 'Hűséges és kedves. Barátokat szerez, megvédi őket, megosztja az ételét, és soha senkit nem árul el.',
       'arch.lonewolf': 'Magányos farkas',
-      'arch.lonewolf.desc': 'Egyedül vadászik. Csendben mozog, a magányos kiválasztottakat követi, és szeret éjjel vadászni.',
+      'arch.lonewolf.desc': 'Egyedül vadászik. Csendben mozog, a magányos versenyzőket követi, és szeret éjjel vadászni.',
 
       // ---- traits
       'trait.aggression': 'Agresszió',
@@ -354,17 +354,17 @@
       'act.panic': 'Pánik',
       'act.mad': 'Őrület',
       'act.berserk': 'Vak düh',
-      'act.bloodbath': 'Vérfürdő',
+      'act.kickoff': 'Nyitó roham',
       'act.scatter': 'Elfut',
 
       // ---- thoughts
-      'thought.pedestalRush': 'A fegyvereket nézi a Bőségszaruban',
+      'thought.pedestalRush': 'A fegyvereket nézi a Nexusban',
       'thought.pedestalEdge': 'Terv: felkap valamit, és elfut',
       'thought.pedestalScatter': 'A menekülés útját keresi',
-      'thought.pedestalCareer': 'Összemosolyog a többi hivatásossal',
-      'thought.bloodbath': 'Rohan a Bőségszaruhoz',
+      'thought.pedestalElite': 'Összemosolyog a többi elittel',
+      'thought.kickoff': 'Rohan a Nexushoz',
       'thought.grab': 'Felkapja: {item}',
-      'thought.scatter': 'Menekül a vérfürdőből',
+      'thought.scatter': 'Menekül a nyitó rohamból',
       'thought.wander': 'Körülnéz',
       'thought.explore': 'Felfedezi az arénát',
       'thought.drift': 'Megy a közép felé. Ennek véget kell érnie.',
@@ -377,9 +377,9 @@
       'thought.fleeHurt': 'Súlyosan sérült — menekül előle: {target}',
       'thought.fleeSight': 'Valaki van itt! Elfut előle: {target}',
       'thought.fleeNoise': 'A közelben harcolnak. Elmegy innen.',
-      'thought.fleeWolves': 'Menekül a farkasmutánsok elől',
-      'thought.fleeWasps': 'Vérdarazsak! Fut a víz felé',
-      'thought.fleeWaspsDry': 'Menekül a vérdarazsak elől',
+      'thought.fleeWolves': 'Menekül a farkasfenevadak elől',
+      'thought.fleeWasps': 'Gyilkosdarazsak! Fut a víz felé',
+      'thought.fleeWaspsDry': 'Menekül a gyilkosdarazsak elől',
       'thought.hide': 'Elbújik az erdőben',
       'thought.hideRocks': 'Elbújik a sziklák között',
       'thought.hideQuiet': 'Nagyon csendben marad',
@@ -395,7 +395,7 @@
       'thought.fight': 'Harcol vele: {target}',
       'thought.fightCornered': 'Sarokba szorult! Harcol vele: {target}',
       'thought.fightBack': 'Visszaüt neki: {target}',
-      'thought.fightWolf': 'Harcol egy farkasmutánssal',
+      'thought.fightWolf': 'Harcol egy farkasfenevaddal',
       'thought.defend': 'Megvédi a társát: {ally}',
       'thought.finalFight': 'Csak egyikünk mehet haza. Ellenfél: {target}',
       'thought.ambushStrike': 'Most! Lesből támad rá: {target}',
@@ -418,7 +418,7 @@
       'thought.ally': 'Szövetséget ajánl neki: {target}',
       'thought.follow': 'Követi a vezetőt: {leader}',
       'thought.stayClose': 'A vezető közelében marad: {leader}',
-      'thought.guard': 'Őrzi a Bőségszaru készleteit',
+      'thought.guard': 'Őrzi a Nexus készleteit',
       'thought.watch': 'Őrködik, amíg a társa alszik: {ally}',
       'thought.trap': 'Csapdát állít',
       'thought.trapWater': 'Csapdát állít a víz mellett',
@@ -459,7 +459,7 @@
       // ---- log: alliances
       'log.alliance.formed': 'Szövetséget kötöttek: {a} és {b}.',
       'log.alliance.joined': '{name} csatlakozik {leader} szövetségéhez.',
-      'log.alliance.careers': 'A hivatásosok falkát alkotnak: {names}.',
+      'log.alliance.elites': 'Az elitek falkát alkotnak: {names}.',
       'log.alliance.left': '{name} kilép a szövetségből. Csak egy győzhet.',
       'log.alliance.dissolved': '{leader} szövetsége felbomlik.',
       'log.alliance.alone': '{name} újra egyedül maradt.',
@@ -482,7 +482,7 @@
       'log.mind.berserk': '{name} vak dühbe gurul!',
       'log.mind.revenge': '{name} bosszút esküszik. Célpont: {target}.',
       'log.mind.spare': '{name} futni hagyja: {target}.',
-      'log.mind.steal': '{name} meglop egy alvó kiválasztottat: {target}.',
+      'log.mind.steal': '{name} meglop egy alvó versenyzőt: {target}.',
       'log.mind.lonely': '{name} magában beszél.',
       'log.mind.recover': '{name} magához tér.',
       'log.mind.grief': '{name} látta meghalni a társát: {ally}.',
@@ -504,14 +504,14 @@
   // ======================================================================
   // Archetypes
   // ======================================================================
-  const ARCHETYPE_IDS = ['career', 'survivor', 'scavenger', 'opportunist', 'strategist', 'berserker', 'protector', 'lonewolf'];
+  const ARCHETYPE_IDS = ['elite', 'survivor', 'scavenger', 'opportunist', 'strategist', 'berserker', 'protector', 'lonewolf'];
   const TRAITS = ['aggression', 'bravery', 'greed', 'sociability', 'loyalty', 'cunning', 'patience', 'stability'];
   const SKILLS = ['strength', 'speed', 'stealth', 'survival', 'aim'];
   const EMOTIONS = ['fear', 'rage', 'confidence', 'sanity'];
 
   /**
    * Behaviour knobs (extra, not in the spec contract):
-   *   rush      tendency to run into the bloodbath
+   *   rush      tendency to run into the kickoff
    *   hunt      bonus to the hunting urge
    *   hide      bonus to hiding
    *   loot      bonus to looting / crates
@@ -550,7 +550,7 @@
   }
 
   const Archetypes = {
-    career: def('career', '⚔️', '#d64541',
+    elite: def('elite', '⚔️', '#d64541',
       { aggression: 0.85, bravery: 0.8, greed: 0.55, sociability: 0.6, loyalty: 0.45, cunning: 0.45, patience: 0.35, stability: 0.6 },
       { strength: 0.2, aim: 0.15, speed: 0.05, survival: -0.12, stealth: -0.12 },
       { rush: 0.95, hunt: 0.3, hide: -0.2, loot: 0.1, defend: 0.35, share: 0.2, conf: 0.12 }),
@@ -586,19 +586,19 @@
 
   // Alliance compatibility between archetypes (symmetric lookup, default 0.4).
   const COMPAT = {
-    'career|career': 1,
+    'elite|elite': 1,
     'protector|protector': 0.9, 'protector|survivor': 0.9, 'protector|strategist': 0.8,
     'protector|scavenger': 0.6, 'protector|opportunist': 0.6, 'protector|berserker': 0.25,
     'survivor|survivor': 0.7, 'survivor|strategist': 0.7, 'survivor|scavenger': 0.45, 'survivor|opportunist': 0.45,
     'strategist|strategist': 0.6, 'strategist|opportunist': 0.5, 'strategist|scavenger': 0.4,
     'scavenger|scavenger': 0.35, 'scavenger|opportunist': 0.4, 'opportunist|opportunist': 0.3,
-    'berserker|career': 0.3, 'berserker|berserker': 0.15,
+    'berserker|elite': 0.3, 'berserker|berserker': 0.15,
   };
   function compat(a, b) {
     if (a === 'lonewolf' || b === 'lonewolf') return 0;
-    if ((a === 'career') !== (b === 'career')) {
-      const other = a === 'career' ? b : a;
-      return other === 'berserker' ? 0.3 : 0.08;   // Careers keep to themselves
+    if ((a === 'elite') !== (b === 'elite')) {
+      const other = a === 'elite' ? b : a;
+      return other === 'berserker' ? 0.3 : 0.08;   // Elites keep to themselves
     }
     const k1 = a + '|' + b;
     if (COMPAT[k1] !== undefined) return COMPAT[k1];
@@ -616,7 +616,7 @@
     stalk: '👁️', drink: '💧', eat: '🍖', forage: '🍄', rest: '🧘', sleep: '💤', heal: '🩹',
     ally: '🤝', follow: '👣', guard: '🛡️', trap: '🪤', ambush: '🐍', steal: '🧤',
     investigate: '🔍', feast: '🍗', avoid: '⚠️', escape_zone: '🧱', panic: '😱', mad: '🌀',
-    berserk: '💢', bloodbath: '🩸', scatter: '💨',
+    berserk: '💢', kickoff: '💥', scatter: '💨',
   };
   const ACTIONS = {};
   for (const id in ACTION_ICONS) ACTIONS[id] = { icon: ACTION_ICONS[id], key: 'act.' + id };
@@ -626,10 +626,10 @@
     calm: '😐', afraid: '😨', angry: '😠', confident: '😎', desperate: '😰', mad: '🤪', asleep: '😴', hurt: '🤕',
   };
 
-  // Plans that keep the tribute standing still (no movement orders).
+  // Plans that keep the contestant standing still (no movement orders).
   const STATIONARY = { idle: 1, eat: 1, heal: 1, rest: 1 };
   // Actions that look hostile to an observer.
-  const HOSTILE_ACT = { hunt: 1, fight: 1, berserk: 1, mad: 1, stalk: 1, bloodbath: 0 };
+  const HOSTILE_ACT = { hunt: 1, fight: 1, berserk: 1, mad: 1, stalk: 1, kickoff: 0 };
 
   // ======================================================================
   // Archetype picking
@@ -641,8 +641,8 @@
   }
 
   /**
-   * Choose n archetype ids for a roster. Careers come first so that
-   * generateRoster gives them the low districts (1, 2 ...), like the books.
+   * Choose n archetype ids for a roster. Elites come first so that
+   * generateRoster gives them the low teams (1, 2 ...), like the books.
    *   mix: 'balanced' | 'bloodthirsty' | 'peaceful' | 'chaos'
    */
   function pickArchetypes(n, mix, rng) {
@@ -660,23 +660,23 @@
       for (let i = 0; i < n; i++) out.push(ARCHETYPE_IDS[Math.floor(rnd() * ARCHETYPE_IDS.length) % ARCHETYPE_IDS.length]);
       return out;
     }
-    let careerFrac = 0.15;
+    let eliteFrac = 0.15;
     let w = { survivor: 1, scavenger: 1, opportunist: 1, strategist: 1, berserker: 1, protector: 1, lonewolf: 1 };
     if (mix === 'bloodthirsty') {
-      careerFrac = 0.25;
+      eliteFrac = 0.25;
       w = { survivor: 0.55, scavenger: 0.45, opportunist: 1, strategist: 0.8, berserker: 2, protector: 0.5, lonewolf: 1.8 };
     } else if (mix === 'peaceful') {
-      careerFrac = 0.08;
+      eliteFrac = 0.08;
       w = { survivor: 2, scavenger: 1.6, opportunist: 0.6, strategist: 1.2, berserker: 0.3, protector: 2, lonewolf: 0.4 };
     }
-    let careers = Math.round(n * careerFrac);
-    if (careers === 1 && n >= 6) careers = 2;          // a pack needs at least two
-    if (n >= 8 && careers < 2 && mix !== 'peaceful') careers = 2;
-    careers = Math.min(careers, n);
+    let elites = Math.round(n * eliteFrac);
+    if (elites === 1 && n >= 6) elites = 2;          // a pack needs at least two
+    if (n >= 8 && elites < 2 && mix !== 'peaceful') elites = 2;
+    elites = Math.min(elites, n);
     const out = [];
-    for (let i = 0; i < careers; i++) out.push('career');
+    for (let i = 0; i < elites; i++) out.push('elite');
     // Largest-remainder distribution of the rest -> even and fair.
-    const rest = n - careers;
+    const rest = n - elites;
     const ids = Object.keys(w);
     let sum = 0;
     for (const id of ids) sum += w[id];
@@ -707,7 +707,7 @@
   function now() { return GM.state.time; }
   function trib(id) {
     if (id == null || id < 0) return null;
-    const t = GM.state.tributes[id];
+    const t = GM.state.contestants[id];
     return t || null;
   }
   function statusOf(t) { return t.status || NO_STATUS; }
@@ -725,9 +725,9 @@
   }
 
   function tCall(name, a, b, c, d) {
-    const T = GM.Tributes;
+    const T = GM.Contestants;
     if (!T || typeof T[name] !== 'function') return undefined;
-    try { return T[name](a, b, c, d); } catch (e) { GM.reportError('AI.Tributes.' + name, e); return undefined; }
+    try { return T[name](a, b, c, d); } catch (e) { GM.reportError('AI.Contestants.' + name, e); return undefined; }
   }
   function iCall(name, a, b, c) {
     const I = GM.Items;
@@ -833,7 +833,7 @@
     if (w && w.kind !== 'ranged') return defRange(w, 1.8);
     return defRange(weaponDef(invOf(t).melee), 1.6);
   }
-  /** 0..1 how good the tribute's best weapon is. */
+  /** 0..1 how good the contestant's best weapon is. */
   function weaponQuality(t) {
     const inv = invOf(t);
     let best = 0.18;   // fists
@@ -879,7 +879,7 @@
       v: 1,
       arch: a,
       style: 'scatter',
-      // memory of other tributes (indexed by id)
+      // memory of other contestants (indexed by id)
       seenT: seenT,
       seenX: new Float32Array(n),
       seenZ: new Float32Array(n),
@@ -897,7 +897,7 @@
       sleeperId: -1,
       allyCandId: -1, allyCandScore: 0,
       defendId: -1, defendAttackerId: -1,
-      muttRef: null, muttD: 1e9, muttCount: 0, muttType: '',
+      beastRef: null, beastD: 1e9, beastCount: 0, beastType: '',
       itemRef: null, itemScore: 0, itemBody: -1,
       crateRef: null, crateScore: 0,
       dangerLevel: 0, dangerNear: false, dangerX: 0, dangerZ: 0, dangerR: 0, dangerType: '', dangerLvl: 0,
@@ -934,7 +934,7 @@
     };
   }
 
-  function bloodbathStyle(t) {
+  function kickoffStyle(t) {
     const a = t.mind.arch, tr = t.traits;
     const p = a.rush * 0.6 + tr.aggression * 0.2 + tr.bravery * 0.2 - (1 - tr.bravery) * 0.1 + R.gauss(0, 0.1);
     if (p > 0.6) return 'rush';
@@ -942,7 +942,7 @@
     return 'scatter';
   }
 
-  /** Build personality, skills, emotions and the private mind of a tribute. */
+  /** Build personality, skills, emotions and the private mind of a contestant. */
   function initMind(t) {
     if (!t) return;
     if (!Archetypes[t.archetype]) t.archetype = ARCHETYPE_IDS[((t.id | 0) * 7 + 3) % ARCHETYPE_IDS.length];
@@ -968,31 +968,31 @@
     m.rageDecay = a.id === 'berserker' ? 0.018 : 0.035 + tr.stability * 0.04;
     m.nextThink = R.range(0, 0.5);
     m.nextPerceive = R.range(0, 0.45);
-    m.style = bloodbathStyle(t);
+    m.style = kickoffStyle(t);
     t.thought = { key: pedestalThought(t), params: {} };
     m.thKey = t.thought.key;
   }
 
   function pedestalThought(t) {
     const m = t.mind;
-    if (m.arch.id === 'career' && m.style === 'rush') return 'thought.pedestalCareer';
+    if (m.arch.id === 'elite' && m.style === 'rush') return 'thought.pedestalElite';
     if (m.style === 'rush') return 'thought.pedestalRush';
     if (m.style === 'edge') return 'thought.pedestalEdge';
     return 'thought.pedestalScatter';
   }
 
-  /** Initial relations once everybody exists (same district, Careers). */
+  /** Initial relations once everybody exists (same team, Elites). */
   function initRelations() {
-    const trs = GM.state.tributes;
+    const trs = GM.state.contestants;
     for (const t of trs) {
       if (!t || !t.mind) continue;
       const m = t.mind;
       for (const o of trs) {
         if (!o || o === t || o.id >= MAXN) continue;
         let tr = 0;
-        if (o.district === t.district) tr += 0.3;
-        if (t.archetype === 'career' && o.archetype === 'career') tr += 0.3;
-        if (o.archetype === 'career' && t.archetype !== 'career') tr -= 0.15;
+        if (o.team === t.team) tr += 0.3;
+        if (t.archetype === 'elite' && o.archetype === 'elite') tr += 0.3;
+        if (o.archetype === 'elite' && t.archetype !== 'elite') tr -= 0.15;
         m.trust[o.id] = tr;
       }
     }
@@ -1007,9 +1007,9 @@
   let powAt = -1e9;
   let aliveN = 0, totalN = 0;
   let tension = 0;
-  let pace = 0;                       // 0..0.5: tributes killed each other faster than planned -> hunt less
-  let tribKills = 0;                  // deaths caused by tributes (not by the arena / Game Master)
-  let cornStock = 0;                  // loose items around the Cornucopia
+  let pace = 0;                       // 0..0.5: contestants killed each other faster than planned -> hunt less
+  let tribKills = 0;                  // deaths caused by contestants (not by the arena / Showrunner)
+  let cornStock = 0;                  // loose items around the Nexus
   let lastDeathAt = 0;
   let statAt = -1e9, allyAt = -1e9, senseAt = 0;
   let revealOn = false;
@@ -1052,7 +1052,7 @@
     if (t) ids.push(t.id);
     if (other && other !== t) ids.push(other.id);
     try {
-      GM.log(type, key, params, { pos: t ? t.pos : null, tributeIds: ids, important: !!important });
+      GM.log(type, key, params, { pos: t ? t.pos : null, contestantIds: ids, important: !!important });
     } catch (e) { GM.reportError('AI.log', e); }
   }
   function interest(t, score, duration, key, label, kind, pos) {
@@ -1105,7 +1105,7 @@
     const dx = x - t.pos.x, dz = z - t.pos.z;
     return dx * dx + dz * dz <= r * r;
   }
-  /** Detect a tribute that does not make progress and give it a detour. */
+  /** Detect a contestant that does not make progress and give it a detour. */
   function trackStuck(t, dt) {
     const m = t.mind;
     if (!m.moving || t.sleeping) { m.stuckT = 0; return; }
@@ -1165,7 +1165,7 @@
     return clampToArena(P, 8);
   }
 
-  /** A good hiding place near the tribute (cover, rocks, caves). Result in P. */
+  /** A good hiding place near the contestant (cover, rocks, caves). Result in P. */
   function findHideSpot(t, maxDist) {
     const T = GM.Terrain;
     const x = t.pos.x, z = t.pos.z;
@@ -1250,7 +1250,7 @@
   }
   function leaderScore(t) {
     const e = t.emotion || { confidence: 0.5 };
-    return e.confidence + (t.traits ? t.traits.aggression * 0.5 : 0) + (t.archetype === 'career' ? 0.3 : 0) +
+    return e.confidence + (t.traits ? t.traits.aggression * 0.5 : 0) + (t.archetype === 'elite' ? 0.3 : 0) +
       hpFrac(t) * 0.3 + (t.kills || 0) * 0.12 + (t.archetype === 'protector' ? 0.15 : 0);
   }
   function pickLeader(al) {
@@ -1269,14 +1269,14 @@
     return out.join(', ');
   }
 
-  /** Create an alliance from tributes (all must be free). */
-  function createAlliance(list, careers) {
+  /** Create an alliance from contestants (all must be free). */
+  function createAlliance(list, elites) {
     const al = {
       id: ++allianceUid,
       members: [],
       leaderId: null,
       formedAt: now(),
-      careers: !!careers,
+      elites: !!elites,
       targetId: null,     // shared hunting target
       watchId: null,      // who keeps watch at night
     };
@@ -1385,11 +1385,11 @@
     let v = compat(o.archetype, t.archetype) * (0.35 + o.traits.sociability * 0.65);
     v += om.trust[t.id] * 0.4 + om.arch.ally * 0.3;
     v -= om.paranoia * 0.5;
-    if (o.district === t.district) v += 0.25;
+    if (o.team === t.team) v += 0.25;
     if (hpFrac(o) < 0.4) v += 0.1;     // hurt people want friends
     return clamp01(v);
   }
-  function maxAllianceSize(al) { return al && al.careers ? 6 : 4; }
+  function maxAllianceSize(al) { return al && al.elites ? 6 : 4; }
 
   /** t proposes to o (they are close). Returns true on success. */
   function proposeAlliance(t, o) {
@@ -1424,20 +1424,20 @@
     return true;
   }
 
-  /** The Career pack forms when the gong sounds. */
-  function formCareerPacks() {
-    const careers = [];
-    for (const t of GM.state.tributes) if (t && t.alive && t.archetype === 'career' && t.allianceId == null) careers.push(t);
-    if (careers.length < 2) return;
-    // split into packs of at most 6 (two packs when there are many Careers)
-    const packs = careers.length > 6 ? Math.ceil(careers.length / 5) : 1;
-    const size = Math.ceil(careers.length / packs);
+  /** The Elite pack forms when the gong sounds. */
+  function formElitePacks() {
+    const elites = [];
+    for (const t of GM.state.contestants) if (t && t.alive && t.archetype === 'elite' && t.allianceId == null) elites.push(t);
+    if (elites.length < 2) return;
+    // split into packs of at most 6 (two packs when there are many Elites)
+    const packs = elites.length > 6 ? Math.ceil(elites.length / 5) : 1;
+    const size = Math.ceil(elites.length / packs);
     for (let p = 0; p < packs; p++) {
-      const list = careers.slice(p * size, (p + 1) * size);
+      const list = elites.slice(p * size, (p + 1) * size);
       if (list.length < 2) continue;
       const al = createAlliance(list, true);
       const L = trib(al.leaderId);
-      mlog('alliance', 'log.alliance.careers', { names: namesOf(al) }, L || list[0], null, true);
+      mlog('alliance', 'log.alliance.elites', { names: namesOf(al) }, L || list[0], null, true);
       interest(L || list[0], 5, 8, 'ally:' + al.id, { key: 'log.mind.i.alliance', params: { a: list[0].name, b: list[1].name } }, 'alliance');
     }
   }
@@ -1536,7 +1536,7 @@
     const tr = b.traits, e = b.emotion;
     let v = (1 - tr.loyalty) * 0.55 + tr.cunning * 0.35 + tr.greed * 0.1 + (1 - e.sanity) * 0.2;
     if (b.archetype === 'opportunist') v += 0.15;
-    if (b.archetype === 'career') v += 0.05;
+    if (b.archetype === 'elite') v += 0.05;
     return v;
   }
 
@@ -1621,11 +1621,11 @@
         let p;
         if (aliveN <= 3) p = incl * 0.45;
         else if (late) p = incl * incl * 0.1 * (0.5 + vs);
-        else p = incl * incl * 0.0035 * (0.4 + vs) * (al.careers ? 0.5 : 1);
+        else p = incl * incl * 0.0035 * (0.4 + vs) * (al.elites ? 0.5 : 1);
         if (R.chance(p)) { betrayed = betray(b, victim, al); break; }
       }
       if (betrayed) continue;
-      // peaceful split late in the Games
+      // peaceful split late in the Show
       if (late) {
         let loy = 0, cnt = 0, weakest = null, wl = 2;
         for (const id of al.members) {
@@ -1660,20 +1660,20 @@
   // ======================================================================
   // Plans
   // ======================================================================
-  const COVER = new Float32Array(MAXN);   // forest cover at each tribute (refreshed with POW)
-  let gongAt = -1e9;                      // sim time of the gong (bloodbath start)
+  const COVER = new Float32Array(MAXN);   // forest cover at each contestant (refreshed with POW)
+  let gongAt = -1e9;                      // sim time of the gong (kickoff start)
 
   /** Typical plan length (sim s); after it the plan counts as "done" and is re-decided. */
   const PLAN_TIME = {
     idle: 5, wander: 40, loot: 30, flee: 12, hide: 45, hunt: 75, fight: 30, stalk: 60, drink: 45,
     eat: 2.5, forage: 30, rest: 8, sleep: 240, heal: 2.5, ally: 20, follow: 25, guard: 50, trap: 25,
     ambush: 90, steal: 35, investigate: 35, feast: 120, avoid: 14, escape_zone: 45, panic: 8, mad: 30,
-    berserk: 25, bloodbath: 45, scatter: 45,
+    berserk: 25, kickoff: 45, scatter: 45,
   };
 
   function wake(t) {
     if (!t.sleeping) return;
-    if (GM.Tributes && typeof GM.Tributes.setSleeping === 'function') tCall('setSleeping', t, false);
+    if (GM.Contestants && typeof GM.Contestants.setSleeping === 'function') tCall('setSleeping', t, false);
     else t.sleeping = false;
     const m = t.mind;
     if (!m) return;
@@ -1686,7 +1686,7 @@
   function fallAsleep(t) {
     if (t.sleeping) return;
     halt(t);
-    if (GM.Tributes && typeof GM.Tributes.setSleeping === 'function') tCall('setSleeping', t, true);
+    if (GM.Contestants && typeof GM.Contestants.setSleeping === 'function') tCall('setSleeping', t, true);
     else t.sleeping = true;
   }
 
@@ -1729,13 +1729,13 @@
     p.score = score || 0;
     p.done = false;
     t.action = id;
-    t.targetId = ref && ref.kind === 'tribute' ? ref.id : null;
+    t.targetId = ref && ref.kind === 'contestant' ? ref.id : null;
   }
 
   /** Logs, interests and alliance bookkeeping when a new plan starts. */
   function planStarted(t, p) {
     const m = t.mind, nowT = now();
-    const tg = p.ref && p.ref.kind === 'tribute' ? p.ref : null;
+    const tg = p.ref && p.ref.kind === 'contestant' ? p.ref : null;
     if (p.id === 'hunt' && tg) {
       const al = allianceOf(t);
       if (al && al.leaderId === t.id && !allied(t, tg)) {
@@ -1751,7 +1751,7 @@
       if (nowT >= m.nextBerserkLog) {
         m.nextBerserkLog = nowT + 90;
         mlog('mind', 'log.mind.berserk', { name: t.name }, t, tg, true);
-        GM.emit('mind:snap', { tribute: t, kind: 'berserk' });
+        GM.emit('mind:snap', { contestant: t, kind: 'berserk' });
       }
       interest(t, 6, 10, 'berserk:' + t.id, { key: 'log.mind.i.mad', params: { name: t.name } }, 'fight');
     } else if (p.id === 'fight' && p.flavor === 'defend' && tg) {
@@ -1865,8 +1865,8 @@
         z = Math.cos(an) * r;
         break;
       }
-      case 'bloodbath': {
-        // a spot at the horn, on the tribute's own side of the plaza
+      case 'kickoff': {
+        // a spot at the Nexus, on the contestant's own side of the plaza
         const base = Math.atan2(t.pos.x, t.pos.z) + R.range(-0.8, 0.8), r = R.range(3, 9);
         x = Math.sin(base) * r;
         z = Math.cos(base) * r;
@@ -1903,7 +1903,7 @@
     return fallbackAttack(t, tg);
   }
 
-  /** Minimal melee when combat.js is missing (keeps the Games playable). */
+  /** Minimal melee when combat.js is missing (keeps the Show playable). */
   function fallbackAttack(t, tg) {
     const m = t.mind, inv = invOf(t), nowT = now();
     const w = weaponDef(inv.melee);
@@ -1918,13 +1918,13 @@
     if (!R.chance(hitP)) return 'miss';
     let dmg = defDamage(w, 6) * (0.8 + 0.45 * num(t.skills && t.skills.strength, 0.5));
     if (tg.sleeping) dmg *= 1.8;
-    if (tg.kind === 'mutt') {
-      const M = GM.Mutts;
+    if (tg.kind === 'beast') {
+      const M = GM.Beasts;
       if (M && typeof M.damage === 'function') {
-        try { M.damage(tg, dmg, t); } catch (e) { GM.reportError('AI.Mutts.damage', e); }
+        try { M.damage(tg, dmg, t); } catch (e) { GM.reportError('AI.Beasts.damage', e); }
       }
     } else {
-      tCall('damage', tg, dmg, { cause: inv.melee ? 'weapon' : 'fists', attacker: t, mutt: null, weapon: inv.melee || null, pos: t.pos });
+      tCall('damage', tg, dmg, { cause: inv.melee ? 'weapon' : 'fists', attacker: t, beast: null, weapon: inv.melee || null, pos: t.pos });
     }
     return 'hit';
   }
@@ -1934,7 +1934,7 @@
   // ======================================================================
   const FOV_COS = -0.5;   // ~240 degree field of view
 
-  /** How dangerous tribute o looks to t (0 .. ~3). */
+  /** How dangerous contestant o looks to t (0 .. ~3). */
   function threatOf(t, o, d, myP) {
     const m = t.mind;
     let host = 0.3 + (o.traits ? o.traits.aggression * 0.35 : 0.2);
@@ -1948,7 +1948,7 @@
     return host * ratio * (0.3 + 0.7 * clamp01(1 - d / 50));
   }
 
-  /** Best item and best crate the tribute knows about. */
+  /** Best item and best crate the contestant knows about. */
   function scanItems(t) {
     const m = t.mind, nowT = now();
     m.itemRef = null; m.itemScore = 0; m.itemBody = -1;
@@ -2065,7 +2065,7 @@
   function perceive(t) {
     const m = t.mind, e = t.emotion, tr = t.traits, a = m.arch, nowT = now();
     const inv = invOf(t), st = statusOf(t), hp = hpFrac(t);
-    const trs = GM.state.tributes;
+    const trs = GM.state.contestants;
     const asleep = !!t.sleeping;
     const know = revealOn || aliveN <= 2;
     const my = t.id;
@@ -2133,17 +2133,17 @@
           if (oal && oal.members.length >= maxAllianceSize(oal)) continue;
         }
         let s = compat(t.archetype, o.archetype) * (0.35 + tr.sociability * 0.65) + m.trust[i] * 0.4 + a.ally * 0.3 - d / 120;
-        if (o.district === t.district) s += 0.2;
+        if (o.team === t.team) s += 0.2;
         if (s > candS) { candS = s; candId = i; }
       }
     }
 
-    // ---- mutts
+    // ---- beasts
     let mRef = null, mD = 1e9, mCount = 0;
-    const mutts = GM.state.mutts;
-    if (mutts && mutts.length) {
-      for (let k = 0; k < mutts.length; k++) {
-        const mu = mutts[k];
+    const beasts = GM.state.beasts;
+    if (beasts && beasts.length) {
+      for (let k = 0; k < beasts.length; k++) {
+        const mu = beasts[k];
         if (!mu || !mu.alive || !mu.pos) continue;
         const d = dxz(t, mu.pos.x, mu.pos.z);
         if (d > 50) continue;
@@ -2153,7 +2153,7 @@
         if (d < mD) { mD = d; mRef = mu; }
       }
     }
-    m.muttRef = mRef; m.muttD = mD; m.muttCount = Math.max(mCount, mRef ? 1 : 0); m.muttType = mRef ? mRef.type : '';
+    m.beastRef = mRef; m.beastD = mD; m.beastCount = Math.max(mCount, mRef ? 1 : 0); m.beastType = mRef ? mRef.type : '';
 
     // ---- items, dangers
     if (!asleep && nowT >= m.itemScanAt) {
@@ -2285,7 +2285,7 @@
       return;
     }
     if (e.fear > 0.9 && tr.bravery < 0.6 && nowT >= m.nextPanicAt && !(st.panic > 0) && aliveN > 2 &&
-        (m.threatD < 22 || m.dangerNear || m.muttD < 15)) {
+        (m.threatD < 22 || m.dangerNear || m.beastD < 15)) {
       m.nextPanicAt = nowT + 50 + tr.stability * 40;
       applyStatus(t, 'panic', R.range(4, 7));
       return;
@@ -2308,7 +2308,7 @@
 
   /**
    * Something audible happened. kind: 'fight' | 'explosion' | 'lure' |
-   * 'scream' | 'cannon' | anything else. Tributes inside the radius
+   * 'scream' | 'knell' | anything else. Contestants inside the radius
    * remember it (investigate / flee / stalk) and may wake up.
    */
   function noise(pos, radius, kind, sourceId) {
@@ -2317,7 +2317,7 @@
     if (st.phase !== 'running' && st.phase !== 'ended') return;
     radius = Math.max(1, num(radius, 30));
     kind = kind || 'noise';
-    const trs = st.tributes, nowT = now();
+    const trs = st.contestants, nowT = now();
     const x = num(pos.x, 0), z = num(pos.z, 0);
     const r2 = radius * radius;
     for (let i = 0; i < trs.length; i++) {
@@ -2325,9 +2325,9 @@
       if (!hasMind(t) || i === sourceId) continue;
       const dx = x - t.pos.x, dz = z - t.pos.z;
       const d2 = dx * dx + dz * dz;
-      if (kind !== 'cannon' && d2 > r2) continue;
+      if (kind !== 'knell' && d2 > r2) continue;
       const m = t.mind, e = t.emotion, tr = t.traits;
-      if (kind === 'cannon') {
+      if (kind === 'knell') {
         e.fear = clamp01(e.fear + 0.03 * (1.1 - tr.bravery));
         continue;
       }
@@ -2358,7 +2358,7 @@
   function applyStatus(t, status, seconds) {
     if (!t || !t.alive || !status) return;
     seconds = num(seconds, 10);
-    if (GM.Tributes && typeof GM.Tributes.setStatus === 'function') tCall('setStatus', t, status, seconds);
+    if (GM.Contestants && typeof GM.Contestants.setStatus === 'function') tCall('setStatus', t, status, seconds);
     else if (t.status) t.status[status] = Math.max(t.status[status] || 0, seconds);
     if (!hasMind(t)) return;
     const m = t.mind, e = t.emotion, nowT = now();
@@ -2371,7 +2371,7 @@
       if (nowT - m.lastMadLog > 20) {
         m.lastMadLog = nowT;
         interest(t, 7, 10, 'mad:' + t.id, { key: 'log.mind.i.mad', params: { name: t.name } }, 'mind');
-        GM.emit('mind:snap', { tribute: t, kind: 'madness' });
+        GM.emit('mind:snap', { contestant: t, kind: 'madness' });
       }
       setPlan(t, 'mad', -1, NaN, NaN, null, '', 5);
       thinkSoon(m, 0);
@@ -2381,7 +2381,7 @@
       if (nowT - m.lastPanicLog > 30) {
         m.lastPanicLog = nowT;
         mlog('mind', 'log.mind.panic', { name: t.name }, t);
-        GM.emit('mind:snap', { tribute: t, kind: 'panic' });
+        GM.emit('mind:snap', { contestant: t, kind: 'panic' });
       }
       setPlan(t, 'panic', -1, NaN, NaN, null, '', 5);
       thinkSoon(m, 0);
@@ -2396,7 +2396,7 @@
     }
   }
 
-  /** Fear / rage / grudge reactions (called by GM.Tributes.damage). */
+  /** Fear / rage / grudge reactions (called by GM.Contestants.damage). */
   function onDamaged(t, info) {
     if (!hasMind(t)) return;
     info = info || {};
@@ -2415,7 +2415,7 @@
     const frac = amt / (t.maxHealth || 100);
     e.fear = clamp01(e.fear + frac * (1.4 - tr.bravery) * 1.2 + 0.02);
     e.confidence = clamp01(e.confidence - frac * 0.5);
-    const atk = info.attacker && info.attacker.kind === 'tribute' && info.attacker !== t ? info.attacker : null;
+    const atk = info.attacker && info.attacker.kind === 'contestant' && info.attacker !== t ? info.attacker : null;
     if (atk && atk.id < MAXN) {
       const id = atk.id;
       m.lastHitAt = nowT;
@@ -2449,7 +2449,7 @@
     } else if (cause === 'trap') {
       e.fear = clamp01(e.fear + 0.12);
       e.sanity = clamp01(e.sanity - 0.02);
-    } else if (cause !== 'mutt' && cause !== 'wasps') {
+    } else if (cause !== 'beast' && cause !== 'wasps') {
       m.dangerScanAt = 0;
     }
     if (t.sleeping) wake(t);
@@ -2468,8 +2468,8 @@
     lastDeathAt = nowT;
     refreshEnv();
     refreshStats(true);
-    formCareerPacks();
-    for (const t of GM.state.tributes) {
+    formElitePacks();
+    for (const t of GM.state.contestants) {
       if (!hasMind(t)) continue;
       const m = t.mind;
       m.bbStart = nowT;
@@ -2479,16 +2479,16 @@
       m.nextThink = nowT + react + 0.5;
       m.execAt = nowT + react;
       m.nextPerceive = nowT + R.range(0, 0.4);
-      if (m.style === 'rush') setPlan(t, 'bloodbath', -1, NaN, NaN, null, 'rush', 1);
-      else if (m.style === 'edge') setPlan(t, 'bloodbath', -1, NaN, NaN, null, 'edge', 1);
+      if (m.style === 'rush') setPlan(t, 'kickoff', -1, NaN, NaN, null, 'rush', 1);
+      else if (m.style === 'edge') setPlan(t, 'kickoff', -1, NaN, NaN, null, 'edge', 1);
       else setPlan(t, 'scatter', -1, NaN, NaN, null, '', 1);
       m.holdUntil = 0;
-      say(t, m.style === 'scatter' ? 'thought.scatter' : 'thought.bloodbath');
+      say(t, m.style === 'scatter' ? 'thought.scatter' : 'thought.kickoff');
     }
   }
 
   function onDied(ev) {
-    const d = ev && ev.tribute;
+    const d = ev && ev.contestant;
     if (!d || d.id == null) return;
     const nowT = now();
     lastDeathAt = nowT;
@@ -2502,18 +2502,18 @@
     const mates = al ? al.members.slice() : null;
     memberDied(d);
     for (const a2 of alliances) if (a2.targetId === d.id) a2.targetId = null;
-    const killer = ev.killer && ev.killer.kind === 'tribute' && ev.killer !== d ? ev.killer : null;
+    const killer = ev.killer && ev.killer.kind === 'contestant' && ev.killer !== d ? ev.killer : null;
     if (killer) tribKills++;
     if (hasMind(killer)) {
       const km = killer.mind, ke = killer.emotion;
       km.lastKillAt = nowT;
       ke.confidence = clamp01(ke.confidence + 0.12);
       ke.rage = clamp01(ke.rage - 0.25);
-      const hard = killer.archetype === 'career' || killer.archetype === 'berserker' || killer.archetype === 'lonewolf';
+      const hard = killer.archetype === 'elite' || killer.archetype === 'berserker' || killer.archetype === 'lonewolf';
       ke.sanity = clamp01(ke.sanity - (hard ? 0.01 : 0.05) * (1.3 - killer.traits.stability));
       if (km.betrayId === d.id) km.betrayUntil = 0;
     }
-    const trs = GM.state.tributes;
+    const trs = GM.state.contestants;
     for (let i = 0; i < trs.length; i++) {
       const t = trs[i];
       if (!hasMind(t) || t === d) continue;
@@ -2523,7 +2523,7 @@
       m.sworn[d.id] = 0;
       if (m.plan.targetId === d.id || m.plan.ref === d) { m.plan.done = true; thinkSoon(m, 0.3); }
       if (m.defendAttackerId === d.id) { m.defendId = -1; m.defendAttackerId = -1; }
-      // the cannon
+      // the knell
       e.fear = clamp01(e.fear + 0.03 * (1.1 - tr.bravery));
       const near = m.visible[d.id] || dd(t, d) < 30;
       if (near && t !== killer) {
@@ -2557,8 +2557,8 @@
     let slot = BLASTS[0];
     for (let i = 0; i < BLASTS.length; i++) if (BLASTS[i].until < slot.until) slot = BLASTS[i];
     slot.x = num(pos.x, 0); slot.z = num(pos.z, 0); slot.r = r; slot.until = now() + seconds; slot.type = type;
-    // tributes nearby look again right away
-    const trs = GM.state.tributes;
+    // contestants nearby look again right away
+    const trs = GM.state.contestants;
     for (let i = 0; i < trs.length; i++) {
       const t = trs[i];
       if (!hasMind(t)) continue;
@@ -2571,7 +2571,7 @@
   }
 
   function onGift(ev) {
-    const t = ev && ev.tribute;
+    const t = ev && ev.contestant;
     if (!hasMind(t)) return;
     const m = t.mind, nowT = now();
     t.emotion.confidence = clamp01(t.emotion.confidence + 0.08);
@@ -2588,7 +2588,7 @@
   function onCombatAttack(ev) {
     if (!ev || ev.hit) return;
     const a = ev.attacker, tg = ev.target;
-    if (!a || a.kind !== 'tribute' || !hasMind(tg) || tg.kind !== 'tribute' || a.id >= MAXN) return;
+    if (!a || a.kind !== 'contestant' || !hasMind(tg) || tg.kind !== 'contestant' || a.id >= MAXN) return;
     const m = tg.mind, nowT = now();
     m.lastHitBy = a.id;
     m.lastHitAt = nowT;
@@ -2598,7 +2598,7 @@
   }
 
   function everyoneThinks(maxDelay) {
-    for (const t of GM.state.tributes) if (hasMind(t)) { t.mind.itemScanAt = 0; thinkSoon(t.mind, R.range(0.1, maxDelay)); }
+    for (const t of GM.state.contestants) if (hasMind(t)) { t.mind.itemScanAt = 0; thinkSoon(t.mind, R.range(0.1, maxDelay)); }
   }
 
   // ======================================================================
@@ -2634,7 +2634,7 @@
     if (water > CFG.BASE_WATER_LEVEL + 0.4 && ENV.rising > 0) ENV.floodUntil = now() + 10;
   }
 
-  /** Three or fewer left late in the Games: survivors sense each other and the hunt is on. */
+  /** Three or fewer left late in the Show: survivors sense each other and the hunt is on. */
   function isEndgame() {
     return aliveN <= 3 && ((GM.state.day || 1) >= 4 || tension > 1.0);
   }
@@ -2647,18 +2647,18 @@
     if (aliveN <= 4) v += 0.3;
     if (aliveN <= 2) v += 0.5;
     tension = clamp(v, 0, 1.6);
-    // Pacing: a Games with 24 tributes should usually end on day 3-5. When the
-    // tributes kill each other much faster than this plan, they hunt less for a
-    // while. Deaths caused by the arena / Game Master do not count.
+    // Pacing: a Show with 24 contestants should usually end on day 3-5. When the
+    // contestants kill each other much faster than this plan, they hunt less for a
+    // while. Deaths caused by the arena / Showrunner do not count.
     pace = 0;
     if (totalN > 3 && gongAt > -1e8 && aliveN > 2) {
       const g = Math.max(0, nowT - gongAt) / Math.max(60, num(CFG.DAY_LENGTH, 300));
       const ahead = tribKills / totalN - expectedDead(g);
-      if (g > 0.22) pace = clamp(ahead * 2.6, 0, 0.5);   // never during the bloodbath
+      if (g > 0.22) pace = clamp(ahead * 2.6, 0, 0.5);   // never during the kickoff
     }
   }
 
-  // planned fraction of the field killed by other tributes after g game-days
+  // planned fraction of the field killed by other contestants after g game-days
   const PACE_G = [0, 0.2, 1, 2, 3, 4, 5];
   const PACE_F = [0, 0.3, 0.46, 0.63, 0.8, 0.93, 1];
   function expectedDead(g) {
@@ -2673,7 +2673,7 @@
     if (!force && nowT - statAt < 0.5) return;
     statAt = nowT;
     powAt = nowT;
-    const trs = GM.state.tributes;
+    const trs = GM.state.contestants;
     let n = 0;
     for (let i = 0; i < trs.length && i < MAXN; i++) {
       const t = trs[i];
@@ -2696,8 +2696,8 @@
   }
 
   /**
-   * Late in the Games the tributes "feel" where the others are (the
-   * Gamemakers push them together): a rough last-seen hint of the nearest
+   * Late in the Show the contestants "feel" where the others are (the
+   * Showrunners push them together): a rough last-seen hint of the nearest
    * enemy every ~25 s once day 4 begins or 4 or fewer are left.
    */
   function senseEnemies() {
@@ -2705,7 +2705,7 @@
     if (nowT - senseAt < 25) return;
     senseAt = nowT;
     if (!(aliveN <= 4 || (GM.state.day || 1) >= 4 || tension > 1.0)) return;
-    const trs = GM.state.tributes;
+    const trs = GM.state.contestants;
     for (const t of trs) {
       if (!hasMind(t)) continue;
       let best = null, bd = 1e9;
@@ -2727,11 +2727,11 @@
   // Decisions (utility scores)
   // ======================================================================
   const BEST = { id: 'idle', score: -1e9, ref: null, flavor: '', x: NaN, z: NaN };
-  let CUR = null;       // tribute being decided
+  let CUR = null;       // contestant being decided
   let ERR = 0;          // erratic noise (low sanity)
   const PREY = { id: -1, v: 0, d: 0 };
 
-  /** Offer a candidate action. ref: tribute / mutt / item or null. */
+  /** Offer a candidate action. ref: contestant / beast / item or null. */
   function cand(id, score, ref, flavor, x, z) {
     if (!(score > -50)) return;
     const p = CUR.mind.plan;
@@ -2752,9 +2752,9 @@
     return false;
   }
 
-  /** Best tribute to hunt from memory -> PREY. */
+  /** Best contestant to hunt from memory -> PREY. */
   function pickPrey(t, myP) {
-    const m = t.mind, trs = GM.state.tributes, nowT = now();
+    const m = t.mind, trs = GM.state.contestants, nowT = now();
     const know = revealOn || aliveN <= 2 || isEndgame();
     const firstDay = (GM.state.day || 1) <= 1 && aliveN > 4;
     const maxAge = firstDay ? 40 : 90, maxD = firstDay ? 90 : 170;
@@ -2775,7 +2775,7 @@
       v += (1 - hpFrac(o)) * (0.2 + m.arch.finish * 0.5);
       if (o.allianceId == null) v += 0.08;
       if (i === m.betrayId && m.betrayUntil > nowT) v += 1.2;
-      if (m.arch.id === 'career' && o.archetype !== 'career') v += 0.05;
+      if (m.arch.id === 'elite' && o.archetype !== 'elite') v += 0.05;
       if (v > bv) { bv = v; best = i; bd = d; }
     }
     PREY.id = best; PREY.v = bv; PREY.d = bd;
@@ -2792,7 +2792,7 @@
     }
   }
 
-  /** Choose what to do next (runs every ~0.3-0.6 sim s per tribute). */
+  /** Choose what to do next (runs every ~0.3-0.6 sim s per contestant). */
   function think(t) {
     const m = t.mind, e = t.emotion, tr = t.traits, a = m.arch, nowT = now();
     const st = statusOf(t), inv = invOf(t), hp = hpFrac(t), p = m.plan;
@@ -2811,7 +2811,7 @@
     const since = nowT - gongAt;
     const day = GM.state.day || 1;
     const final = aliveN <= 2;
-    // Last three from day 4 on: the Capitol wants a finale, so fear fades and hunting takes over.
+    // Last three from day 4 on: the Studio wants a finale, so fear fades and hunting takes over.
     const endgame = !final && isEndgame();
     let threat = m.threatId >= 0 ? trib(m.threatId) : null;
     if (threat && !threat.alive) threat = null;
@@ -2824,15 +2824,15 @@
     if (m.flood) cand('avoid', 2.2, null, 'flood');
     if (m.dangerNear) cand('avoid', 1.2 + m.dangerLvl * 1.8, null, dangerFlavor(m.dangerType));
     if (m.inWaterBad) cand('avoid', 1.3, null, 'water');
-    const mu = m.muttRef;
+    const mu = m.beastRef;
     if (mu && mu.alive) {
       if (mu.type === 'wasps') {
-        if (m.muttD < 30) cand('flee', 2.4, mu, 'wasps');
-      } else if (m.muttD < 35) {
+        if (m.beastD < 30) cand('flee', 2.4, mu, 'wasps');
+      } else if (m.beastD < 35) {
         const wq = weaponQuality(t);
-        const fightS = 0.4 + e.confidence * 0.5 + tr.bravery * 0.4 + wq * 0.6 - m.muttCount * 0.2 - e.fear * 0.6 +
-          (m.muttD < 3 ? 0.4 : 0) + (hp > 0.6 ? 0.1 : -0.3);
-        const fleeS = 0.6 + e.fear * 0.8 + m.muttCount * 0.15 + (m.muttD < 12 ? 0.3 : 0);
+        const fightS = 0.4 + e.confidence * 0.5 + tr.bravery * 0.4 + wq * 0.6 - m.beastCount * 0.2 - e.fear * 0.6 +
+          (m.beastD < 3 ? 0.4 : 0) + (hp > 0.6 ? 0.1 : -0.3);
+        const fleeS = 0.6 + e.fear * 0.8 + m.beastCount * 0.15 + (m.beastD < 12 ? 0.3 : 0);
         if (fightS > fleeS) cand('fight', 1.3 + fightS * 0.4, mu, 'wolf');
         else cand('flee', 1.3 + fleeS * 0.4, mu, 'wolves');
       }
@@ -2841,7 +2841,7 @@
     // ---------------------------------------------------------- the final duel
     if (final) {
       let other = null;
-      for (const o of GM.state.tributes) if (o && o !== t && o.alive) { other = o; break; }
+      for (const o of GM.state.contestants) if (o && o !== t && o.alive) { other = o; break; }
       if (other) {
         if (!finalLogged) {
           finalLogged = true;
@@ -2851,18 +2851,18 @@
       }
     }
 
-    // ---------------------------------------------------------- bloodbath
-    if (p.id === 'bloodbath' && !p.done && since < 50) cand('bloodbath', 1.25, null, p.flavor);
+    // ---------------------------------------------------------- kickoff
+    if (p.id === 'kickoff' && !p.done && since < 50) cand('kickoff', 1.25, null, p.flavor);
     if (p.id === 'scatter' && !p.done) cand('scatter', 1.0 + e.fear * 0.2, null, '');
-    if (since < 90 && m.style !== 'rush' && p.id !== 'bloodbath' && t.pos.x * t.pos.x + t.pos.z * t.pos.z < 45 * 45 &&
-        a.id !== 'career' && a.id !== 'berserker') {
+    if (since < 90 && m.style !== 'rush' && p.id !== 'kickoff' && t.pos.x * t.pos.x + t.pos.z * t.pos.z < 45 * 45 &&
+        a.id !== 'elite' && a.id !== 'berserker') {
       cand('scatter', 0.65 + e.fear * 0.4 + (1 - tr.aggression) * 0.2, null, '');
     }
 
     // ---------------------------------------------------------- fear
     const seenThreat = threat && m.visible[threat.id];
     let fearDrive = e.fear * 1.3 + m.threatLevel * 0.35 + (hp < 0.35 ? 0.45 : 0) - e.rage * 0.5 - e.confidence * 0.3 - tr.bravery * 0.2;
-    // late in the Games running away stops working: the last few face each other
+    // late in the Show running away stops working: the last few face each other
     const lateNerve = Math.max(0, tension - 0.55) * 0.6 + (aliveN <= 4 ? 0.15 : 0);
     if (seenThreat && m.threatD < 30) fearDrive += a.fleeOnSight * (aliveN <= 4 ? 0.4 : 0.8);
     fearDrive -= lateNerve;
@@ -2911,8 +2911,8 @@
     // ---------------------------------------------------------- hunting
     pickPrey(t, myP);
     const bbFrenzy = since < 90 && tr.aggression > 0.6 && hasWeapon(t) && t.pos.x * t.pos.x + t.pos.z * t.pos.z < 40 * 40 ? 0.35 : 0;
-    // After the bloodbath the first days are about survival: hunting ramps up with tension.
-    // `pace` adds more calm when the tributes are killing each other faster than planned.
+    // After the kickoff the first days are about survival: hunting ramps up with tension.
+    // `pace` adds more calm when the contestants are killing each other faster than planned.
     const early = final ? 0 : (day <= 1 && since > 60 ? 0.32 : day === 2 ? 0.16 : 0) + pace;
     const huntUrge = tr.aggression * 0.75 + a.hunt + e.rage * 0.55 + e.confidence * 0.35 + tension * 0.4 + bbFrenzy +
       (ENV.night ? a.night : 0) - e.fear * 0.9 - needs * 0.35 - (hp < 0.5 ? 0.5 - hp : 0) + (hasWeapon(t) ? 0.1 : -0.3) - 0.35 - early + (endgame ? 0.5 : 0);
@@ -2957,7 +2957,7 @@
     }
     if (al && al.watchId === t.id && ENV.night) {
       cand('guard', 0.95, null, 'watch');
-    } else if (a.id === 'career' && day <= 1 && cornStock >= 3 && since > 40 && dxz(t, 0, 0) < 70) {
+    } else if (a.id === 'elite' && day <= 1 && cornStock >= 3 && since > 40 && dxz(t, 0, 0) < 70) {
       cand('guard', 0.45 + tr.greed * 0.2 + (leader === t ? 0.1 : 0), null, '');
     }
 
@@ -3002,7 +3002,7 @@
     if (f && !f.over && typeof f.x === 'number' && (f.ready || num(f.at, 0) - nowT < 40)) {
       const df = dxz(t, f.x, f.z);
       const s = 0.3 + tr.greed * 0.4 + a.loot + needs * 0.5 + tr.bravery * 0.2 + (1 - hp) * 0.3 * (inv.medkit > 0 ? 0 : 1) -
-        e.fear * 0.4 + tension * 0.2 - df / 400 + (a.id === 'career' || a.id === 'berserker' ? 0.3 : 0) + (a.id === 'survivor' ? -0.15 : 0);
+        e.fear * 0.4 + tension * 0.2 - df / 400 + (a.id === 'elite' || a.id === 'berserker' ? 0.3 : 0) + (a.id === 'survivor' ? -0.15 : 0);
       cand('feast', s, null, f.ready ? '' : 'wait');
     }
 
@@ -3056,14 +3056,14 @@
     // ---------------------------------------------------------- commit
     CUR = null;
     const ref = BEST.ref;
-    const tid = ref && ref.kind === 'tribute' ? ref.id : -1;
+    const tid = ref && ref.kind === 'contestant' ? ref.id : -1;
     const wasId = p.id, wasRef = p.ref, wasDone = p.done;
     setPlan(t, BEST.id, tid, BEST.x, BEST.z, ref, BEST.flavor, BEST.score);
     if (wasDone || wasId !== p.id || wasRef !== p.ref) m.execAt = 0;
   }
 
   // ======================================================================
-  // Action execution (every ~0.1 sim s per tribute)
+  // Action execution (every ~0.1 sim s per contestant)
   // ======================================================================
   function tryPickup(t, it) {
     if (!it || it.removed || it.falling || !it.pos) return false;
@@ -3085,9 +3085,9 @@
     const an = R.angle();
     tCall('faceToward', t, t.pos.x + Math.sin(an) * 5, t.pos.z + Math.cos(an) * 5);
   }
-  /** Nearest visible tribute (allies too) within maxD. */
+  /** Nearest visible contestant (allies too) within maxD. */
   function nearestVisible(t, maxD) {
-    const m = t.mind, trs = GM.state.tributes;
+    const m = t.mind, trs = GM.state.contestants;
     let best = null, bd = maxD;
     for (let i = 0; i < trs.length && i < MAXN; i++) {
       const o = trs[i];
@@ -3097,7 +3097,7 @@
     }
     return best;
   }
-  /** Closest dry land around a swimming tribute -> P. */
+  /** Closest dry land around a swimming contestant -> P. */
   function findShore(t) {
     for (let r = 5; r <= 30; r += 6) {
       let best = -1e9;
@@ -3113,7 +3113,7 @@
     P.x = t.pos.x * 0.9; P.z = t.pos.z * 0.9;
     return P;
   }
-  /** Attack when possible, otherwise close in. Works for tributes and mutts. */
+  /** Attack when possible, otherwise close in. Works for contestants and beasts. */
   function engage(t, o, far) {
     const d = dd(t, o);
     const opt = canHit(t, o);
@@ -3153,13 +3153,13 @@
     }
   }
 
-  function exBloodbath(t, m, p, nowT) {
+  function exKickoff(t, m, p, nowT) {
     const el = nowT - m.bbStart;
     const edge = p.flavor === 'edge';
-    const cap = edge ? 1 : (m.arch.id === 'career' ? 3 : 2);
+    const cap = edge ? 1 : (m.arch.id === 'elite' ? 3 : 2);
     if (m.pickups >= cap || el > 45 || hpFrac(t) < 0.45 || (edge && el > 12)) {
       p.done = true;
-      if (edge || (m.arch.id !== 'career' && m.arch.id !== 'berserker')) { setPlan(t, 'scatter', -1, NaN, NaN, null, '', 1); m.execAt = 0; }
+      if (edge || (m.arch.id !== 'elite' && m.arch.id !== 'berserker')) { setPlan(t, 'scatter', -1, NaN, NaN, null, '', 1); m.execAt = 0; }
       return;
     }
     const tr = t.traits;
@@ -3176,7 +3176,7 @@
     }
     if (arrivedAt(t, p.x, p.z, 2)) chooseSpot(t, p);
     go(t, p.x, p.z, 'sprint', 1);
-    say(t, 'thought.bloodbath');
+    say(t, 'thought.kickoff');
   }
 
   function exScatter(t, m, p, nowT) {
@@ -3227,11 +3227,11 @@
     }
     if (nowT >= p.timer) {
       p.timer = nowT + 1.5;
-      pickEscape(t, sx, sz, 28, false, !!ref && ref.kind === 'tribute');
+      pickEscape(t, sx, sz, 28, false, !!ref && ref.kind === 'contestant');
       p.x = P.x; p.z = P.z;
     }
     go(t, p.x, p.z, d < 14 ? 'sprint' : 'run', 3);
-    if (ref && ref.kind === 'tribute') {
+    if (ref && ref.kind === 'contestant') {
       if (d < 2.6 && nowT - p.since > 3 && hpFrac(t) > 0.12) {
         m.cornered = nowT + 8;
         setPlan(t, 'fight', ref.id, NaN, NaN, ref, 'cornered', 2);
@@ -3268,7 +3268,7 @@
 
   function exHunt(t, m, p, nowT) {
     const o = p.ref;
-    if (!o || !o.alive || o.kind !== 'tribute' || (allied(t, o) && p.flavor !== 'final')) { p.done = true; return; }
+    if (!o || !o.alive || o.kind !== 'contestant' || (allied(t, o) && p.flavor !== 'final')) { p.done = true; return; }
     const known = whereIs(t, o);
     const d = dxz(t, TX, TZ);
     if (known) {
@@ -3295,7 +3295,7 @@
   function exFight(t, m, p, nowT) {
     const o = p.ref;
     if (!o || !o.alive || !o.pos) { p.done = true; return; }
-    const isT = o.kind === 'tribute';
+    const isT = o.kind === 'contestant';
     if (isT && allied(t, o) && p.flavor !== 'final') { p.done = true; return; }
     const d = dd(t, o);
     if (isT) {
@@ -3335,7 +3335,7 @@
       if (nowT - m.heardT > 20 || nowT > p.until) p.done = true;
       return;
     }
-    if (!o.alive || o.kind !== 'tribute' || allied(t, o)) { p.done = true; return; }
+    if (!o.alive || o.kind !== 'contestant' || allied(t, o)) { p.done = true; return; }
     const known = whereIs(t, o);
     const d = dxz(t, TX, TZ);
     if (known && (o.sleeping || hpFrac(o) < 0.45 || (o.action === 'fight' && o.targetId !== t.id && hpFrac(o) < 0.65))) {
@@ -3374,7 +3374,7 @@
       if (nowT >= p.timer) {
         p.timer = nowT + 1.8;
         let ok;
-        if (GM.Tributes && typeof GM.Tributes.drink === 'function') ok = !!tCall('drink', t);
+        if (GM.Contestants && typeof GM.Contestants.drink === 'function') ok = !!tCall('drink', t);
         else { t.thirst = Math.max(0, (t.thirst || 0) - 60); ok = true; }
         if (ok) { p.stage = 1; halt(t); }
         else {
@@ -3409,7 +3409,7 @@
     } else {
       if (m.moving) halt(t);
       let got = null;
-      if (GM.Tributes && typeof GM.Tributes.forage === 'function') got = tCall('forage', t, dt);
+      if (GM.Contestants && typeof GM.Contestants.forage === 'function') got = tCall('forage', t, dt);
       else if (t.inv && R.chance(dt * 0.05)) { t.inv.berries = (t.inv.berries || 0) + 1; got = 'berries'; }
       if (got) { m.forageFail = 0; p.done = true; }
       else if (nowT > p.t2) { m.forageFail++; p.done = true; }
@@ -3679,7 +3679,7 @@
 
   function exMad(t, m, p, nowT) {
     if (!(statusOf(t).madness > 0) && nowT - p.since > 2) { p.done = true; return; }
-    let tg = p.ref && p.ref.alive && p.ref.kind === 'tribute' && dd(t, p.ref) < 18 ? p.ref : null;
+    let tg = p.ref && p.ref.alive && p.ref.kind === 'contestant' && dd(t, p.ref) < 18 ? p.ref : null;
     if (!tg && nowT >= p.t2) {
       p.t2 = nowT + 1;
       tg = nearestVisible(t, 15);
@@ -3717,7 +3717,7 @@
     const thirsty = (t.thirst || 0) > 70;
     go(t, p.x, p.z, fl === 'search' || (fl === 'explore' && thirsty) ? 'run' : 'walk', 3);
     if (fl === 'drift') say(t, 'thought.drift');
-    else if (fl === 'search' && p.ref && p.ref.kind === 'tribute') say(t, 'thought.searchEnemy', 'target', p.ref.name);
+    else if (fl === 'search' && p.ref && p.ref.kind === 'contestant') say(t, 'thought.searchEnemy', 'target', p.ref.name);
     else if (fl === 'explore') say(t, thirsty ? 'thought.thirsty' : 'thought.explore');
     else say(t, 'thought.wander');
   }
@@ -3734,7 +3734,7 @@
     const m = t.mind, p = m.plan, nowT = now();
     if (statusOf(t).stun > 0) return;
     switch (p.id) {
-      case 'bloodbath': exBloodbath(t, m, p, nowT); break;
+      case 'kickoff': exKickoff(t, m, p, nowT); break;
       case 'scatter': exScatter(t, m, p, nowT); break;
       case 'loot': exLoot(t, m, p, nowT); break;
       case 'flee': exFlee(t, m, p, nowT); break;
@@ -3776,7 +3776,7 @@
   // ======================================================================
   function endedTick() {
     const st = GM.state;
-    for (const t of st.tributes) {
+    for (const t of st.contestants) {
       if (!hasMind(t)) continue;
       const m = t.mind;
       if (m.plan.id !== 'idle' || m.plan.flavor !== 'end') {
@@ -3804,7 +3804,7 @@
       try { allianceUpkeep(); } catch (err) { GM.reportError('AI.alliances', err); }
     }
     senseEnemies();
-    const trs = st.tributes;
+    const trs = st.contestants;
     for (let i = 0; i < trs.length; i++) {
       const t = trs[i];
       if (!hasMind(t)) continue;
@@ -3829,7 +3829,7 @@
           execute(t, edt);
         }
       } catch (err) {
-        GM.reportError('AI.tribute', err);
+        GM.reportError('AI.contestant', err);
         CUR = null;
         m.plan.done = true;
         m.nextThink = nowT + 1;
@@ -3858,7 +3858,7 @@
 
   function reset() {
     clear();
-    const trs = GM.state.tributes || [];
+    const trs = GM.state.contestants || [];
     for (const t of trs) {
       if (t && (!t.mind || t.mind.v !== 1)) {
         try { initMind(t); } catch (err) { GM.reportError('AI.initMind', err); }
@@ -3870,10 +3870,10 @@
     refreshStats(true);
   }
 
-  /** Tributes near a point look again (new fire / gas cloud). */
+  /** Contestants near a point look again (new fire / gas cloud). */
   function nudgeNear(pos, r) {
     if (!pos) return;
-    for (const t of GM.state.tributes) {
+    for (const t of GM.state.contestants) {
       if (!hasMind(t) || dxz(t, num(pos.x, 0), num(pos.z, 0)) > r) continue;
       t.mind.dangerScanAt = 0;
       thinkSoon(t.mind, R.range(0.1, 0.5));
@@ -3882,7 +3882,7 @@
 
   function init() {
     GM.on('game:start', onGameStart);
-    GM.on('tribute:died', onDied);
+    GM.on('contestant:died', onDied);
     GM.on('hazard:lightning', function (e) { if (e) addBlast(e.pos, num(e.radius, 8) + 4, 3, 'lightning'); });
     GM.on('hazard:explosion', function (e) { if (e) addBlast(e.pos, num(e.radius, 6) + 3, 4, 'explosion'); });
     GM.on('hazard:quake', function (e) { if (e) addBlast(e.pos, num(e.radius, 20), 6, 'quake'); });
@@ -3901,7 +3901,7 @@
     GM.on('feast:ready', function () { everyoneThinks(2); });
     GM.on('power:used', function (e) { if (e && e.id === 'reveal') everyoneThinks(1.5); });
     GM.on('trap:triggered', function (e) {
-      const t = e && e.tribute;
+      const t = e && e.contestant;
       if (hasMind(t)) { t.mind.plan.done = true; thinkSoon(t.mind, 0.3); }
     });
   }
@@ -3914,7 +3914,7 @@
     if (!a || !b || !a.mind || a.mind.v !== 1 || b.id == null || b.id >= MAXN) return { trust: 0, grudge: 0, allied: false };
     return { trust: a.mind.trust[b.id], grudge: a.mind.grudge[b.id], allied: allied(a, b) };
   }
-  /** Small summary of a tribute's mind (UI helpers / debugging). */
+  /** Small summary of a contestant's mind (UI helpers / debugging). */
   function describe(t) {
     if (!t || !t.mind || t.mind.v !== 1) return null;
     const p = t.mind.plan;

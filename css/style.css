@@ -1,5 +1,5 @@
 /* ==========================================================================
-   The Game Master's Arena - control room stylesheet
+   Arena Showrunner - control room stylesheet
    Owned by the UI module. The DOM is built by js/ui.js (+ js/minimap.js).
    Rules that matter for the renderer (js/camera.js):
    - canvas#gl is fixed full-window behind everything (z-index 0).
@@ -631,7 +631,7 @@ select.inp option { background: var(--bg-2); color: var(--text); }
   flex: 1 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr);
-  grid-template-areas: 'arena roster' 'tributes roster' 'options roster';
+  grid-template-areas: 'arena roster' 'contestants roster' 'options roster';
   grid-template-rows: auto auto 1fr;
   gap: 14px;
   padding: 18px 30px 22px;
@@ -658,7 +658,7 @@ select.inp option { background: var(--bg-2); color: var(--text); }
   border-radius: 2px;
 }
 .s-arena { grid-area: arena; }
-.s-tributes { grid-area: tributes; }
+.s-contestants { grid-area: contestants; }
 .s-roster { grid-area: roster; display: flex; flex-direction: column; min-height: 0; }
 .s-options { grid-area: options; }
 .card-title {
@@ -754,7 +754,7 @@ select.inp option { background: var(--bg-2); color: var(--text); }
   z-index: 1;
 }
 
-/* 02 tributes */
+/* 02 contestants */
 .count-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .count-out { font-size: 26px; font-weight: 700; line-height: 1; color: var(--cyan); text-shadow: 0 0 14px rgb(var(--cyan-rgb) / 0.35); }
 .mix-seg { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 6px; }
@@ -1749,7 +1749,7 @@ select.inp option { background: var(--bg-2); color: var(--text); }
 .rc-close { margin-top: 14px; font-size: var(--fs-xs); color: var(--text-3); font-variant-caps: all-small-caps; letter-spacing: var(--track); animation: gm-blink-soft 2s ease-in-out infinite; }
 
 /* =========================================================================
-   DOCK (under the viewport): tabs + powers / tribute / log panes
+   DOCK (under the viewport): tabs + powers / contestant / log panes
    ========================================================================= */
 .dock {
   position: relative;
@@ -1817,11 +1817,11 @@ select.inp option { background: var(--bg-2); color: var(--text); }
 }
 .dock-tab.on,
 .dock[data-tab="powers"] .dock-tab[data-tab="powers"],
-.dock[data-tab="tribute"] .dock-tab[data-tab="tribute"],
+.dock[data-tab="contestant"] .dock-tab[data-tab="contestant"],
 .dock[data-tab="log"] .dock-tab[data-tab="log"] { color: var(--cyan); }
 .dock-tab.on::after,
 .dock[data-tab="powers"] .dock-tab[data-tab="powers"]::after,
-.dock[data-tab="tribute"] .dock-tab[data-tab="tribute"]::after,
+.dock[data-tab="contestant"] .dock-tab[data-tab="contestant"]::after,
 .dock[data-tab="log"] .dock-tab[data-tab="log"]::after { background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
 .dock.min .dock-tab::after { background: transparent !important; box-shadow: none !important; }
 .dt-badge {
@@ -1844,7 +1844,7 @@ select.inp option { background: var(--bg-2); color: var(--text); }
   overscroll-behavior: contain;
 }
 .dock[data-tab="powers"] .pane-powers,
-.dock[data-tab="tribute"] .pane-tribute,
+.dock[data-tab="contestant"] .pane-contestant,
 .dock[data-tab="log"] .pane-log { display: flex; }
 .pane-head {
   display: flex;
@@ -1972,8 +1972,8 @@ select.inp option { background: var(--bg-2); color: var(--text); }
 .pow.fired { animation: gm-fired 0.55s var(--ease); }
 .pane-powers.locked .pow { opacity: 0.45; filter: saturate(0.4); }
 
-/* ----------------------------------------------------------- tribute pane */
-.pane-tribute { display: none; }
+/* ----------------------------------------------------------- contestant pane */
+.pane-contestant { display: none; }
 .sel-empty {
   flex: 1;
   display: flex;
@@ -2638,7 +2638,7 @@ button.chip-i:active { transform: translateY(1px); }
   .chip-day .chip-sub { font-size: 10.5px; }
   .meter { width: 64px; }
   .pow-grid { grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); }
-  .setup-body { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'arena' 'tributes' 'roster' 'options'; }
+  .setup-body { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'arena' 'contestants' 'roster' 'options'; }
   .re-list { max-height: 52vh; }
 }
 @media (max-width: 1040px) and (min-width: 900px) {

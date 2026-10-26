@@ -3,7 +3,7 @@
  *
  *   GM.Game.boot()                 on DOMContentLoaded
  *   GM.Game.previewArena(seed)     regenerate terrain for the setup screen
- *   GM.Game.newGame(settings)      start a new Games (countdown -> running)
+ *   GM.Game.newGame(settings)      start a new Show (countdown -> running)
  *   GM.Game.toSetup()              back to the setup screen
  *   GM.Game.setSpeed(x) / togglePause(force?) / stepSpeed(+1|-1)
  *
@@ -83,8 +83,8 @@
     st.phase = 'setup';
     st.paused = false;
     st.speed = 1;
-    st.tributes = [];
-    st.mutts = [];
+    st.contestants = [];
+    st.beasts = [];
     st.selectedId = null;
     st.interests = [];
     GM.emit('game:setup', {});
@@ -95,7 +95,7 @@
     s = Object.assign(
       {
         seed: GM.state.seed || GM.randomSeed(),
-        tributeCount: CFG.DEFAULT_TRIBUTES,
+        contestantCount: CFG.DEFAULT_CONTESTANTS,
         mix: 'balanced',
         roster: null,
         sandbox: false,
@@ -108,17 +108,17 @@
       s || {}
     );
     s.seed = s.seed >>> 0;
-    s.tributeCount = GM.U.clamp(s.tributeCount | 0, CFG.MIN_TRIBUTES, CFG.MAX_TRIBUTES);
-    if (!Array.isArray(s.roster) || s.roster.length < CFG.MIN_TRIBUTES) {
-      s.roster = GM.Tributes && GM.Tributes.generateRoster
-        ? GM.Tributes.generateRoster(s.tributeCount, s.mix, s.seed)
+    s.contestantCount = GM.U.clamp(s.contestantCount | 0, CFG.MIN_CONTESTANTS, CFG.MAX_CONTESTANTS);
+    if (!Array.isArray(s.roster) || s.roster.length < CFG.MIN_CONTESTANTS) {
+      s.roster = GM.Contestants && GM.Contestants.generateRoster
+        ? GM.Contestants.generateRoster(s.contestantCount, s.mix, s.seed)
         : [];
     }
-    s.tributeCount = s.roster.length;
+    s.contestantCount = s.roster.length;
     return s;
   };
 
-  /** Start a new Games. Terrain is always regenerated (clears old deformations). */
+  /** Start a new Show. Terrain is always regenerated (clears old deformations). */
   Game.newGame = function (settings) {
     const s = Game.normalizeSettings(settings);
     callAll('clear');
@@ -141,41 +141,41 @@
     GM.emit('countdown:tick', { n: CFG.COUNTDOWN });
   };
 
-  function startGames() {
+  function startShow() {
     const st = GM.state;
     st.phase = 'running';
     st.countdown = 0;
     st.time = 0;
     GM.emit('game:start', {});
-    GM.announce('ann.bloodbath', {}, { style: 'danger', duration: 4 });
-    GM.log('system', 'log.gamesBegin', { n: st.tributes.length }, { important: true });
+    GM.announce('ann.kickoff', {}, { style: 'danger', duration: 4 });
+    GM.log('system', 'log.gamesBegin', { n: st.contestants.length }, { important: true });
   }
 
   function checkVictory() {
     const st = GM.state;
-    if (!st.tributes.length) return;
+    if (!st.contestants.length) return;
     let alive = 0;
     let last = null;
-    for (const t of st.tributes) {
+    for (const t of st.contestants) {
       if (t.alive) {
         alive++;
         last = t;
       }
     }
-    if (alive <= 1) endGames(alive === 1 ? last : null);
+    if (alive <= 1) endShow(alive === 1 ? last : null);
   }
 
-  function endGames(winner) {
+  function endShow(winner) {
     const st = GM.state;
     st.phase = 'ended';
     st.winner = winner ? winner.id : null;
     st.endTime = st.time;
     if (winner) {
       winner.placement = 1;
-      GM.announce('ann.victor', { name: winner.name, district: winner.district }, { style: 'gold', duration: 7 });
-      GM.log('system', 'log.victor', { name: winner.name, district: winner.district }, {
+      GM.announce('ann.victor', { name: winner.name, team: winner.team }, { style: 'gold', duration: 7 });
+      GM.log('system', 'log.victor', { name: winner.name, team: winner.team }, {
         important: true,
-        tributeIds: [winner.id],
+        contestantIds: [winner.id],
         pos: winner.pos,
       });
       GM.addInterest({ pos: winner.pos, score: 20, duration: 60, followId: winner.id, kind: 'victor', key: 'victor' });
@@ -210,9 +210,9 @@
   };
 
   // --------------------------------------------------------- bookkeeping
-  GM.on('tribute:died', function (e) {
+  GM.on('contestant:died', function (e) {
     const st = GM.state;
-    const t = e && e.tribute;
+    const t = e && e.contestant;
     if (!t) return;
     st.deaths.push({
       id: t.id,
@@ -246,7 +246,7 @@
       st.countdown -= dt;
       const after = Math.ceil(st.countdown);
       if (after !== before && after > 0) GM.emit('countdown:tick', { n: after });
-      if (st.countdown <= 0) startGames();
+      if (st.countdown <= 0) startShow();
     } else {
       st.time += dt;
     }

@@ -9,10 +9,10 @@
  *   showcase  setup screen: slow cinematic orbit over the arena
  *   free      fly camera: WASD / arrows, Q/E down/up, Shift x3, drag to look,
  *             wheel moves forward / back; stays above ground, inside the map
- *   follow    orbit one tribute: drag to orbit, wheel zoom, drifts behind
+ *   follow    orbit one contestant: drag to orbit, wheel zoom, drifts behind
  *   director  automatic TV director: interest-driven shots, hysteresis,
  *             shot variety, hard cuts or smooth moves, countdown sweep,
- *             bloodbath wide, victor orbit
+ *             kickoff wide, victor orbit
  *   overhead  top-down tactical view: WASD / drag pans, wheel zooms
  *
  * Owner: CAMERA. Contract: SPEC.md section 8.11.
@@ -40,7 +40,7 @@
         'cam.modeShort.follow': 'FOLLOW',
         'cam.modeShort.director': 'DIRECTOR',
         'cam.modeShort.overhead': 'MAP',
-        'cam.hint.showcase': 'Arena preview. Start the Games to take control.',
+        'cam.hint.showcase': 'Arena preview. Start the Show to take control.',
         'cam.hint.free': 'W A S D: move · Q / E: down / up · Shift: fast · Drag: look · Wheel: forward / back',
         'cam.hint.follow': 'Drag: turn around · Wheel: zoom · A / D: turn · W / S: zoom',
         'cam.hint.director': 'The camera finds the action by itself. Move or drag to take control.',
@@ -56,43 +56,43 @@
         'cam.shot.crane': 'Crane',
         'cam.shot.portrait': 'Close-up',
         'cam.shot.sweep': 'Pedestals',
-        'cam.shot.bloodbath': 'Wide',
-        'cam.shot.victor': 'Victor',
+        'cam.shot.kickoff': 'Wide',
+        'cam.shot.victor': 'Winner',
         'cam.overview': 'The arena',
-        'cam.cornucopia': 'The Cornucopia',
-        'cam.bloodbath': 'The bloodbath',
-        'cam.countdown': 'The tributes wait on their pedestals',
-        'cam.pedestal': '{name}, District {district}',
-        'cam.tribute': '{name} · District {district}',
-        'cam.feedTribute': '{name} · District {district}',
+        'cam.nexus': 'The Nexus',
+        'cam.kickoff': 'The opening rush',
+        'cam.countdown': 'The contestants wait on their pedestals',
+        'cam.pedestal': '{name}, Team {team}',
+        'cam.contestant': '{name} · Team {team}',
+        'cam.feedContestant': '{name} · Team {team}',
         'cam.watch': 'Watching: {name}',
         'cam.following': 'Following: {name}',
         'cam.followDead': '{name} has fallen',
         'cam.fight': '{a} vs {b}',
         'cam.feedFight': 'Fight: {a} vs {b}',
-        'cam.fightMutt': '{a} vs {mutt}',
-        'cam.mutt.wolf': 'wolf mutts',
-        'cam.mutt.wasps': 'tracker jackers',
+        'cam.fightBeast': '{a} vs {beast}',
+        'cam.beast.wolf': 'wolf beasts',
+        'cam.beast.wasps': 'killer wasps',
         'cam.death': 'Fallen: {name}',
         'cam.deathBy': '{killer} killed {name}',
         'cam.betrayal': 'Betrayal: {name}',
-        'cam.mutts': 'Mutts in the arena',
+        'cam.beasts': 'Beasts in the arena',
         'cam.hazard': 'Danger in the arena',
         'cam.drop': 'Supply drop',
         'cam.gift': 'A gift for {name}',
         'cam.feast': 'The feast',
         'cam.trap': 'A trap',
         'cam.alliance': 'Allies',
-        'cam.power': 'The Game Master steps in',
-        'cam.powerUsed': 'Game Master: {power}',
+        'cam.power': 'The Showrunner steps in',
+        'cam.powerUsed': 'Showrunner: {power}',
         'cam.lightning': 'Lightning strike',
         'cam.explosion': 'Explosion',
         'cam.quake': 'Earthquake',
         'cam.fire': 'Fire',
         'cam.gas': 'Gas cloud',
         'cam.zone': 'The force field closes',
-        'cam.victor': 'Victor: {name}',
-        'cam.noVictor': 'No victor',
+        'cam.victor': 'Winner: {name}',
+        'cam.noVictor': 'No winner',
         'cam.event': 'Live from the arena',
         'cam.noSignal': 'No signal',
         'cam.searching': 'Looking for action...',
@@ -112,12 +112,12 @@
         'cam.modeShort.follow': 'KÖVETÉS',
         'cam.modeShort.director': 'RENDEZŐ',
         'cam.modeShort.overhead': 'TÉRKÉP',
-        'cam.hint.showcase': 'Aréna bemutató. Indítsd el a Viadalt, és te irányítasz.',
+        'cam.hint.showcase': 'Aréna bemutató. Indítsd el a Műsort, és te irányítasz.',
         'cam.hint.free': 'W A S D: mozgás · Q / E: le / fel · Shift: gyors · Húzás: nézelődés · Görgő: előre / hátra',
         'cam.hint.follow': 'Húzás: körbeforgatás · Görgő: nagyítás · A / D: forgatás · W / S: nagyítás',
         'cam.hint.director': 'A kamera magától megkeresi az akciót. Mozgasd vagy húzd, és átveszed az irányítást.',
         'cam.hint.overhead': 'W A S D vagy húzás: térkép mozgatása · Görgő: nagyítás',
-        'cam.keys': '1 Szabad · 2 Követés · 3 Rendező · 4 Térkép · C Következő kamera · F Kiválasztott követése',
+        'cam.keys': '1 Szabad · 2 Követés · 3 Rendező · 4 Térkép · C Következő kamera · F Versenyző követése',
         'cam.shot.establish': 'Távoli',
         'cam.shot.wide': 'Távoli',
         'cam.shot.top': 'Felülről',
@@ -128,35 +128,35 @@
         'cam.shot.crane': 'Daru',
         'cam.shot.portrait': 'Közeli',
         'cam.shot.sweep': 'Talapzatok',
-        'cam.shot.bloodbath': 'Távoli',
+        'cam.shot.kickoff': 'Távoli',
         'cam.shot.victor': 'Győztes',
         'cam.overview': 'Az aréna',
-        'cam.cornucopia': 'A Bőségszaru',
-        'cam.bloodbath': 'A vérfürdő',
-        'cam.countdown': 'A kiválasztottak a talapzatukon várnak',
-        'cam.pedestal': '{name}, {district}. körzet',
-        'cam.tribute': '{name} · {district}. körzet',
-        'cam.feedTribute': '{name} · {district}. körzet',
+        'cam.nexus': 'A Nexus',
+        'cam.kickoff': 'A nyitó roham',
+        'cam.countdown': 'A versenyzők a talapzatukon várnak',
+        'cam.pedestal': '{name}, {team}. csapat',
+        'cam.contestant': '{name} · {team}. csapat',
+        'cam.feedContestant': '{name} · {team}. csapat',
         'cam.watch': 'Figyeljük: {name}',
         'cam.following': 'Követjük: {name}',
         'cam.followDead': 'Elesett: {name}',
         'cam.fight': 'Harc: {a} – {b}',
         'cam.feedFight': 'Harc: {a} – {b}',
-        'cam.fightMutt': 'Harc: {a} – {mutt}',
-        'cam.mutt.wolf': 'farkasmutánsok',
-        'cam.mutt.wasps': 'vérdarazsak',
+        'cam.fightBeast': 'Harc: {a} – {beast}',
+        'cam.beast.wolf': 'farkasfenevadak',
+        'cam.beast.wasps': 'gyilkosdarazsak',
         'cam.death': 'Elesett: {name}',
         'cam.deathBy': '{killer} megölte: {name}',
         'cam.betrayal': 'Árulás: {name}',
-        'cam.mutts': 'Mutánsok az arénában',
+        'cam.beasts': 'Fenevadak az arénában',
         'cam.hazard': 'Veszély az arénában',
         'cam.drop': 'Utánpótlás érkezik',
         'cam.gift': 'Ajándék neki: {name}',
         'cam.feast': 'A lakoma',
         'cam.trap': 'Csapda',
         'cam.alliance': 'Szövetségesek',
-        'cam.power': 'A Játékmester közbelép',
-        'cam.powerUsed': 'Játékmester: {power}',
+        'cam.power': 'A Showrunner közbelép',
+        'cam.powerUsed': 'Showrunner: {power}',
         'cam.lightning': 'Villámcsapás',
         'cam.explosion': 'Robbanás',
         'cam.quake': 'Földrengés',
@@ -229,22 +229,22 @@
       Math.abs(v.x) < 1e6 && Math.abs(v.y) < 1e6 && Math.abs(v.z) < 1e6;
   }
   function kDamp(lambda, dt) { return 1 - Math.exp(-lambda * dt); }
-  function tributeById(id) {
-    const ts = GM.state.tributes;
+  function contestantById(id) {
+    const ts = GM.state.contestants;
     return id != null && ts && ts[id] ? ts[id] : null;
   }
   function phase() { return GM.state.phase; }
   function inGame() { const p = GM.state.phase; return p === 'countdown' || p === 'running' || p === 'ended'; }
-  /** Entities that can still be filmed: living ones, and tribute bodies. */
+  /** Entities that can still be filmed: living ones, and contestant bodies. */
   function filmable(e) {
     if (!e || !e.pos) return false;
     if (e.alive) return true;
-    return e.kind === 'tribute' && !!(e.mesh && e.mesh.parent && e.mesh.visible !== false);
+    return e.kind === 'contestant' && !!(e.mesh && e.mesh.parent && e.mesh.visible !== false);
   }
-  /** Visual feet position of a tribute or mutt. */
+  /** Visual feet position of a contestant or beast. */
   function entPos(e, out) {
     const m = e.mesh;
-    if (e.kind === 'tribute' && m && m.parent && m.position && m.parent.type === 'Scene') {
+    if (e.kind === 'contestant' && m && m.parent && m.position && m.parent.type === 'Scene') {
       out.copy(m.position);
     } else if (e.pos) {
       out.set(+e.pos.x || 0, +e.pos.y || 0, +e.pos.z || 0);
@@ -265,7 +265,7 @@
   function label(key, params) { return { key, params: params || {} }; }
   function nameOf(e) {
     if (!e) return '?';
-    if (e.kind === 'mutt') return '@cam.mutt.' + (e.type === 'wasps' ? 'wasps' : 'wolf');
+    if (e.kind === 'beast') return '@cam.beast.' + (e.type === 'wasps' ? 'wasps' : 'wolf');
     return e.name || '?';
   }
   function hasKey(key) { return !!(GM.i18n && GM.i18n.has && GM.i18n.has(key, 'en')); }
@@ -502,7 +502,7 @@
     crane:     { fov: 55, lp: 4.0, ll: 5.0, clear: 0.6, cam: 6, hold: [5.5, 7.5] },
     portrait:  { fov: 40, lp: 4.0, ll: 5.0, clear: 0.6, cam: 8, hold: [4.5, 6.5] },
     establish: { fov: 50, lp: 2.0, ll: 2.0, clear: 8.0, cam: 1, hold: [6, 9] },
-    bloodbath: { fov: 55, lp: 3.0, ll: 3.0, clear: 4.0, cam: 1, hold: [6, 6] },
+    kickoff: { fov: 55, lp: 3.0, ll: 3.0, clear: 4.0, cam: 1, hold: [6, 6] },
     victor:    { fov: 48, lp: 3.0, ll: 4.0, clear: 0.6, cam: 2, hold: [1e9, 1e9] },
   };
   // Director shot weights per kind of happening.
@@ -510,14 +510,14 @@
     fight:    { shoulder: 3, low: 2, orbit: 2, wide: 1, track: 1 },
     death:    { crane: 3, low: 2, top: 1, portrait: 1 },
     hazard:   { top: 3, wide: 3, crane: 1, low: 1 },
-    mutt:     { wide: 2, low: 2, track: 2, top: 1, shoulder: 1 },
+    beast:     { wide: 2, low: 2, track: 2, top: 1, shoulder: 1 },
     drop:     { wide: 2, crane: 2, orbit: 1, top: 1 },
     betrayal: { shoulder: 3, low: 2, portrait: 2 },
     alliance: { orbit: 2, wide: 2, portrait: 1 },
     trap:     { low: 2, crane: 2, portrait: 1 },
     power:    { top: 2, wide: 3, crane: 1 },
     victor:   { orbit: 1 },
-    tribute:  { track: 3, orbit: 2, shoulder: 1, portrait: 1, wide: 1, low: 1 },
+    contestant:  { track: 3, orbit: 2, shoulder: 1, portrait: 1, wide: 1, low: 1 },
     event:    { wide: 3, orbit: 1, crane: 1, top: 1 },
   };
   // Live feeds use calmer, simpler framing.
@@ -525,27 +525,27 @@
     fight:    { shoulder: 2, orbit: 2, low: 1 },
     death:    { crane: 2, top: 1 },
     hazard:   { wide: 2, top: 2 },
-    mutt:     { wide: 1, orbit: 1, low: 1 },
+    beast:     { wide: 1, orbit: 1, low: 1 },
     drop:     { wide: 1, orbit: 1 },
     betrayal: { shoulder: 1, portrait: 1 },
     alliance: { orbit: 1, wide: 1 },
     trap:     { low: 1, orbit: 1 },
     power:    { wide: 1, top: 1 },
     victor:   { orbit: 1 },
-    tribute:  { track: 2, orbit: 1, portrait: 1 },
+    contestant:  { track: 2, orbit: 1, portrait: 1 },
     event:    { wide: 1, orbit: 1 },
   };
   const NEEDS_SUBJECT = { shoulder: 1, track: 1, portrait: 1 };
-  // Fallback director: what makes a tribute worth watching.
+  // Fallback director: what makes a contestant worth watching.
   const ACTIVE_ACTIONS = {
-    fight: 1.6, berserk: 1.6, hunt: 1.4, stalk: 1.2, bloodbath: 1.2, ambush: 1.1, mad: 1.3,
+    fight: 1.6, berserk: 1.6, hunt: 1.4, stalk: 1.2, kickoff: 1.2, ambush: 1.1, mad: 1.3,
     flee: 1.0, steal: 1.0, panic: 1.0, feast: 1.0, escape_zone: 0.9, trap: 0.8,
     investigate: 0.6, ally: 0.6, loot: 0.5,
   };
   const CAM_NAMES = [];
   for (let i = 0; i < 40; i++) CAM_NAMES.push('CAM ' + (i < 10 ? '0' : '') + i);
   const FEED_MIN = 5;   // real seconds a feed keeps its subject at least
-  const FEED_MAX = 12;  // ... and at most (tribute rotation)
+  const FEED_MAX = 12;  // ... and at most (contestant rotation)
 
   // ------------------------------------------------------------ public object
   const Cameras = (GM.Cameras = {});
@@ -639,14 +639,14 @@
     if (k === 'fight' || k === 'combat' || (key && String(key).indexOf('fight') === 0)) return 'fight';
     if (k === 'hazard' || k === 'fire' || k === 'gas' || k === 'quake' || k === 'lightning' ||
         k === 'explosion' || k === 'zone' || k === 'flood' || k === 'storm' || k === 'fireball') return 'hazard';
-    if (k === 'mutt' || k === 'mutts' || k === 'wolf' || k === 'wasps') return 'mutt';
+    if (k === 'beast' || k === 'beasts' || k === 'wolf' || k === 'wasps') return 'beast';
     if (k === 'drop' || k === 'supply' || k === 'crate' || k === 'gift' || k === 'item' || k === 'loot' || k === 'feast') return 'drop';
     if (k === 'betrayal' || k === 'betray') return 'betrayal';
     if (k === 'alliance') return 'alliance';
     if (k === 'trap') return 'trap';
     if (k === 'victor' || k === 'finale') return 'victor';
     if (k === 'power' || k === 'gm') return 'power';
-    return followId != null ? 'tribute' : 'event';
+    return followId != null ? 'contestant' : 'event';
   }
 
   const FIGHT_KEY = /^fight:(\d+)-(\d+)$/;
@@ -736,7 +736,7 @@
     }
   }
 
-  // Recently filmed tributes (variety).
+  // Recently filmed contestants (variety).
   const recentIds = new Int32Array(12).fill(-1);
   const recentAt = new Float64Array(12);
   let recentI = 0;
@@ -757,10 +757,10 @@
     if (!c.live) v *= 0.85;
     if (clock - c.shownAt < 25) v *= 0.7;             // we just showed this
     if (c.followId != null) {
-      const t = tributeById(c.followId);
+      const t = contestantById(c.followId);
       if (t) {
         if (!t.alive && c.cls !== 'death') v *= 0.5;
-        if (GM.state.selectedId === t.id) v *= 1.25;   // the Game Master cares about this one
+        if (GM.state.selectedId === t.id) v *= 1.25;   // the Showrunner cares about this one
         if (recentlyShown(t.id, 30)) v *= 0.85;
       }
     }
@@ -771,23 +771,23 @@
   function makeShot() {
     return {
       active: false, style: 'wide', cand: null, candId: 0, cls: 'event',
-      subjectId: null, otherId: null, otherMutt: null, otherCheck: -99,
+      subjectId: null, otherId: null, otherBeast: null, otherCheck: -99,
       anchor: new V3(), radius: 10, t0: 0, hold: 8, side: 1, yaw0: 0, rnd: 0.5, yawS: 0,
       heading: 0, speed: 0, label: null, camNo: 1, fov: 55, lp: 3.5, ll: 4, clear: 0.8,
       fallback: false, pos: new V3(), look: new V3(),
     };
   }
 
-  /** Find someone the subject is dealing with (target, nearest enemy or mutt). */
+  /** Find someone the subject is dealing with (target, nearest enemy or beast). */
   function findOther(s, nearestToo) {
-    const t = tributeById(s.subjectId);
+    const t = contestantById(s.subjectId);
     if (!t || !t.pos) return;
     if (t.targetId != null) {
-      const o = tributeById(t.targetId);
-      if (o && o !== t && o.alive && o.pos && U.distSqXZ(o.pos, t.pos) < 900) { s.otherId = o.id; s.otherMutt = null; return; }
+      const o = contestantById(t.targetId);
+      if (o && o !== t && o.alive && o.pos && U.distSqXZ(o.pos, t.pos) < 900) { s.otherId = o.id; s.otherBeast = null; return; }
     }
     if (!nearestToo) return;
-    const ts = GM.state.tributes;
+    const ts = GM.state.contestants;
     let best = null, bd = 14 * 14;
     for (let i = 0; i < ts.length; i++) {
       const o = ts[i];
@@ -795,8 +795,8 @@
       const d = U.distSqXZ(o.pos, t.pos);
       if (d < bd) { bd = d; best = o; }
     }
-    if (best) { s.otherId = best.id; s.otherMutt = null; return; }
-    const ms = GM.state.mutts;
+    if (best) { s.otherId = best.id; s.otherBeast = null; return; }
+    const ms = GM.state.beasts;
     let bm = null; bd = 16 * 16;
     if (ms) {
       for (let i = 0; i < ms.length; i++) {
@@ -806,7 +806,7 @@
         if (d < bd) { bd = d; bm = m; }
       }
     }
-    if (bm) { s.otherMutt = bm; s.otherId = null; }
+    if (bm) { s.otherBeast = bm; s.otherId = null; }
   }
 
   function pickStyle(table, cls, hasSubject, prev, avoid) {
@@ -834,7 +834,7 @@
   function pickYaw(s) {
     const S = s.anchor;
     let base;
-    const o = tributeById(s.otherId);
+    const o = contestantById(s.otherId);
     if (o && o.pos) {
       // 180-degree rule: film a fight from the side of the fighting line.
       base = Math.atan2(o.pos.x - S.x, o.pos.z - S.z) + s.side * Math.PI * 0.5;
@@ -877,18 +877,18 @@
 
   function labelFor(s, cand, forFeed) {
     if (cand && cand.label && cand.label.key) return cand.label;
-    const t = tributeById(s.subjectId);
-    const o = tributeById(s.otherId);
+    const t = contestantById(s.subjectId);
+    const o = contestantById(s.otherId);
     switch (s.cls) {
       case 'fight':
         if (t && o) return label(forFeed ? 'cam.feedFight' : 'cam.fight', { a: t.name, b: o.name });
-        if (t && s.otherMutt) return label('cam.fightMutt', { a: t.name, mutt: nameOf(s.otherMutt) });
+        if (t && s.otherBeast) return label('cam.fightBeast', { a: t.name, beast: nameOf(s.otherBeast) });
         break;
       case 'death':
         if (t) return o && o !== t ? label('cam.deathBy', { killer: o.name, name: t.name }) : label('cam.death', { name: t.name });
         break;
       case 'hazard': return label('cam.hazard');
-      case 'mutt': return label('cam.mutts');
+      case 'beast': return label('cam.beasts');
       case 'drop': return t ? label('cam.gift', { name: t.name }) : label('cam.drop');
       case 'betrayal': if (t) return label('cam.betrayal', { name: t.name }); break;
       case 'alliance': return label('cam.alliance');
@@ -898,8 +898,8 @@
       default: break;
     }
     if (t) {
-      if (phase() === 'countdown') return label('cam.pedestal', { name: t.name, district: t.district });
-      return label(forFeed ? 'cam.feedTribute' : 'cam.tribute', { name: t.name, district: t.district });
+      if (phase() === 'countdown') return label('cam.pedestal', { name: t.name, team: t.team });
+      return label(forFeed ? 'cam.feedContestant' : 'cam.contestant', { name: t.name, team: t.team });
     }
     return label('cam.event');
   }
@@ -913,10 +913,10 @@
     s.active = true;
     s.cand = cand || null;
     s.candId = cand ? cand.id : 0;
-    s.cls = cand ? cand.cls : (opts && opts.cls) || (subjectId != null ? 'tribute' : 'event');
-    s.subjectId = subjectId != null && tributeById(subjectId) ? subjectId : null;
+    s.cls = cand ? cand.cls : (opts && opts.cls) || (subjectId != null ? 'contestant' : 'event');
+    s.subjectId = subjectId != null && contestantById(subjectId) ? subjectId : null;
     s.otherId = cand && cand.otherId != null && cand.otherId !== s.subjectId ? cand.otherId : null;
-    s.otherMutt = null;
+    s.otherBeast = null;
     s.otherCheck = clock;
     s.radius = cand ? cand.radius : 10;
     s.t0 = clock;
@@ -924,7 +924,7 @@
     s.rnd = Math.random();
     s.fallback = !cand;
     s.style = style;
-    const t = tributeById(s.subjectId);
+    const t = contestantById(s.subjectId);
     if (t && filmable(t)) {
       entPos(t, s.anchor);
       s.heading = entHeading(t);
@@ -938,9 +938,9 @@
       s.heading = 0;
     }
     if (opts && opts.radius) s.radius = opts.radius;
-    if (s.subjectId != null && s.otherId == null && s.otherMutt == null &&
-        (s.cls === 'fight' || s.cls === 'mutt' || s.cls === 'betrayal' || s.cls === 'tribute')) {
-      findOther(s, s.cls !== 'tribute');
+    if (s.subjectId != null && s.otherId == null && s.otherBeast == null &&
+        (s.cls === 'fight' || s.cls === 'beast' || s.cls === 'betrayal' || s.cls === 'contestant')) {
+      findOther(s, s.cls !== 'contestant');
     }
     s.yaw0 = pickYaw(s);
     s.yawS = s.style === 'track' ? s.heading + Math.PI + s.side * 0.6 : s.style === 'portrait' ? s.heading + s.side * 0.45 : s.yaw0;
@@ -954,7 +954,7 @@
   /** Compute the wanted camera position (s.pos) and look target (s.look) for a shot. */
   function computeShot(s, dt) {
     const age = clock - s.t0;
-    const t = tributeById(s.subjectId);
+    const t = contestantById(s.subjectId);
     if (t && filmable(t)) {
       entPos(t, s.anchor);
       s.heading = entHeading(t);
@@ -967,10 +967,10 @@
 
     let hasO = false;
     if (s.otherId != null) {
-      const o = tributeById(s.otherId);
+      const o = contestantById(s.otherId);
       if (o && filmable(o)) { entPos(o, _O); hasO = true; }
-    } else if (s.otherMutt && s.otherMutt.alive && s.otherMutt.pos) {
-      const mp = s.otherMutt.pos;
+    } else if (s.otherBeast && s.otherBeast.alive && s.otherBeast.pos) {
+      const mp = s.otherBeast.pos;
       _O.set(+mp.x || 0, +mp.y || 0, +mp.z || 0);
       hasO = finiteV(_O);
     }
@@ -978,9 +978,9 @@
       const dx = _O.x - S.x, dz = _O.z - S.z;
       if (dx * dx + dz * dz > 900) hasO = false;
     }
-    if ((s.cls === 'fight' || s.cls === 'mutt') && s.subjectId != null && clock - s.otherCheck > 0.7) {
+    if ((s.cls === 'fight' || s.cls === 'beast') && s.subjectId != null && clock - s.otherCheck > 0.7) {
       s.otherCheck = clock;
-      if (!hasO) { s.otherId = null; s.otherMutt = null; findOther(s, true); }
+      if (!hasO) { s.otherId = null; s.otherBeast = null; findOther(s, true); }
     }
 
     const P = s.pos, L = s.look, h = s.heading;
@@ -1066,7 +1066,7 @@
         L.set(S.x, S.y + 3, S.z);
         break;
       }
-      case 'bloodbath': {
+      case 'kickoff': {
         const k = U.smoothstep(0, 6, age);
         const yaw = s.yaw0 + 0.06 * age;
         const r = 34 + 8 * k;
@@ -1125,8 +1125,8 @@
     return best;
   }
 
-  function pickFallbackTribute(ex) {
-    const ts = GM.state.tributes;
+  function pickFallbackContestant(ex) {
+    const ts = GM.state.contestants;
     let best = null, bv = -1;
     for (let i = 0; i < ts.length; i++) {
       const t = ts[i];
@@ -1150,16 +1150,16 @@
     const hadShot = s.active;
     _g0.copy(cur.look).sub(cur.pos);
     if (cand) {
-      const subj = cand.followId != null && tributeById(cand.followId) ? cand.followId : null;
+      const subj = cand.followId != null && contestantById(cand.followId) ? cand.followId : null;
       const style = pickStyle(STYLE_W, cand.cls, subj != null, prevStyle, null);
       setupShot(s, cand, subj, style, null);
       cand.shownAt = clock;
     } else {
       dir.fallbackN++;
-      const t = dir.fallbackN % 4 === 0 ? null : pickFallbackTribute(prevSubject);
+      const t = dir.fallbackN % 4 === 0 ? null : pickFallbackContestant(prevSubject);
       if (t) {
-        const style = pickStyle(STYLE_W, 'tribute', true, prevStyle, null);
-        setupShot(s, null, t.id, style, { cls: 'tribute', hold: 9 + Math.random() * 4 });
+        const style = pickStyle(STYLE_W, 'contestant', true, prevStyle, null);
+        setupShot(s, null, t.id, style, { cls: 'contestant', hold: 9 + Math.random() * 4 });
       } else {
         const gy = groundY(0, 0);
         _g1.set(0, gy, 0);
@@ -1208,23 +1208,23 @@
     hardCut();
   }
 
-  function startBloodbath() {
+  function startKickoff() {
     const s = dir.shot;
-    dir.pin = 'bloodbath';
+    dir.pin = 'kickoff';
     dir.pinUntil = clock + 6;
     _g1.set(0, groundY(0, 0), 0);
-    setupShot(s, null, null, 'bloodbath', { pos: _g1, cls: 'event', hold: 6, radius: 30 });
+    setupShot(s, null, null, 'kickoff', { pos: _g1, cls: 'event', hold: 6, radius: 30 });
     s.yaw0 = main.position.x * main.position.x + main.position.z * main.position.z > 1
       ? Math.atan2(main.position.x, main.position.z) : Math.random() * TAU;
-    s.label = label('cam.bloodbath');
-    pushStyle('bloodbath');
+    s.label = label('cam.kickoff');
+    pushStyle('kickoff');
     hardCut();
   }
 
   function startVictor() {
     const s = dir.shot;
     dir.pin = 'victor';
-    const w = tributeById(GM.state.winner);
+    const w = contestantById(GM.state.winner);
     if (w) {
       setupShot(s, null, w.id, 'victor', { cls: 'victor', hold: 1e9 });
       s.yaw0 = entHeading(w) + 0.5;
@@ -1244,7 +1244,7 @@
     if (dir.pin === 'countdown') dir.pin = null;
     if (ph === 'ended') { if (dir.pin !== 'victor' || !s.active) startVictor(); return; }
     if (dir.pin === 'victor') dir.pin = null;
-    if (dir.pin === 'bloodbath') {
+    if (dir.pin === 'kickoff') {
       if (clock < dir.pinUntil && s.active) return;
       dir.pin = null;
     }
@@ -1261,7 +1261,7 @@
     }
     if (held >= s.hold || held >= MAX_HOLD) {
       if (best && bestV >= 2.5 && (bestV > curV * 0.7 || held >= MAX_HOLD)) startDirectorShot(best, false);
-      else if (curValid || (s.fallback && s.subjectId != null && tributeById(s.subjectId) && tributeById(s.subjectId).alive && held < MAX_HOLD)) restyleShot();
+      else if (curValid || (s.fallback && s.subjectId != null && contestantById(s.subjectId) && contestantById(s.subjectId).alive && held < MAX_HOLD)) restyleShot();
       else startDirectorShot(best && bestV >= 1.5 ? best : null, false);
       return;
     }
@@ -1275,7 +1275,7 @@
     const gy = groundY(0, 0);
     const PR = CFG.PEDESTAL_RADIUS || 18;
     if (k < 0.7) {
-      // Slide along the inside of the ring: the tributes face the centre, so we see faces.
+      // Slide along the inside of the ring: the contestants face the centre, so we see faces.
       const q = k / 0.7;
       const a = dir.sweepA + q * TAU * 0.5;
       const R = PR - 5.5;
@@ -1283,7 +1283,7 @@
       const la = a + 0.2;
       des.look.set(Math.sin(la) * PR, gy + 1.9, Math.cos(la) * PR);
       // Who is on screen?
-      const ts = GM.state.tributes;
+      const ts = GM.state.contestants;
       let best = null, bd = Infinity;
       for (let i = 0; i < ts.length; i++) {
         const t = ts[i];
@@ -1294,7 +1294,7 @@
       }
       if (best && best.id !== dir.pedId) {
         dir.pedId = best.id;
-        curLabel = label('cam.pedestal', { name: best.name, district: best.district });
+        curLabel = label('cam.pedestal', { name: best.name, team: best.team });
       }
     } else {
       const q = (k - 0.7) / 0.3;
@@ -1351,7 +1351,7 @@
   let feedsThink = -99;
   let landmarks = null;
 
-  /** Tribute id shown by the main camera right now (or null). */
+  /** Contestant id shown by the main camera right now (or null). */
   function mainSubject() {
     if (mode === 'follow') return fol.id;
     if (mode === 'director' && dir.shot.active && dir.pin !== 'countdown') return dir.shot.subjectId;
@@ -1369,7 +1369,7 @@
     }
     return false;
   }
-  function feedUsesTribute(id, except) {
+  function feedUsesContestant(id, except) {
     for (let j = 0; j < FEED_COUNT; j++) {
       if (j === except) continue;
       const s = feeds[j].shot;
@@ -1385,7 +1385,7 @@
       return clock - s.t0 < FEED_MIN;
     }
     if (s.subjectId != null) {
-      const t = tributeById(s.subjectId);
+      const t = contestantById(s.subjectId);
       if (!t || !filmable(t)) return false;
       if (!t.alive && clock - s.t0 > 3) return false;
       return true;
@@ -1396,7 +1396,7 @@
   function landmarkList() {
     if (landmarks) return landmarks;
     const out = [];
-    out.push({ x: 0, y: groundY(0, 0), z: 0, key: 'cam.cornucopia', r: 14 });
+    out.push({ x: 0, y: groundY(0, 0), z: 0, key: 'cam.nexus', r: 14 });
     const lm = GM.Terrain && GM.Terrain.landmarks;
     const addAll = (arr, key, r) => {
       if (!Array.isArray(arr)) return;
@@ -1416,23 +1416,23 @@
   }
 
   function startFeedShot(f, cand) {
-    const subj = cand.followId != null && tributeById(cand.followId) ? cand.followId : null;
+    const subj = cand.followId != null && contestantById(cand.followId) ? cand.followId : null;
     const style = pickStyle(FEED_W, cand.cls, subj != null, f.shot.active ? f.shot.style : '', null);
     setupShot(f.shot, cand, subj, style, { forFeed: true, hold: FEED_MAX });
     f.snap = true;
   }
 
   function startFeedRotation(f, i, mSub) {
-    const ts = GM.state.tributes;
+    const ts = GM.state.contestants;
     const n = ts ? ts.length : 0;
     const countdown = phase() === 'countdown';
     for (let k = 0; k < n; k++) {
       feedRot = (feedRot + 1) % n;
       const t = ts[feedRot];
       if (!t || !t.alive || !t.pos) continue;
-      if (t.id === mSub || feedUsesTribute(t.id, i)) continue;
-      const style = countdown ? 'portrait' : pickStyle(FEED_W, 'tribute', true, f.shot.active ? f.shot.style : '', null);
-      setupShot(f.shot, null, t.id, style, { cls: 'tribute', forFeed: true, hold: countdown ? 3.2 : FEED_MAX });
+      if (t.id === mSub || feedUsesContestant(t.id, i)) continue;
+      const style = countdown ? 'portrait' : pickStyle(FEED_W, 'contestant', true, f.shot.active ? f.shot.style : '', null);
+      setupShot(f.shot, null, t.id, style, { cls: 'contestant', forFeed: true, hold: countdown ? 3.2 : FEED_MAX });
       f.snap = true;
       return;
     }
@@ -1623,7 +1623,7 @@
 
   // ---------------------------------------------------------- follow camera
   function initFollowFromCurrent() {
-    const t = tributeById(fol.id);
+    const t = contestantById(fol.id);
     if (!t) return;
     entPos(t, _a);
     fol.tgt.set(_a.x, _a.y + 1.2, _a.z);
@@ -1643,7 +1643,7 @@
     fol.labelId = -1;
   }
   function updateFollow(dt) {
-    const t = tributeById(fol.id);
+    const t = contestantById(fol.id);
     if (!t) { setMode(inGame() ? 'director' : 'showcase'); return; }
     const kr = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
     const kf = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0);
@@ -1746,8 +1746,8 @@
     HINTS[m] = label('cam.hint.' + m);
   }
 
-  function nearestTributeTo(p) {
-    const ts = GM.state.tributes;
+  function nearestContestantTo(p) {
+    const ts = GM.state.contestants;
     let best = null, bd = Infinity;
     for (let i = 0; i < ts.length; i++) {
       const t = ts[i];
@@ -1758,13 +1758,13 @@
     return best;
   }
 
-  /** Best tribute to follow: selected, current follow, director subject, nearest to view. */
+  /** Best contestant to follow: selected, current follow, director subject, nearest to view. */
   function followCandidate() {
     let id = GM.state.selectedId;
-    if (id == null || !tributeById(id)) id = null;
-    if (id == null && fol.id != null && tributeById(fol.id)) id = fol.id;
+    if (id == null || !contestantById(id)) id = null;
+    if (id == null && fol.id != null && contestantById(fol.id)) id = fol.id;
     if (id == null && mode === 'director' && dir.shot.active && dir.shot.subjectId != null) id = dir.shot.subjectId;
-    if (id == null) { const t = nearestTributeTo(focusPoint); if (t) id = t.id; }
+    if (id == null) { const t = nearestContestantTo(focusPoint); if (t) id = t.id; }
     return id;
   }
 
@@ -1774,7 +1774,7 @@
     if (!game && (m === 'director' || m === 'follow')) m = 'showcase';
     if (game && m === 'showcase') m = 'director';
     if (m === 'follow') {
-      if (fol.id == null || !tributeById(fol.id)) fol.id = followCandidate();
+      if (fol.id == null || !contestantById(fol.id)) fol.id = followCandidate();
       if (fol.id == null) return false;
       initFollowFromCurrent();
     }
@@ -2035,8 +2035,8 @@
   function emitClick(cx, cy, button) {
     let point = null, trib = null;
     try { point = Cameras.pickGround(cx, cy); } catch (err) { GM.reportError('Cameras.pickGround', err); }
-    try { trib = Cameras.pickTribute(cx, cy); } catch (err) { GM.reportError('Cameras.pickTribute', err); }
-    GM.emit('canvas:click', { clientX: cx, clientY: cy, button, point, tribute: trib });
+    try { trib = Cameras.pickContestant(cx, cy); } catch (err) { GM.reportError('Cameras.pickContestant', err); }
+    GM.emit('canvas:click', { clientX: cx, clientY: cy, button, point, contestant: trib });
   }
 
   function processHover() {
@@ -2119,9 +2119,9 @@
     return null;
   };
 
-  /** Tribute under a screen position (living first, then bodies) or null. */
-  Cameras.pickTribute = function (clientX, clientY) {
-    const ts = GM.state.tributes;
+  /** Contestant under a screen position (living first, then bodies) or null. */
+  Cameras.pickContestant = function (clientX, clientY) {
+    const ts = GM.state.contestants;
     if (!ts || !ts.length) return null;
     const ray = rayFromClient(+clientX || 0, +clientY || 0);
     const o = ray.origin, d = ray.direction;
@@ -2144,7 +2144,7 @@
       entPos(t, _e);
       const dx = _e.x - o.x, dy = _e.y - o.y, dz = _e.z - o.z;
       const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      const r = 0.85 + dist * 0.012;          // generous: far tributes stay clickable
+      const r = 0.85 + dist * 0.012;          // generous: far contestants stay clickable
       const ri = 0.45 + dist * 0.004;         // a direct hit on the body
       let hit, inner;
       if (t.alive) {
@@ -2218,11 +2218,11 @@
 
   let renderNo = 0;
   const _dofP = new V3();
-  /** Cinematic depth of field: close shots of a tribute soften the background (post.js). */
+  /** Cinematic depth of field: close shots of a contestant soften the background (post.js). */
   function updateDof(S) {
     let want = 0, focus = S.dofFocus || 10;
     const sid = mode === 'follow' || mode === 'director' ? mainSubject() : null;
-    const t = sid != null ? tributeById(sid) : null;
+    const t = sid != null ? contestantById(sid) : null;
     if (t && t.pos) {
       entPos(t, _dofP);
       _dofP.y += t.alive ? 1.2 : 0.3;
@@ -2317,9 +2317,9 @@
   /** Switch the main camera mode: 'showcase'|'free'|'follow'|'director'|'overhead'. */
   Cameras.setMode = function (m) { return setMode(m); };
 
-  /** Follow tribute id (mode 'follow') and select it. */
+  /** Follow contestant id (mode 'follow') and select it. */
   Cameras.follow = function (id) {
-    const t = tributeById(id);
+    const t = contestantById(id);
     if (!t || !inGame()) return false;
     fol.id = t.id;
     if (mode !== 'follow') setMode('follow');
@@ -2396,7 +2396,7 @@
   Cameras.takeFeed = function (i) {
     const f = feeds[i | 0];
     if (!f || !f.shot.active) return false;
-    const t = tributeById(f.shot.subjectId);
+    const t = contestantById(f.shot.subjectId);
     cur.pos.copy(f.cur.pos);
     cur.look.copy(f.cur.look);
     cur.fov = f.cur.fov;
@@ -2434,7 +2434,7 @@
     return out;
   };
 
-  /** Tribute id on the main camera (follow target or director subject) or null. */
+  /** Contestant id on the main camera (follow target or director subject) or null. */
   Cameras.subjectId = function () { return mainSubject(); };
 
   // ----------------------------------------------------------------- events
@@ -2451,7 +2451,7 @@
     else setMode('director');
   }
   function onStart() {
-    if (mode === 'director') startBloodbath();
+    if (mode === 'director') startKickoff();
   }
   function onEnd() {
     if (mode !== 'director') setMode('director');
@@ -2459,15 +2459,15 @@
   }
   function onSelect(e) {
     const id = e ? e.id : null;
-    if (id == null || mode !== 'follow' || id === fol.id || !tributeById(id)) return;
+    if (id == null || mode !== 'follow' || id === fol.id || !contestantById(id)) return;
     fol.id = id;
     fol.userT = -99;
     fol.labelId = -1;
   }
   function onDied(e) {
-    const t = e && e.tribute;
+    const t = e && e.contestant;
     if (!t) return;
-    const k = e.killer && e.killer.kind !== 'mutt' ? e.killer : null;
+    const k = e.killer && e.killer.kind !== 'beast' ? e.killer : null;
     const lbl = k && k !== t ? label('cam.deathBy', { killer: k.name, name: t.name }) : label('cam.death', { name: t.name });
     addEventCand('death', e.pos || t.pos, 10.5, t.id, k && k !== t ? k.id : null, lbl, 8, 7);
     if (mode === 'follow' && fol.id === t.id) fol.labelId = -1;
@@ -2486,14 +2486,14 @@
     GM.on('game:end', onEnd);
     GM.on('select', onSelect);
     GM.on('interest', function (it) { if (it && inGame()) upsertInterest(it); });
-    GM.on('tribute:died', onDied);
+    GM.on('contestant:died', onDied);
     GM.on('arena:generated', function () {
       landmarks = null;
       clampXZ(free.pos, LIMIT);
     });
     GM.on('alliance:broken', function (e) {
       if (!e || !e.betrayal || e.byId == null) return;
-      const t = tributeById(e.byId);
+      const t = contestantById(e.byId);
       if (!t || !t.pos) return;
       addEventCand('betrayal', t.pos, 9, t.id, null, label('cam.betrayal', { name: t.name }), 10, 6);
     });
@@ -2514,17 +2514,17 @@
       _g1.y = surfaceY(_g1.x, _g1.z);
       addEventCand('hazard', _g1, 6, null, null, label('cam.zone'), 40, 5);
     });
-    GM.on('mutt:spawned', function (e) {
-      const m = e && e.mutt;
+    GM.on('beast:spawned', function (e) {
+      const m = e && e.beast;
       if (!m || !m.pos) return;
-      addEventCand('mutt', m.pos, 7, null, null, label('cam.mutts'), 14, 5);
+      addEventCand('beast', m.pos, 7, null, null, label('cam.beasts'), 14, 5);
     });
     GM.on('crate:landed', function (e) {
       if (!e) return;
       addEventCand('drop', e.pos || (e.item && e.item.pos), 3.5, null, null, label('cam.drop'), 10, 3);
     });
     GM.on('gift:sent', function (e) {
-      const t = e && e.tribute;
+      const t = e && e.contestant;
       if (!t || !t.pos) return;
       addEventCand('drop', t.pos, 4, t.id, null, label('cam.gift', { name: t.name }), 8, 4);
     });
@@ -2532,7 +2532,7 @@
       addEventCand('drop', (e && e.pos) || { x: 0, z: 0 }, 8, null, null, label('cam.feast'), 20, 8);
     });
     GM.on('trap:triggered', function (e) {
-      const t = e && e.tribute;
+      const t = e && e.contestant;
       const p = (e && e.pos) || (t && t.pos);
       if (!p) return;
       addEventCand('trap', p, 7, t ? t.id : null, e && e.ownerId != null ? e.ownerId : null, label('cam.trap'), 8, 4);
@@ -2542,7 +2542,7 @@
       const tgt = e.target;
       const nameKey = 'power.' + e.id;
       const lbl = hasKey(nameKey) ? label('cam.powerUsed', { power: '@' + nameKey }) : label('cam.power');
-      if (tgt && tgt.kind === 'tribute' && tgt.pos) addEventCand('power', tgt.pos, 6.5, tgt.id, null, lbl, 10, 4);
+      if (tgt && tgt.kind === 'contestant' && tgt.pos) addEventCand('power', tgt.pos, 6.5, tgt.id, null, lbl, 10, 4);
       else if (tgt && +tgt.x === +tgt.x && +tgt.z === +tgt.z) {
         const def = GM.Powers && typeof GM.Powers.def === 'function' ? GM.Powers.def(e.id) : null;
         addEventCand('power', tgt, 6.5, null, null, lbl, def && def.radius ? +def.radius : 14, 4);
@@ -2627,7 +2627,7 @@
       else if (game && mode === 'showcase') setMode('director');
       const m0 = mode;
       runMode(dt);
-      if (mode !== m0) runMode(dt);   // the mode changed inside (e.g. followed tribute gone)
+      if (mode !== m0) runMode(dt);   // the mode changed inside (e.g. followed contestant gone)
       applyMain(dt);
       clampXZ(focusPoint, HALF);
       if (!finiteV(focusPoint)) focusPoint.set(0, 0, 0);

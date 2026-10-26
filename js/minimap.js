@@ -9,11 +9,11 @@
  *      'forest:burnt' and 'water:changed'.
  *   2. Live layer (~10 Hz, only while visible): fire cells, gas clouds, force
  *      field zone, feast, items / crates, traps, points of interest, alliance
- *      lines, mutts, tributes (district colours, selected / hovered rings,
+ *      lines, beasts, contestants (team colours, selected / hovered rings,
  *      dead = small x), the main camera's view cone and the power aim radius.
  *
- * Input: click -> use the armed power (GM.UI.targetPoint) or pick a tribute
- * (GM.UI.pickTribute) or move the camera (GM.Cameras.lookAt); drag -> camera
+ * Input: click -> use the armed power (GM.UI.targetPoint) or pick a contestant
+ * (GM.UI.pickContestant) or move the camera (GM.Cameras.lookAt); drag -> camera
  * follows the pointer; hover while targeting -> GM.UI.aimPoint; right-click
  * cancels targeting.
  *
@@ -43,14 +43,14 @@
         'minimap.title': 'Arena map',
         'minimap.scale': '{n} m',
         'minimap.coords': 'X {x} · Z {z}',
-        'minimap.tipLook': 'Click: the camera looks there. Drag: move the camera. Click a dot: watch that tribute.',
+        'minimap.tipLook': 'Click: the camera looks there. Drag: move the camera. Click a dot: watch that contestant.',
         'minimap.tipTarget': 'Click: use the power here. Right-click: cancel.',
       },
       hu: {
         'minimap.title': 'Az aréna térképe',
         'minimap.scale': '{n} m',
         'minimap.coords': 'X {x} · Z {z}',
-        'minimap.tipLook': 'Kattintás: a kamera odanéz. Húzás: a kamera mozog. Kattints egy pontra: kövesd azt a kiválasztottat.',
+        'minimap.tipLook': 'Kattintás: a kamera odanéz. Húzás: a kamera mozog. Kattints egy pontra: kövesd azt a versenyzőt.',
         'minimap.tipTarget': 'Kattintás: itt használod a képességet. Jobb klikk: mégse.',
       },
     });
@@ -92,7 +92,7 @@
   let coordsEl = null;
   let errorShown = false;
   const dirty = { full: true, rect: false, x0: 0, y0: 0, x1: 0, y1: 0, lastFull: -99, lastRect: -99, urgent: true };
-  const hover = { on: false, px: 0, py: 0, x: 0, z: 0, tribute: null, lastAim: 0 };
+  const hover = { on: false, px: 0, py: 0, x: 0, z: 0, contestant: null, lastAim: 0 };
   const press = { on: false, id: -1, x: 0, y: 0, button: 0, drag: false, lastLook: 0 };
   const _col = { r: 0, g: 0, b: 0 };
   const _dir = window.THREE ? new window.THREE.Vector3() : null;
@@ -460,7 +460,7 @@
         }
       }
     }
-    // traps (the Game Master sees them)
+    // traps (the Showrunner sees them)
     const traps = I && Array.isArray(I.traps) ? I.traps : null;
     if (traps && traps.length) {
       const s = 2 * dpr;
@@ -541,8 +541,8 @@
     g.setLineDash([]);
   }
 
-  function drawMutts(g) {
-    const list = GM.state.mutts;
+  function drawBeasts(g) {
+    const list = GM.state.beasts;
     if (!list || !list.length) return;
     for (let i = 0; i < list.length; i++) {
       const m = list[i];
@@ -568,7 +568,7 @@
     }
   }
 
-  function drawTributes(g, trs) {
+  function drawContestants(g, trs) {
     const selId = GM.state.selectedId;
     const hovId = GM.UI ? GM.UI.hoverId : null;
     const r = 3.3 * dpr;
@@ -599,7 +599,7 @@
       g.moveTo(x, y);
       g.lineTo(x + Math.sin(hd) * r * 2.1, y + Math.cos(hd) * r * 2.1);
       g.stroke();
-      g.fillStyle = tr.color || GM.districtColor(tr.district || 1);
+      g.fillStyle = tr.color || GM.teamColor(tr.team || 1);
       g.strokeStyle = tr.sleeping ? 'rgba(160, 170, 255, 0.95)' : 'rgba(4, 8, 14, 0.95)';
       g.lineWidth = 1.2 * dpr;
       g.beginPath();
@@ -711,7 +711,7 @@
   }
 
   function drawHoverLabel(g) {
-    const tr = hover.on ? hover.tribute : null;
+    const tr = hover.on ? hover.contestant : null;
     if (!tr || !tr.pos) return;
     const x = px(tr.pos.x), y = py(tr.pos.z);
     const label = tr.name + (tr.alive ? '' : ' ✝');
@@ -747,10 +747,10 @@
       drawHazards(g);
       drawItems(g);
       drawInterests(g);
-      const trs = GM.state.tributes || [];
+      const trs = GM.state.contestants || [];
       drawAlliances(g, trs);
-      drawMutts(g);
-      drawTributes(g, trs);
+      drawBeasts(g);
+      drawContestants(g, trs);
     }
     drawCamera(g);
     drawAim(g);
@@ -764,9 +764,9 @@
     const k = r.width > 0 ? cssS / r.width : 1;
     return { x: (e.clientX - r.left) * k, y: (e.clientY - r.top) * k };
   }
-  /** Tribute within `maxPx` CSS pixels of a canvas point (living first). */
-  function tributeAtPx(lx, ly, maxPx) {
-    const trs = GM.state.tributes;
+  /** Contestant within `maxPx` CSS pixels of a canvas point (living first). */
+  function contestantAtPx(lx, ly, maxPx) {
+    const trs = GM.state.contestants;
     if (!trs || !trs.length || !(cssS > 0)) return null;
     const k = cssS / (VIEW * 2);
     let best = null, bd = maxPx * maxPx;
@@ -818,7 +818,7 @@
       hover.on = true;
       hover.px = p.x; hover.py = p.y;
       hover.x = _w.x; hover.z = _w.z;
-      hover.tribute = isGame() ? tributeAtPx(p.x, p.y, 8) : null;
+      hover.contestant = isGame() ? contestantAtPx(p.x, p.y, 8) : null;
       if (coordsEl) {
         const s = GM.t('minimap.coords', { x: Math.round(_w.x), z: Math.round(_w.z) });
         if (coordsEl.__t !== s) { coordsEl.__t = s; coordsEl.textContent = s; }
@@ -852,15 +852,15 @@
       }
       if (press.button !== 0) return;
       if (targeting() && UIm.targetPoint) { UIm.targetPoint(_w.x, _w.z); return; }
-      const tr = tributeAtPx(p.x, p.y, 7);
-      if (tr && UIm && UIm.pickTribute) { UIm.pickTribute(tr.id); return; }
+      const tr = contestantAtPx(p.x, p.y, 7);
+      if (tr && UIm && UIm.pickContestant) { UIm.pickContestant(tr.id); return; }
       lookAt(_w.x, _w.z);
     };
     cv.addEventListener('pointerup', end);
     cv.addEventListener('pointercancel', end);
     cv.addEventListener('pointerleave', function () {
       hover.on = false;
-      hover.tribute = null;
+      hover.contestant = null;
       if (coordsEl) { coordsEl.__t = ''; coordsEl.textContent = ''; }
       liveAcc = LIVE_DT;
     });
@@ -889,7 +889,7 @@
     },
     clear() {
       hover.on = false;
-      hover.tribute = null;
+      hover.contestant = null;
       press.on = false;
       press.drag = false;
       liveAcc = 99;
@@ -910,7 +910,7 @@
       const tgt = targeting();
       const tipKey = tgt ? 'minimap.tipTarget' : 'minimap.tipLook';
       if (M.canvas.__tipKey !== tipKey) { M.canvas.__tipKey = tipKey; M.canvas.setAttribute('data-tip', tipKey); }
-      M.canvas.style.cursor = tgt ? 'crosshair' : hover.tribute ? 'pointer' : 'default';
+      M.canvas.style.cursor = tgt ? 'crosshair' : hover.contestant ? 'pointer' : 'default';
       try {
         drawLive();
       } catch (e) {

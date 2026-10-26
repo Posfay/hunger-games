@@ -1,5 +1,5 @@
 /* ==========================================================================
- * audio.js — procedural sound for "The Game Master's Arena" (WebAudio only).
+ * audio.js — procedural sound for "Arena Showrunner" (WebAudio only).
  *
  *   GM.Audio.unlock()                        create / resume the AudioContext (user gesture)
  *   GM.Audio.play(name, opts) -> bool        opts {pos, volume=1, rate=1, delay, variant, pan}
@@ -13,8 +13,8 @@
  * ground focus point) and panned in stereo. Ambient beds (wind, rain, storm,
  * crickets, cicadas, fire crackle) follow weather / time of day and
  * cross-fade; birds sing by day, an owl calls at night.
- * Event driven: cannon on every death, gong at the start, countdown beeps,
- * combat, hazards, mutts, betrayals, announcements, anthem, victory fanfare.
+ * Event driven: knell on every death, gong at the start, countdown beeps,
+ * combat, hazards, beasts, betrayals, announcements, anthem, victory fanfare.
  * Owner: CAMERA.
  * ========================================================================== */
 (function () {
@@ -51,8 +51,8 @@
   const AMB_STEP = 0.25;          // ambience update period (real s)
   const FIRE_STEP = 0.5;          // fire proximity sampling period (real s)
   const AMB_LEVEL = 0.85;         // ambient bus level
-  const CANNON_GAP = 1.7;         // seconds between queued cannon shots
-  const CANNON_QUEUE_MAX = 9;     // never queue cannons further ahead than this
+  const KNELL_GAP = 1.7;         // seconds between queued knell shots
+  const KNELL_QUEUE_MAX = 9;     // never queue knells further ahead than this
   const COMBAT_RATE = 10;         // combat sounds per real second (token bucket)
   const COMBAT_BURST = 6;
   const EMPTY = {};
@@ -70,7 +70,7 @@
   let reverbIn = null;
   let curves = null;
   let suspendTimer = 0;
-  let nextCannon = 0;
+  let nextKnell = 0;
   let tokens = COMBAT_BURST, tokenTime = 0;
   let duckUntil = 0;
   const buffers = Object.create(null);
@@ -412,8 +412,8 @@
   // ---------------------------------------------------------------- sounds
   // Each recipe: (dest, startTime, params {rate, vol, variant, dist}) -> duration (s).
 
-  /** The Hunger Games cannon: a deep boom that rolls around the arena. */
-  function sCannon(d, t, p) {
+  /** The Hunger Show knell: a deep boom that rolls around the arena. */
+  function sKnell(d, t, p) {
     const r = p.rate;
     const cg = G(0, d);
     const cf = F('lowpass', 3000, 0.7, cg);
@@ -725,7 +725,7 @@
     return L + 0.15;
   }
 
-  /** Tracker jacker swarm passing by. */
+  /** Killer wasp swarm passing by. */
   function sBuzz(d, t, p) {
     const r = p.rate, L = 1.9;
     const env = G(0, d);
@@ -918,7 +918,7 @@
     return L + 0.3;
   }
 
-  /** Electric zap (force field, Capitol strike, gas release). */
+  /** Electric zap (force field, Studio strike, gas release). */
   function sZap(d, t, p) {
     const r = p.rate, L = 0.45;
     const g = G(0, d);
@@ -1102,7 +1102,7 @@
     return 2.3;
   }
 
-  /** Game Master console confirm (a power was used). */
+  /** Showrunner console confirm (a power was used). */
   function sPower(d, t, p) {
     const r = p.rate;
     const g = G(0, d);
@@ -1139,7 +1139,7 @@
     return L + 0.1;
   }
 
-  /** Wolf mutt dying (short whimper). */
+  /** Wolf beast dying (short whimper). */
   function sWhimper(d, t, p) {
     const g = G(0, d);
     const o = O('sine', 950 * p.rate, t, t + 0.6, F('lowpass', 2500, 1, g));
@@ -1235,7 +1235,7 @@
     };
   }
   const DEFS = {
-    cannon: D(sCannon, { global: true, limit: 8, gap: 0.3, prio: 10, gain: 1, send: 0.55, duck: 0.35, duckFor: 3 }),
+    knell: D(sKnell, { global: true, limit: 8, gap: 0.3, prio: 10, gain: 1, send: 0.55, duck: 0.35, duckFor: 3 }),
     gong: D(sGong, { bus: 'music', global: true, limit: 1, gap: 2, prio: 10, gain: 0.9, send: 0.6, duck: 0.4, duckFor: 4 }),
     countdown: D(sCountdown, { bus: 'ui', global: true, limit: 2, gap: 0.25, prio: 9, gain: 0.55, send: 0.15 }),
     thunder: D(sThunder, { ref: 70, max: 3000, limit: 3, gap: 0.35, gapDist: 30, prio: 8, gain: 1, send: 0.4, minAtt: 0.22, sonic: true }),
@@ -1461,7 +1461,7 @@
       if (!victim || v.prio < victim.prio || (v.prio === victim.prio && v.t0 < victim.t0)) victim = v;
     }
     if (same >= def.limit) {
-      if (!oldest || oldest.level > level * 1.25 || name === 'cannon') return false;
+      if (!oldest || oldest.level > level * 1.25 || name === 'knell') return false;
       kill(oldest);
       live--;
       if (victim === oldest) victim = null;
@@ -1563,7 +1563,7 @@
   }
   /** Stop every playing sound (ambience beds keep running). */
   function stopAll(filter) {
-    nextCannon = 0;
+    nextKnell = 0;
     if (!ctx) return;
     for (let i = 0; i < voices.length; i++) {
       if (!filter || filter(voices[i])) kill(voices[i]);
@@ -1863,7 +1863,7 @@
   const BLADE = { knife: 1, sickle: 1, sword: 1, spear: 1, trident: 1, throwing_knives: 1 };
   const HEAVY = { axe: 1, mace: 1, trident: 1 };
   const ANN_SKIP = { 'ann.victor': 1, 'ann.noVictor': 1 };
-  const SCREAM_CAUSES = { weapon: 1, fists: 1, mutt: 1, wasps: 1, trap: 1, fire: 1, smite: 1 };
+  const SCREAM_CAUSES = { weapon: 1, fists: 1, beast: 1, wasps: 1, trap: 1, fire: 1, smite: 1 };
 
   function takeToken() {
     const now = ctx.currentTime;
@@ -1881,13 +1881,13 @@
     return null;
   }
 
-  /** Every death fires the cannon; several deaths queue shots a moment apart. */
+  /** Every death fires the knell; several deaths queue shots a moment apart. */
   function onDied(e) {
     if (!ready()) return;
     const now = ctx.currentTime;
-    const at = Math.max(now + 0.05, nextCannon);
-    if (at - now <= CANNON_QUEUE_MAX && play('cannon', { delay: at - now })) nextCannon = at + CANNON_GAP;
-    const t = e && e.tribute;
+    const at = Math.max(now + 0.05, nextKnell);
+    if (at - now <= KNELL_QUEUE_MAX && play('knell', { delay: at - now })) nextKnell = at + KNELL_GAP;
+    const t = e && e.contestant;
     if (t && validPos(t.pos) && (e.killer || SCREAM_CAUSES[e.cause])) {
       play('scream', { pos: t.pos, volume: 0.7, variant: t.gender === 'f' ? 'f' : 'm' });
     }
@@ -1909,14 +1909,14 @@
       else play('bow', { pos: pos, rate: rnd(0.95, 1.05) });
       if (e.hit && hp !== pos) {
         const delay = U.clamp(U.distXZ(pos, hp) / 45, 0.05, 1.1) / speed;
-        if (w === 'throwing_knives' || (tg && tg.kind === 'mutt')) play('hit', { pos: hp, delay: delay, variant: 'blade' });
+        if (w === 'throwing_knives' || (tg && tg.kind === 'beast')) play('hit', { pos: hp, delay: delay, variant: 'blade' });
         else play('arrowHit', { pos: hp, delay: delay, rate: rnd(0.92, 1.08) });
       }
       return;
     }
     play('swing', { pos: pos, rate: heavy ? 0.75 : w ? 1.05 : 1.3, volume: w ? 0.9 : 0.6 });
     if (!e.hit) return;
-    const armed = w && tg && tg.kind === 'tribute' && tg.inv && tg.inv.melee;
+    const armed = w && tg && tg.kind === 'contestant' && tg.inv && tg.inv.melee;
     if (armed && Math.random() < 0.3) {
       play('clash', { pos: hp, delay: 0.05 / speed });
     } else {
@@ -1932,13 +1932,13 @@
   function onAnnounce(e) {
     if (!e || typeof e.key !== 'string') return;
     // the gong and the fanfare already mark these moments
-    if (ANN_SKIP[e.key] || e.key.indexOf('ann.bloodbath') === 0) return;
+    if (ANN_SKIP[e.key] || e.key.indexOf('ann.kickoff') === 0) return;
     const s = e.style;
     play('announce', { variant: s === 'danger' || s === 'gold' || s === 'gm' ? s : null });
   }
   function onEnd(e) {
     if (!ready()) return;
-    const wait = Math.max(0, nextCannon - ctx.currentTime) + 0.9;
+    const wait = Math.max(0, nextKnell - ctx.currentTime) + 0.9;
     if (e && e.winner) play('victory', { delay: wait });
     else play('anthem', { delay: wait, variant: 'somber' });
   }
@@ -1960,7 +1960,7 @@
     play('power', { volume: 0.8 });
   }
   function onItemUsed(e) {
-    const t = e && e.tribute;
+    const t = e && e.contestant;
     if (!t || !validPos(t.pos)) return;
     switch (e.type) {
       case 'food':
@@ -1974,7 +1974,7 @@
   function posOf(e) { return e && validPos(e.pos) ? e.pos : null; }
 
   function initEvents() {
-    GM.on('tribute:died', onDied);
+    GM.on('contestant:died', onDied);
     GM.on('game:start', function () { play('gong'); });
     GM.on('countdown:tick', function (e) {
       const n = e && e.n;
@@ -1994,12 +1994,12 @@
       const c = e && e.center;
       play('alarm', { pos: validPos(c) ? c : null });
     });
-    GM.on('mutt:spawned', function (e) {
-      const m = e && e.mutt;
+    GM.on('beast:spawned', function (e) {
+      const m = e && e.beast;
       if (m && validPos(m.pos)) play(m.type === 'wasps' ? 'buzz' : 'howl', { pos: m.pos });
     });
-    GM.on('mutt:died', function (e) {
-      const m = e && e.mutt;
+    GM.on('beast:died', function (e) {
+      const m = e && e.beast;
       if (m && m.type === 'wolf' && validPos(m.pos)) play('whimper', { pos: m.pos });
     });
     GM.on('alliance:broken', function (e) { if (e && e.betrayal) play('betray'); });
@@ -2010,7 +2010,7 @@
     GM.on('trap:triggered', function (e) { const p = posOf(e); if (p) play('trap', { pos: p }); });
     GM.on('crate:landed', function (e) { const p = posOf(e); if (p) play('drop', { pos: p }); });
     GM.on('gift:sent', function (e) {
-      const t = e && e.tribute;
+      const t = e && e.contestant;
       if (t && validPos(t.pos)) play('parachute', { pos: t.pos });
     });
     GM.on('item:used', onItemUsed);
@@ -2095,11 +2095,11 @@
       initEvents();
     },
     clear: function () {
-      nextCannon = 0;
+      nextKnell = 0;
       amb.fire = 0;
       amb.firePan = 0;
       if (!ctx) return;
-      // cut game sounds (a playing fanfare, queued cannons); keep UI clicks and ambience
+      // cut game sounds (a playing fanfare, queued knells); keep UI clicks and ambience
       stopAll(function (v) {
         const d = DEFS[v.name];
         return !d || (d.bus !== 'ui' && d.bus !== 'amb');

@@ -1,9 +1,9 @@
 /* ==========================================================================
- * core.js — shared foundation for "The Game Master's Arena".
+ * core.js — shared foundation for "Arena Showrunner".
  *
  * Namespace (GM), config, seeded RNG, simplex noise, math helpers, event bus,
  * system registry, error reporting, logging, announcements, points of
- * interest and tribute selection.
+ * interest and contestant selection.
  *
  * Owner: core. Feature modules must NOT edit this file (see SPEC.md).
  * ========================================================================== */
@@ -17,9 +17,9 @@
   GM.CFG = {
     MAP_SIZE: 360,            // terrain extent in metres; x,z in [-180, 180]
     TERRAIN_RES: 181,         // height samples per side (2 m spacing)
-    ARENA_RADIUS: 150,        // force-field radius; tributes can never leave it
-    CORNUCOPIA_RADIUS: 24,    // flat plaza around the cornucopia at (0,0)
-    PEDESTAL_RADIUS: 18,      // ring on which tributes start
+    ARENA_RADIUS: 150,        // force-field radius; contestants can never leave it
+    NEXUS_RADIUS: 24,    // flat plaza around the nexus at (0,0)
+    PEDESTAL_RADIUS: 18,      // ring on which contestants start
     NAV_RES: 120,             // navigation grid cells per side (3 m cells)
     BASE_WATER_LEVEL: 0,      // normal water height (y)
     DAY_LENGTH: 300,          // sim seconds for one full day + night
@@ -27,23 +27,23 @@
     DAWN: 0.25,               // 06:00 -> 'day:start'
     DUSK: 0.79,               // ~19:00 -> 'night:start'
     COUNTDOWN: 10,            // seconds on the pedestals
-    MIN_TRIBUTES: 2,
-    MAX_TRIBUTES: 48,
-    DEFAULT_TRIBUTES: 24,
+    MIN_CONTESTANTS: 2,
+    MAX_CONTESTANTS: 48,
+    DEFAULT_CONTESTANTS: 24,
     SIM_STEP: 1 / 30,         // max simulation sub-step (sim seconds)
     MAX_SUBSTEPS: 12,         // per rendered frame (prevents spiral of death)
     SPEEDS: [0.5, 1, 2, 4, 8, 16],
   };
 
-  // --------------------------------------------------------- district colors
-  const DISTRICT_COLORS = [
+  // --------------------------------------------------------- team colors
+  const TEAM_COLORS = [
     '#e8b931', '#d64541', '#3a7bd5', '#2fa36b', '#9b59b6', '#e67e22',
     '#1abc9c', '#c0567a', '#95a5a6', '#f06ecb', '#22b8e0', '#7fbf3f',
   ];
-  /** District number (1-based) -> CSS hex colour. Works for any district count. */
-  GM.districtColor = function (district) {
-    const i = (district - 1) | 0;
-    if (i >= 0 && i < DISTRICT_COLORS.length) return DISTRICT_COLORS[i];
+  /** Team number (1-based) -> CSS hex colour. Works for any team count. */
+  GM.teamColor = function (team) {
+    const i = (team - 1) | 0;
+    if (i >= 0 && i < TEAM_COLORS.length) return TEAM_COLORS[i];
     const hue = (i * 137.508) % 360;
     return hslToHex(hue, 62, 55);
   };
@@ -270,7 +270,7 @@
   /**
    * Every module registers one or more systems:
    *   GM.registerSystem({
-   *     name: 'Tributes', order: 50,
+   *     name: 'Contestants', order: 50,
    *     init()          // once at boot (THREE + DOM ready, terrain NOT generated yet)
    *     clear()         // back to setup screen: remove all game entities from the scene
    *     reset(settings) // new game: terrain already generated; build game entities
@@ -303,16 +303,16 @@
     timeOfDay: 0.3,        // 0..1, advanced by Env
     speed: 1,
     paused: false,
-    tributes: [],          // owned by Tributes; tributes[i].id === i
-    mutts: [],             // owned by Mutts
-    selectedId: null,      // selected tribute id or null
-    winner: null,          // tribute id or null (after 'game:end')
+    contestants: [],          // owned by Contestants; contestants[i].id === i
+    beasts: [],             // owned by Beasts
+    selectedId: null,      // selected contestant id or null
+    winner: null,          // contestant id or null (after 'game:end')
     endTime: 0,
     interests: [],         // points of interest (see GM.addInterest)
     log: [],               // log entries (see GM.log)
     deaths: [],            // [{id, killerId, cause, weapon, time, day}] in order of death
-    fallenSinceRecap: [],  // tribute ids that died since the last night recap
-    revealUntil: 0,        // sim time until which every tribute knows where all others are
+    fallenSinceRecap: [],  // contestant ids that died since the last night recap
+    revealUntil: 0,        // sim time until which every contestant knows where all others are
     feast: null,           // {x, z, at, ready} while a feast is announced/active
     stats: { powersUsed: 0, peakViewers: 0, kills: 0 },
   };
@@ -327,8 +327,8 @@
     st.day = 1;
     st.timeOfDay = GM.CFG.START_TIME_OF_DAY;
     st.paused = false;
-    st.tributes = [];
-    st.mutts = [];
+    st.contestants = [];
+    st.beasts = [];
     st.selectedId = null;
     st.winner = null;
     st.endTime = 0;
@@ -348,7 +348,7 @@
    *   type:   'kill' | 'death' | 'combat' | 'alliance' | 'betrayal' | 'item' |
    *           'gm' | 'hazard' | 'event' | 'mind' | 'system'
    *   key:    i18n key; params: i18n params (strings starting with '@' are keys)
-   *   opts:   { pos, tributeIds: [ids], important: bool }
+   *   opts:   { pos, contestantIds: [ids], important: bool }
    */
   GM.log = function (type, key, params, opts) {
     const st = GM.state;
@@ -362,7 +362,7 @@
       day: st.day,
       tod: st.timeOfDay,
       pos: U.toPos(opts.pos),
-      tributeIds: opts.tributeIds || [],
+      contestantIds: opts.contestantIds || [],
       important: !!opts.important,
     };
     st.log.push(entry);
@@ -390,7 +390,7 @@
   /**
    * Register something worth watching (used by the auto director and live feeds).
    *   { pos, score, duration (sim s, default 8), label: {key, params},
-   *     followId (tribute to track), kind, key (dedupe: same key refreshes) }
+   *     followId (contestant to track), kind, key (dedupe: same key refreshes) }
    * Score guide: wandering 1-2, supply drop 3, fight 5-8, hazard 6-9,
    *              betrayal 9, death 10, finale 12.
    */
@@ -442,17 +442,17 @@
   };
 
   // --------------------------------------------------------------- selection
-  /** Select a tribute by id (or null). Emits 'select' {id}. */
+  /** Select a contestant by id (or null). Emits 'select' {id}. */
   GM.select = function (id) {
     const st = GM.state;
-    if (id != null && !st.tributes[id]) id = null;
+    if (id != null && !st.contestants[id]) id = null;
     if (st.selectedId === id) return;
     st.selectedId = id;
     GM.emit('select', { id });
   };
   GM.selected = function () {
     const st = GM.state;
-    return st.selectedId == null ? null : st.tributes[st.selectedId] || null;
+    return st.selectedId == null ? null : st.contestants[st.selectedId] || null;
   };
 
   /** Translation shortcut (real implementation installed by i18n.js). */

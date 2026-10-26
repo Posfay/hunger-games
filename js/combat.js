@@ -19,10 +19,10 @@
  * applied at the strike / when the projectile arrives. A fleeing target can
  * still step out of reach before a swing lands.
  *
- * Per-tribute state lives in t.combat (created by Tributes):
+ * Per-contestant state lives in t.combat (created by Contestants):
  *   {next, mode, modeAt, lastAttackAt, lastTargetId, cooldown, swing, ...}
  *
- * Owner: TRIBUTES.
+ * Owner: CONTESTANTS.
  * ========================================================================== */
 (function () {
   'use strict';
@@ -37,14 +37,14 @@
       'log.combat.fight': '{a} and {b} are fighting.',
       'log.combat.sneak': '{a} attacks {b} by surprise!',
       'log.combat.sleep': '{a} attacks {b} in their sleep!',
-      'log.combat.mutt': '{a} fights the mutts.',
+      'log.combat.beast': '{a} fights the beasts.',
       'log.combat.stun': '{a} hits {b} very hard. {b} cannot move for a moment.',
     },
     hu: {
       'log.combat.fight': 'Harc: {a} és {b} egymásra támadt.',
       'log.combat.sneak': '{a} váratlanul megtámadta: {b}!',
       'log.combat.sleep': '{a} alvás közben támadta meg: {b}!',
-      'log.combat.mutt': '{a} a mutánsokkal harcol.',
+      'log.combat.beast': '{a} a fenevadakkal harcol.',
       'log.combat.stun': '{a} nagyon erősen megütötte: {b}. Egy pillanatig nem tud mozogni.',
     },
   });
@@ -81,9 +81,9 @@
   const FALLBACK_FISTS = { id: 'fists', kind: 'melee', dmg: 6, range: 1.6, cd: 0.9, anim: 'punch', score: 10 };
 
   function tCall(name, a, b, c, d) {
-    const T = GM.Tributes;
+    const T = GM.Contestants;
     if (!T || typeof T[name] !== 'function') return undefined;
-    try { return T[name](a, b, c, d); } catch (e) { GM.reportError('Combat.Tributes.' + name, e); return undefined; }
+    try { return T[name](a, b, c, d); } catch (e) { GM.reportError('Combat.Contestants.' + name, e); return undefined; }
   }
   function fx(name, a, b, c, d, e) {
     const F = GM.FX;
@@ -121,7 +121,7 @@
     return tod < num(CFG.DAWN, 0.25) || tod > num(CFG.DUSK, 0.79);
   }
   function canAct(t) {
-    const T = GM.Tributes;
+    const T = GM.Contestants;
     if (T && typeof T.canAct === 'function') return T.canAct(t);
     return !!(t && t.alive && !t.sleeping && !(t.status && t.status.stun > 0));
   }
@@ -133,7 +133,7 @@
     }
     return c;
   }
-  function targetKey(tg) { return tg.kind === 'mutt' ? 1000000 + num(tg.id, 0) : tg.id; }
+  function targetKey(tg) { return tg.kind === 'beast' ? 1000000 + num(tg.id, 0) : tg.id; }
 
   /** Sight multiplier for a shooter (night, fog, weather; goggles help at night). */
   Combat.visibility = function (t) {
@@ -148,8 +148,8 @@
 
   /** Point where hits land / projectiles aim, written into out. */
   function aimPoint(tg, out) {
-    if (tg.kind === 'tribute') {
-      const T = GM.Tributes;
+    if (tg.kind === 'contestant') {
+      const T = GM.Contestants;
       if (T && typeof T.chestPos === 'function') return T.chestPos(tg, out);
       return out.set(tg.pos.x, tg.pos.y + (tg.sleeping ? 0.25 : 1.2), tg.pos.z);
     }
@@ -211,7 +211,7 @@
 
   /** Is this an attack the target does not see coming (or a sleeping target)? */
   Combat.isSneak = function (t, tg, ranged) {
-    if (!t || !tg || tg.kind !== 'tribute') return false;
+    if (!t || !tg || tg.kind !== 'contestant') return false;
     if (tg.sleeping) return true;
     const nowT = now();
     if (tg.lastAttackedBy === t.id && nowT - num(tg.lastAttackedAt, -1e9) < 6) return false;
@@ -238,7 +238,7 @@
 
   function meleeHitChance(t, tg, sneak) {
     let p = 0.85;
-    if (tg.kind === 'tribute') {
+    if (tg.kind === 'contestant') {
       if (isSprinting(tg)) p -= 0.2;
       else if (isRunning(tg)) p -= 0.06;
       if (isHelpless(tg)) p += 0.1;
@@ -261,7 +261,7 @@
     if (t.swimming) return 0;
     const range = Math.max(1, num(def.range, 20));
     let p = (0.95 - 0.55 * U.clamp01(d / range)) * (0.6 + 0.5 * skill(t, 'aim', 0.5)) * Math.sqrt(Combat.visibility(t));
-    if (tg.kind === 'tribute') {
+    if (tg.kind === 'contestant') {
       if (isSprinting(tg)) p *= 0.75;
       else if (isRunning(tg)) p *= 0.88;
       if (tg.hidden) p *= 0.8;
@@ -289,12 +289,12 @@
   };
 
   function validPair(t, tg) {
-    return !!(t && t.alive && t.pos && t.kind !== 'mutt' && tg && tg.alive && tg.pos && tg !== t);
+    return !!(t && t.alive && t.pos && t.kind !== 'beast' && tg && tg.alive && tg.pos && tg !== t);
   }
 
   /**
    * Best attack option at the current distance, or null when nothing reaches.
-   * The returned object is reused per tribute (read it right away).
+   * The returned object is reused per contestant (read it right away).
    */
   Combat.bestAttack = function (t, tg) {
     if (!validPair(t, tg)) return null;
@@ -306,7 +306,7 @@
     const meleeOk = d <= reach && dy < 2.2;
     const rd = rangedDef(t);
     let rangedOk = false, rHit = 0;
-    if (rd && !t.swimming && !(tg.kind === 'mutt' && tg.type === 'wasps')) {
+    if (rd && !t.swimming && !(tg.kind === 'beast' && tg.type === 'wasps')) {
       const minD = num(MIN_RANGED[rd.id], 2);
       if (d >= minD && d <= effRange(t, rd) && lineOfSight(t, tg)) {
         rangedOk = true;
@@ -365,7 +365,7 @@
 
   // ============================================================== tryAttack
   /**
-   * Attack a tribute or mutt: facing, cooldown, animation, hit roll,
+   * Attack a contestant or beast: facing, cooldown, animation, hit roll,
    * projectiles, noise, events. -> 'hit'|'miss'|'cooldown'|'range'|'noammo'|false
    */
   Combat.tryAttack = function (t, tg) {
@@ -399,8 +399,8 @@
     c.cooldown = cd;
     c.next = nowT + cd;
     c.lastAttackAt = nowT;
-    c.lastTargetId = tg.kind === 'tribute' ? tg.id : null;
-    c.lastMuttAt = tg.kind === 'mutt' ? nowT : num(c.lastMuttAt, -1e9);
+    c.lastTargetId = tg.kind === 'contestant' ? tg.id : null;
+    c.lastBeastAt = tg.kind === 'beast' ? nowT : num(c.lastBeastAt, -1e9);
     c.swing = def.anim || (ranged ? 'throw' : 'punch');
 
     let hit, dmg = damageRoll(t, def);
@@ -455,17 +455,17 @@
    */
   function applyHit(a, tg, def, dmg, sneak, wasAsleep, ranged, dirX, dirZ) {
     const weapon = def && def.id !== 'fists' ? def.id : null;
-    if (tg.kind === 'mutt') {
-      const M = GM.Mutts;
+    if (tg.kind === 'beast') {
+      const M = GM.Beasts;
       if (!M || typeof M.damage !== 'function') return 0;
-      try { return num(M.damage(tg, dmg, a), 0); } catch (e) { GM.reportError('Combat.Mutts.damage', e); return 0; }
+      try { return num(M.damage(tg, dmg, a), 0); } catch (e) { GM.reportError('Combat.Beasts.damage', e); return 0; }
     }
-    const T = GM.Tributes;
+    const T = GM.Contestants;
     if (!T || typeof T.damage !== 'function') return 0;
     aimPoint(tg, _hit);
     const armored = !!(tg.inv && tg.inv.armor);
     const info = {
-      cause: weapon ? 'weapon' : 'fists', attacker: a, mutt: null, weapon: weapon,
+      cause: weapon ? 'weapon' : 'fists', attacker: a, beast: null, weapon: weapon,
       pos: a.pos, sneak: !!sneak, ranged: !!ranged,
     };
     let actual = 0;
@@ -484,7 +484,7 @@
     // mace stun
     if (def.stunChance > 0 && GM.R.chance(def.stunChance)) {
       tCall('stun', tg, num(def.stunTime, 1));
-      if (GM.R.chance(0.35)) GM.log('combat', 'log.combat.stun', { a: a.name, b: tg.name }, { pos: tg.pos, tributeIds: [a.id, tg.id] });
+      if (GM.R.chance(0.35)) GM.log('combat', 'log.combat.stun', { a: a.name, b: tg.name }, { pos: tg.pos, contestantIds: [a.id, tg.id] });
     }
     // bleeding wounds
     if (def.bleed > 0 && GM.R.chance(Math.min(0.9, def.bleed * (sneak ? 1.3 : 1) * (armored ? 0.5 : 1)))) {
@@ -493,7 +493,7 @@
     }
     if (sneak) {
       GM.log('combat', wasAsleep ? 'log.combat.sleep' : 'log.combat.sneak', { a: a.name, b: tg.name },
-        { pos: tg.pos, tributeIds: [a.id, tg.id], important: wasAsleep });
+        { pos: tg.pos, contestantIds: [a.id, tg.id], important: wasAsleep });
     }
     return actual;
   }
@@ -511,7 +511,7 @@
       let dx = tg.pos.x - a.pos.x, dz = tg.pos.z - a.pos.z;
       if (!(dx * dx + dz * dz > 1e-6)) { dx = Math.sin(num(a.heading, 0)); dz = Math.cos(num(a.heading, 0)); }
       dmg = applyHit(a, tg, def, p.dmg, p.sneak, p.wasAsleep, false, dx, dz);
-    } else if (tg.kind === 'tribute' && tg.inv && tg.inv.melee && canAct(tg) && def.id !== 'fists') {
+    } else if (tg.kind === 'contestant' && tg.inv && tg.inv.melee && canAct(tg) && def.id !== 'fists') {
       // parried: blades meet when the target faces the attacker
       const dx = a.pos.x - tg.pos.x, dz = a.pos.z - tg.pos.z;
       const l = Math.sqrt(dx * dx + dz * dz) || 1;
@@ -582,7 +582,7 @@
     dirty = true;
     if (a.inv && !a.inv.ranged) setMode(a, 'melee');
     // the attack event goes out at release (bow sound), damage = expected
-    const armorF = tg.kind === 'tribute' && tg.inv && tg.inv.armor ? 0.7 : 1;
+    const armorF = tg.kind === 'contestant' && tg.inv && tg.inv.armor ? 0.7 : 1;
     emitAttack(a, tg, def, p.hit, p.hit ? p.dmg * armorF : 0, true);
   }
 
@@ -647,7 +647,7 @@
     if (p.hit && tg && tg.alive) {
       let dmg = 0;
       if (a) dmg = applyHit(a, tg, p.def, p.dmg, p.sneak, p.wasAsleep, true, p.dir.x, p.dir.z);
-      if (dmg > 0 || tg.kind === 'mutt') {
+      if (dmg > 0 || tg.kind === 'beast') {
         freeProj(p);
         return;
       }
@@ -844,25 +844,25 @@
   // ================================================================ fights
   const fightAt = new Map();   // pair key -> last attack time
   const fightEvt = new Map();  // pair key -> last 'combat:fight' time
-  const muttLogAt = new Map(); // tribute id -> last mutt-fight log time
+  const beastLogAt = new Map(); // contestant id -> last beast-fight log time
 
   function noteFight(a, b) {
     const nowT = now();
     const mid = { x: (a.pos.x + b.pos.x) * 0.5, y: Math.max(a.pos.y, b.pos.y), z: (a.pos.z + b.pos.z) * 0.5 };
-    if (b.kind === 'mutt') {
-      const key = 'fight:mutt-' + a.id;
+    if (b.kind === 'beast') {
+      const key = 'fight:beast-' + a.id;
       const lastE = fightEvt.get(key);
       if (lastE == null || nowT - lastE >= FIGHT_EVENT_GAP) {
         fightEvt.set(key, nowT);
         GM.emit('combat:fight', { a: a, b: b, pos: mid });
         GM.addInterest({
           pos: mid, score: 5, duration: 6, key: key, kind: 'fight', followId: a.id,
-          label: { key: 'cam.fightMutt', params: { a: a.name, mutt: '@mutt.' + (b.type === 'wasps' ? 'wasps' : 'wolf') } },
+          label: { key: 'cam.fightBeast', params: { a: a.name, beast: '@beast.' + (b.type === 'wasps' ? 'wasps' : 'wolf') } },
         });
       }
-      const lastL = muttLogAt.get(a.id);
-      if (lastL == null || nowT - lastL > FIGHT_LOG_GAP) GM.log('combat', 'log.combat.mutt', { a: a.name }, { pos: a.pos, tributeIds: [a.id] });
-      muttLogAt.set(a.id, nowT);
+      const lastL = beastLogAt.get(a.id);
+      if (lastL == null || nowT - lastL > FIGHT_LOG_GAP) GM.log('combat', 'log.combat.beast', { a: a.name }, { pos: a.pos, contestantIds: [a.id] });
+      beastLogAt.set(a.id, nowT);
       return;
     }
     const lo = Math.min(a.id, b.id), hi = Math.max(a.id, b.id);
@@ -870,7 +870,7 @@
     const last = fightAt.get(key);
     fightAt.set(key, nowT);
     if (last == null || nowT - last > FIGHT_LOG_GAP) {
-      GM.log('combat', 'log.combat.fight', { a: a.name, b: b.name }, { pos: mid, tributeIds: [a.id, b.id] });
+      GM.log('combat', 'log.combat.fight', { a: a.name, b: b.name }, { pos: mid, contestantIds: [a.id, b.id] });
     }
     const lastE = fightEvt.get(key);
     if (lastE != null && nowT - lastE < FIGHT_EVENT_GAP) return;
@@ -883,13 +883,13 @@
     });
   }
 
-  /** Put the ranged weapon away when a tribute has not shot for a while. */
+  /** Put the ranged weapon away when a contestant has not shot for a while. */
   let modeT = 0;
   function revertModes(dt) {
     modeT -= dt;
     if (modeT > 0) return;
     modeT = 1;
-    const list = GM.state.tributes;
+    const list = GM.state.contestants;
     const nowT = now();
     for (let i = 0; i < list.length; i++) {
       const t = list[i];
@@ -906,7 +906,7 @@
    */
   Combat.power = function (t) {
     if (!t || !t.alive) return 0;
-    if (t.kind === 'mutt') {
+    if (t.kind === 'beast') {
       const frac = num(t.health, 50) / Math.max(1, num(t.maxHealth, 50));
       return (t.type === 'wasps' ? 30 : 20) * U.clamp(frac, 0.1, 1);
     }
@@ -939,7 +939,7 @@
     }
     fightAt.clear();
     fightEvt.clear();
-    muttLogAt.clear();
+    beastLogAt.clear();
     modeT = 0;
     if (arrowIM) { arrowIM.count = 0; knifeIM.count = 0; }
     dirty = false;

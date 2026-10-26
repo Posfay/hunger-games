@@ -1,5 +1,5 @@
 /* ==========================================================================
- * powers.js — the Game Master's console, the audience and the assistant.
+ * powers.js — the Showrunner's console, the audience and the assistant.
  *
  *   GM.Powers.defs                     18 powers in display order (see SPEC 8.10)
  *   GM.Powers.def(id) -> def
@@ -14,7 +14,7 @@
  *
  *   GM.AutoGM.enabled / setEnabled(bool) / status()
  *
- * System 'Powers' (order 80). Owner: GAMEMAKER.
+ * System 'Powers' (order 80). Owner: SHOWRUNNER.
  * ========================================================================== */
 (function () {
   'use strict';
@@ -27,19 +27,19 @@
   GM.i18n.add({
     en: {
       'power.supply_drop': 'Supply drop',
-      'power.supply_drop.desc': 'A crate falls on a parachute. It holds 3–5 good items and lures tributes to the spot.',
+      'power.supply_drop.desc': 'A crate falls on a parachute. It holds 3–5 good items and lures contestants to the spot.',
       'power.sponsor_gift': 'Sponsor gift',
-      'power.sponsor_gift.desc': 'A silver parachute lands next to one tribute. It brings what they need most right now.',
+      'power.sponsor_gift.desc': 'A gift parachute lands next to one contestant. It brings what they need most right now.',
       'power.feast': 'Feast',
-      'power.feast.desc': 'Announce a feast at the Cornucopia. After 20 seconds rich crates appear, and many tributes go there.',
+      'power.feast.desc': 'Announce a feast at the Nexus. After 20 seconds rich crates appear, and many contestants go there.',
       'power.weather': 'Weather',
       'power.weather.desc': 'Change the weather for two minutes. Fog hides, snow slows, heat makes them thirsty, storms bring lightning.',
       'power.time_skip': 'Time skip',
       'power.time_skip.desc': 'Move the arena clock. At night it is dark and hard to see.',
       'power.flood': 'Flood',
-      'power.flood.desc': 'The water rises about 4 metres for one minute. Tributes run to high ground.',
+      'power.flood.desc': 'The water rises about 4 metres for one minute. Contestants run to high ground.',
       'power.quake': 'Earthquake',
-      'power.quake.desc': 'The ground shakes. It makes a hole or a hill and throws tributes to the ground.',
+      'power.quake.desc': 'The ground shakes. It makes a hole or a hill and throws contestants to the ground.',
       'power.terraform': 'Shape the land',
       'power.terraform.desc': 'Raise, lower or flatten the ground. Build hills, walls or pits.',
       'power.fireball': 'Fireballs',
@@ -49,19 +49,19 @@
       'power.poison_fog': 'Poison fog',
       'power.poison_fog.desc': 'A poison cloud that moves with the wind. Breathing it hurts.',
       'power.madness_gas': 'Madness gas',
-      'power.madness_gas.desc': 'A purple gas. Tributes who breathe it go mad and attack anyone.',
-      'power.mutts': 'Wolf mutts',
-      'power.mutts.desc': 'A pack of four wolf mutts comes out of the ground and hunts the nearest tributes.',
+      'power.madness_gas.desc': 'A purple gas. Contestants who breathe it go mad and attack anyone.',
+      'power.beasts': 'Wolf beasts',
+      'power.beasts.desc': 'A pack of four wolf beasts comes out of the ground and hunts the nearest contestants.',
       'power.wasps': 'Wasp nest',
-      'power.wasps.desc': 'A nest of tracker jackers (killer wasps). The swarm attacks tributes nearby, and the stings cause bad visions. Water helps.',
+      'power.wasps.desc': 'A nest of killer wasps (killer wasps). The swarm attacks contestants nearby, and the stings cause bad visions. Water helps.',
       'power.lure': 'Lure',
-      'power.lure.desc': 'A loud siren and a blinking light. Tributes nearby come to see what it is.',
+      'power.lure.desc': 'A loud siren and a blinking light. Contestants nearby come to see what it is.',
       'power.reveal': 'Reveal',
-      'power.reveal.desc': 'For 30 seconds every tribute knows where all the others are. Hunters love it.',
+      'power.reveal.desc': 'For 30 seconds every contestant knows where all the others are. Hunters love it.',
       'power.shrink_zone': 'Close arena',
       'power.shrink_zone.desc': 'Close the force field: in 60 seconds it shrinks around the point to 55% of its size. Outside it hurts.',
       'power.smite': 'Smite',
-      'power.smite.desc': 'A Capitol strike from the sky kills one tribute. The audience may not like it.',
+      'power.smite.desc': 'A Studio strike from the sky kills one contestant. The audience may not like it.',
 
       'power.opt.dawn': 'Dawn',
       'power.opt.noon': 'Noon',
@@ -77,47 +77,47 @@
       'power.cat.rule': 'Rules',
 
       'power.interest.lure': 'A strange signal',
-      'power.interest.smite': 'The Capitol strikes',
+      'power.interest.smite': 'The Studio strikes',
       'power.interest.feast': 'The feast is coming',
       'power.interest.reveal': 'Nowhere to hide',
-      'power.target.tribute': 'Target: {name}',
+      'power.target.contestant': 'Target: {name}',
 
-      'ann.gm.feast': 'A feast at the Cornucopia in {n} seconds!',
+      'ann.gm.feast': 'A feast at the Nexus in {n} seconds!',
       'ann.gm.flood': 'Flood! The water is rising.',
       'ann.gm.quake': 'Earthquake!',
       'ann.gm.fireball': 'Fire falls from the sky!',
       'ann.gm.poison_fog': 'Poison fog!',
       'ann.gm.madness_gas': 'Madness gas!',
-      'ann.gm.mutts': 'Mutts are loose in the arena!',
-      'ann.gm.wasps': 'Tracker jackers!',
+      'ann.gm.beasts': 'Beasts are loose in the arena!',
+      'ann.gm.wasps': 'Killer wasps!',
       'ann.gm.reveal': 'Nowhere to hide! Everyone knows where everyone is.',
       'ann.gm.shrink_zone': 'The force field is closing!',
-      'ann.gm.smite': 'The Capitol strikes: {name}!',
+      'ann.gm.smite': 'The Studio strikes: {name}!',
       'ann.gm.weather': 'Weather: {weather}',
       'ann.gm.time_skip': 'The clock jumps: {time}',
 
-      'log.gm.supply_drop': 'The Game Master sent a supply drop.',
+      'log.gm.supply_drop': 'The Showrunner sent a supply drop.',
       'log.gm.sponsor_gift': 'Sponsors sent a gift to {name}: {item}.',
-      'log.gm.feast': 'The Game Master announced a feast at the Cornucopia.',
-      'log.gm.weather': 'The Game Master changed the weather: {weather}.',
-      'log.gm.time_skip': 'The Game Master moved the clock: {time}.',
-      'log.gm.flood': 'The Game Master opened the dams. The water is rising!',
-      'log.gm.quake': 'The Game Master made the ground shake.',
-      'log.gm.terraform': 'The Game Master changed the land: {mode}.',
-      'log.gm.fireball': 'The Game Master sent fireballs from the sky.',
-      'log.gm.lightning': 'The Game Master called down lightning.',
-      'log.gm.poison_fog': 'The Game Master released poison fog.',
-      'log.gm.madness_gas': 'The Game Master released madness gas.',
-      'log.gm.mutts': 'The Game Master released a pack of wolf mutts.',
-      'log.gm.wasps': 'The Game Master dropped a tracker jacker nest.',
-      'log.gm.lure': 'The Game Master set off a loud signal to lure the tributes.',
-      'log.gm.reveal': 'The Game Master showed every tribute where the others are.',
-      'log.gm.shrink_zone': 'The Game Master is closing the force field to {n} m.',
-      'log.gm.smite': 'The Game Master struck down {name}.',
+      'log.gm.feast': 'The Showrunner announced a feast at the Nexus.',
+      'log.gm.weather': 'The Showrunner changed the weather: {weather}.',
+      'log.gm.time_skip': 'The Showrunner moved the clock: {time}.',
+      'log.gm.flood': 'The Showrunner opened the dams. The water is rising!',
+      'log.gm.quake': 'The Showrunner made the ground shake.',
+      'log.gm.terraform': 'The Showrunner changed the land: {mode}.',
+      'log.gm.fireball': 'The Showrunner sent fireballs from the sky.',
+      'log.gm.lightning': 'The Showrunner called down lightning.',
+      'log.gm.poison_fog': 'The Showrunner released poison fog.',
+      'log.gm.madness_gas': 'The Showrunner released madness gas.',
+      'log.gm.beasts': 'The Showrunner released a pack of wolf beasts.',
+      'log.gm.wasps': 'The Showrunner dropped a killer wasp nest.',
+      'log.gm.lure': 'The Showrunner set off a loud signal to lure the contestants.',
+      'log.gm.reveal': 'The Showrunner showed every contestant where the others are.',
+      'log.gm.shrink_zone': 'The Showrunner is closing the force field to {n} m.',
+      'log.gm.smite': 'The Showrunner struck down {name}.',
       'log.gm.byAssistant': 'The assistant used a power: {power}.',
-      'log.gm.assistantOn': 'The assistant Game Master is now on.',
-      'log.gm.assistantOff': 'The assistant Game Master is now off.',
-      'log.gm.revealEnd': 'The reveal is over. The tributes can hide again.',
+      'log.gm.assistantOn': 'The assistant Showrunner is now on.',
+      'log.gm.assistantOff': 'The assistant Showrunner is now off.',
+      'log.gm.revealEnd': 'The reveal is over. The contestants can hide again.',
       'log.gm.bored': 'The audience is bored. The viewers want action.',
 
       'audience.title': 'Audience',
@@ -132,27 +132,27 @@
       'audience.mood.excited': 'Excited',
       'audience.mood.wild': 'Wild',
       'audience.reason.kill': 'A kill!',
-      'audience.reason.death': 'A tribute died',
+      'audience.reason.death': 'A contestant died',
       'audience.reason.betrayal': 'Betrayal!',
       'audience.reason.betrayalKill': 'Killed by a friend!',
       'audience.reason.alliance': 'A new alliance',
       'audience.reason.fight': 'A fight',
-      'audience.reason.power': 'The Game Master acts',
+      'audience.reason.power': 'The Showrunner acts',
       'audience.reason.feast': 'The feast',
       'audience.reason.finale': 'The final fight',
-      'audience.reason.bloodbath': 'The bloodbath',
-      'audience.reason.smiteBad': 'They loved that tribute',
-      'audience.reason.smiteGood': 'Nobody liked that tribute',
-      'audience.reason.mutt': 'A mutt was killed',
+      'audience.reason.kickoff': 'The opening rush',
+      'audience.reason.smiteBad': 'They loved that contestant',
+      'audience.reason.smiteGood': 'Nobody liked that contestant',
+      'audience.reason.beast': 'A beast was killed',
       'audience.reason.trap': 'A trap!',
       'audience.reason.gift': 'A sponsor gift',
       'audience.reason.madness': 'Someone lost their mind',
-      'audience.reason.victor': 'We have a victor!',
+      'audience.reason.victor': 'We have a winner!',
       'audience.reason.zone': 'The force field moves',
       'audience.reason.hazard': 'The arena strikes',
 
       'autogm.name': 'Assistant',
-      'autogm.desc': 'A helper Game Master. It acts when the audience is bored.',
+      'autogm.desc': 'A helper Showrunner. It acts when the audience is bored.',
       'autogm.on': 'Assistant on',
       'autogm.off': 'Assistant off',
       'autogm.status.off': 'The assistant is off.',
@@ -163,19 +163,19 @@
     },
     hu: {
       'power.supply_drop': 'Utánpótlás',
-      'power.supply_drop.desc': 'Egy láda érkezik ejtőernyővel. 3–5 jó tárgy van benne, és odacsalja a kiválasztottakat.',
+      'power.supply_drop.desc': 'Egy láda érkezik ejtőernyővel. 3–5 jó tárgy van benne, és odacsalja a versenyzőket.',
       'power.sponsor_gift': 'Ajándék',
-      'power.sponsor_gift.desc': 'Szponzori ajándék: egy ezüst ejtőernyő landol egy kiválasztott mellett. Azt hozza, amire most a legjobban szüksége van.',
+      'power.sponsor_gift.desc': 'Szponzori ajándék: egy ajándék-ejtőernyő landol egy versenyző mellett. Azt hozza, amire most a legjobban szüksége van.',
       'power.feast': 'Lakoma',
-      'power.feast.desc': 'Lakomát hirdetsz a Bőségszarunál. 20 másodperc múlva gazdag ládák jelennek meg, és sokan odamennek.',
+      'power.feast.desc': 'Lakomát hirdetsz a Nexusnál. 20 másodperc múlva gazdag ládák jelennek meg, és sokan odamennek.',
       'power.weather': 'Időjárás',
       'power.weather.desc': 'Két percre megváltoztatod az időjárást. A köd elrejt, a hó lassít, a hőségtől szomjasak lesznek, a viharban villámlik.',
       'power.time_skip': 'Időugrás',
       'power.time_skip.desc': 'Átállítod az aréna óráját. Éjjel sötét van, és nehéz látni.',
       'power.flood': 'Árvíz',
-      'power.flood.desc': 'A víz kb. 4 métert emelkedik egy percre. A kiválasztottak a magas helyekre futnak.',
+      'power.flood.desc': 'A víz kb. 4 métert emelkedik egy percre. A versenyzők a magas helyekre futnak.',
       'power.quake': 'Földrengés',
-      'power.quake.desc': 'Megrázza a földet. Gödröt vagy dombot csinál, és a földre dönti a kiválasztottakat.',
+      'power.quake.desc': 'Megrázza a földet. Gödröt vagy dombot csinál, és a földre dönti a versenyzőket.',
       'power.terraform': 'Tájformálás',
       'power.terraform.desc': 'Megemeled, lesüllyeszted vagy elsimítod a földet. Építs dombot, falat vagy gödröt.',
       'power.fireball': 'Tűzgolyók',
@@ -186,18 +186,18 @@
       'power.poison_fog.desc': 'Mérges felhő, amelyet a szél sodor. Aki belélegzi, megsérül.',
       'power.madness_gas': 'Őrület-gáz',
       'power.madness_gas.desc': 'Lila gáz. Aki belélegzi, megőrül, és bárkit megtámad.',
-      'power.mutts': 'Farkasok',
-      'power.mutts.desc': 'Négy farkasmutáns bújik elő a földből, és a legközelebbi kiválasztottakra vadászik.',
-      'power.wasps': 'Vérdarazsak',
-      'power.wasps.desc': 'Egy vérdarázsfészek. A raj megtámadja a közeli kiválasztottakat, és a csípésük rémképeket okoz. A víz segít.',
+      'power.beasts': 'Farkasok',
+      'power.beasts.desc': 'Négy farkasfenevad bújik elő a földből, és a legközelebbi versenyzőkre vadászik.',
+      'power.wasps': 'Gyilkosdarazsak',
+      'power.wasps.desc': 'Egy gyilkosdarázsfészek. A raj megtámadja a közeli versenyzőket, és a csípésük rémképeket okoz. A víz segít.',
       'power.lure': 'Csali',
-      'power.lure.desc': 'Hangos sziréna és villogó fény. A közeli kiválasztottak odamennek megnézni.',
+      'power.lure.desc': 'Hangos sziréna és villogó fény. A közeli versenyzők odamennek megnézni.',
       'power.reveal': 'Leleplezés',
-      'power.reveal.desc': '30 másodpercig minden kiválasztott tudja, hol vannak a többiek. A vadászok imádják.',
+      'power.reveal.desc': '30 másodpercig minden versenyző tudja, hol vannak a többiek. A vadászok imádják.',
       'power.shrink_zone': 'Aréna zárása',
       'power.shrink_zone.desc': 'Összehúzod az erőteret: 60 másodperc alatt a pont körül a mostani méret 55%-ára szűkül. Kint sérülnek.',
       'power.smite': 'Csapás',
-      'power.smite.desc': 'A Kapitólium lesújt az égből, és megöl egy kiválasztottat. Lehet, hogy a közönségnek nem tetszik.',
+      'power.smite.desc': 'A Stúdió lesújt az égből, és megöl egy versenyzőt. Lehet, hogy a közönségnek nem tetszik.',
 
       'power.opt.dawn': 'Hajnal',
       'power.opt.noon': 'Dél',
@@ -213,47 +213,47 @@
       'power.cat.rule': 'Szabályok',
 
       'power.interest.lure': 'Különös jel',
-      'power.interest.smite': 'Lesújt a Kapitólium',
+      'power.interest.smite': 'Lesújt a Stúdió',
       'power.interest.feast': 'Hamarosan lakoma',
       'power.interest.reveal': 'Nincs hová bújni',
-      'power.target.tribute': 'Célpont: {name}',
+      'power.target.contestant': 'Célpont: {name}',
 
-      'ann.gm.feast': 'Lakoma a Bőségszarunál {n} másodperc múlva!',
+      'ann.gm.feast': 'Lakoma a Nexusnál {n} másodperc múlva!',
       'ann.gm.flood': 'Árvíz! Emelkedik a víz.',
       'ann.gm.quake': 'Földrengés!',
       'ann.gm.fireball': 'Tűz hullik az égből!',
       'ann.gm.poison_fog': 'Mérges köd!',
       'ann.gm.madness_gas': 'Őrület-gáz!',
-      'ann.gm.mutts': 'Mutánsok az arénában!',
-      'ann.gm.wasps': 'Vérdarazsak!',
+      'ann.gm.beasts': 'Fenevadak az arénában!',
+      'ann.gm.wasps': 'Gyilkosdarazsak!',
       'ann.gm.reveal': 'Nincs hová bújni! Mindenki tudja, hol vannak a többiek.',
       'ann.gm.shrink_zone': 'Szűkül az erőtér!',
-      'ann.gm.smite': 'Lesújt a Kapitólium: {name}!',
+      'ann.gm.smite': 'Lesújt a Stúdió: {name}!',
       'ann.gm.weather': 'Időjárás: {weather}',
       'ann.gm.time_skip': 'Ugrik az óra: {time}',
 
-      'log.gm.supply_drop': 'A Játékmester utánpótlást küldött.',
+      'log.gm.supply_drop': 'A Showrunner utánpótlást küldött.',
       'log.gm.sponsor_gift': 'A szponzorok ajándékot küldtek. Címzett: {name}, ajándék: {item}.',
-      'log.gm.feast': 'A Játékmester lakomát hirdetett a Bőségszarunál.',
-      'log.gm.weather': 'A Játékmester megváltoztatta az időjárást: {weather}.',
-      'log.gm.time_skip': 'A Játékmester átállította az órát: {time}.',
-      'log.gm.flood': 'A Játékmester kinyitotta a gátakat. Emelkedik a víz!',
-      'log.gm.quake': 'A Játékmester megrázta a földet.',
-      'log.gm.terraform': 'A Játékmester átalakította a tájat: {mode}.',
-      'log.gm.fireball': 'A Játékmester tűzgolyókat küldött az égből.',
-      'log.gm.lightning': 'A Játékmester villámot küldött.',
-      'log.gm.poison_fog': 'A Játékmester mérges ködöt engedett ki.',
-      'log.gm.madness_gas': 'A Játékmester őrület-gázt engedett ki.',
-      'log.gm.mutts': 'A Játékmester elengedett egy farkasmutáns-falkát.',
-      'log.gm.wasps': 'A Játékmester ledobott egy vérdarázsfészket.',
-      'log.gm.lure': 'A Játékmester hangos jelet adott, hogy odacsalja a kiválasztottakat.',
-      'log.gm.reveal': 'A Játékmester mindenkinek megmutatta, hol vannak a többiek.',
-      'log.gm.shrink_zone': 'A Játékmester szűkíti az erőteret. Új méret: {n} m.',
-      'log.gm.smite': 'A Játékmester lesújtott rá: {name}.',
+      'log.gm.feast': 'A Showrunner lakomát hirdetett a Nexusnál.',
+      'log.gm.weather': 'A Showrunner megváltoztatta az időjárást: {weather}.',
+      'log.gm.time_skip': 'A Showrunner átállította az órát: {time}.',
+      'log.gm.flood': 'A Showrunner kinyitotta a gátakat. Emelkedik a víz!',
+      'log.gm.quake': 'A Showrunner megrázta a földet.',
+      'log.gm.terraform': 'A Showrunner átalakította a tájat: {mode}.',
+      'log.gm.fireball': 'A Showrunner tűzgolyókat küldött az égből.',
+      'log.gm.lightning': 'A Showrunner villámot küldött.',
+      'log.gm.poison_fog': 'A Showrunner mérges ködöt engedett ki.',
+      'log.gm.madness_gas': 'A Showrunner őrület-gázt engedett ki.',
+      'log.gm.beasts': 'A Showrunner elengedett egy farkasfenevad-falkát.',
+      'log.gm.wasps': 'A Showrunner ledobott egy gyilkosdarázsfészket.',
+      'log.gm.lure': 'A Showrunner hangos jelet adott, hogy odacsalja a versenyzőket.',
+      'log.gm.reveal': 'A Showrunner mindenkinek megmutatta, hol vannak a többiek.',
+      'log.gm.shrink_zone': 'A Showrunner szűkíti az erőteret. Új méret: {n} m.',
+      'log.gm.smite': 'A Showrunner lesújtott rá: {name}.',
       'log.gm.byAssistant': 'A segéd képességet használt: {power}.',
-      'log.gm.assistantOn': 'A segéd Játékmester bekapcsolt.',
-      'log.gm.assistantOff': 'A segéd Játékmester kikapcsolt.',
-      'log.gm.revealEnd': 'Vége a leleplezésnek. A kiválasztottak újra elbújhatnak.',
+      'log.gm.assistantOn': 'A segéd Showrunner bekapcsolt.',
+      'log.gm.assistantOff': 'A segéd Showrunner kikapcsolt.',
+      'log.gm.revealEnd': 'Vége a leleplezésnek. A versenyzők újra elbújhatnak.',
       'log.gm.bored': 'A közönség unatkozik. A nézők izgalmat akarnak.',
 
       'audience.title': 'Közönség',
@@ -268,18 +268,18 @@
       'audience.mood.excited': 'Izgatott',
       'audience.mood.wild': 'Tombol',
       'audience.reason.kill': 'Egy gyilkosság!',
-      'audience.reason.death': 'Meghalt egy kiválasztott',
+      'audience.reason.death': 'Meghalt egy versenyző',
       'audience.reason.betrayal': 'Árulás!',
       'audience.reason.betrayalKill': 'A barátja ölte meg!',
       'audience.reason.alliance': 'Új szövetség',
       'audience.reason.fight': 'Harc',
-      'audience.reason.power': 'A Játékmester közbelép',
+      'audience.reason.power': 'A Showrunner közbelép',
       'audience.reason.feast': 'A lakoma',
       'audience.reason.finale': 'A végső harc',
-      'audience.reason.bloodbath': 'A vérfürdő',
-      'audience.reason.smiteBad': 'Szerették azt a kiválasztottat',
-      'audience.reason.smiteGood': 'Senki sem szerette azt a kiválasztottat',
-      'audience.reason.mutt': 'Meghalt egy mutáns',
+      'audience.reason.kickoff': 'A nyitó roham',
+      'audience.reason.smiteBad': 'Szerették azt a versenyzőt',
+      'audience.reason.smiteGood': 'Senki sem szerette azt a versenyzőt',
+      'audience.reason.beast': 'Meghalt egy fenevad',
       'audience.reason.trap': 'Egy csapda!',
       'audience.reason.gift': 'Szponzori ajándék',
       'audience.reason.madness': 'Valaki megőrült',
@@ -288,7 +288,7 @@
       'audience.reason.hazard': 'Lecsap az aréna',
 
       'autogm.name': 'Segéd',
-      'autogm.desc': 'Segéd Játékmester. Közbelép, ha unatkozik a közönség.',
+      'autogm.desc': 'Segéd Showrunner. Közbelép, ha unatkozik a közönség.',
       'autogm.on': 'Segéd be',
       'autogm.off': 'Segéd ki',
       'autogm.status.off': 'A segéd ki van kapcsolva.',
@@ -324,7 +324,7 @@
   function opt(id, icon, key) { return { id: id, icon: icon, key: key || 'power.opt.' + id }; }
   const DEFS = [
     { id: 'supply_drop', category: 'gift', icon: '📦', cost: 15, cooldown: 20, target: 'point', radius: 6, options: null, weight: 1 },
-    { id: 'sponsor_gift', category: 'gift', icon: '🪂', cost: 10, cooldown: 8, target: 'tribute', radius: 2.5, options: null, weight: 0.6 },
+    { id: 'sponsor_gift', category: 'gift', icon: '🪂', cost: 10, cooldown: 8, target: 'contestant', radius: 2.5, options: null, weight: 0.6 },
     { id: 'feast', category: 'gift', icon: '🍗', cost: 35, cooldown: 150, target: 'none', radius: null, options: null, weight: 1.4 },
     {
       id: 'weather', category: 'nature', icon: '🌦️', cost: 10, cooldown: 25, target: 'none', radius: null, weight: 0.8,
@@ -347,12 +347,12 @@
     { id: 'lightning', category: 'hazard', icon: '⚡', cost: 10, cooldown: 6, target: 'point', radius: 8, options: null, weight: 0.7 },
     { id: 'poison_fog', category: 'hazard', icon: '☠️', cost: 25, cooldown: 60, target: 'point', radius: 20, options: null, weight: 1.2 },
     { id: 'madness_gas', category: 'hazard', icon: '🌀', cost: 25, cooldown: 60, target: 'point', radius: 16, options: null, weight: 1.3 },
-    { id: 'mutts', category: 'hazard', icon: '🐺', cost: 30, cooldown: 60, target: 'point', radius: 10, options: null, weight: 1.5 },
+    { id: 'beasts', category: 'hazard', icon: '🐺', cost: 30, cooldown: 60, target: 'point', radius: 10, options: null, weight: 1.5 },
     { id: 'wasps', category: 'hazard', icon: '🐝', cost: 20, cooldown: 45, target: 'point', radius: 10, options: null, weight: 1.2 },
     { id: 'lure', category: 'rule', icon: '📣', cost: 8, cooldown: 15, target: 'point', radius: 30, options: null, weight: 0.6 },
     { id: 'reveal', category: 'rule', icon: '👁️', cost: 20, cooldown: 90, target: 'none', radius: null, options: null, weight: 1 },
     { id: 'shrink_zone', category: 'rule', icon: '⭕', cost: 40, cooldown: 120, target: 'point', radius: Math.round(CFG.ARENA_RADIUS * 0.55), options: null, weight: 1.5 },
-    { id: 'smite', category: 'rule', icon: '🌩️', cost: 60, cooldown: 180, target: 'tribute', radius: 2.5, options: null, weight: 0 },
+    { id: 'smite', category: 'rule', icon: '🌩️', cost: 60, cooldown: 180, target: 'contestant', radius: 2.5, options: null, weight: 0 },
   ];
   const BY_ID = Object.create(null);
   for (let i = 0; i < DEFS.length; i++) {
@@ -423,20 +423,20 @@
   function isPoint(p) { return !!p && typeof p === 'object' && isFinite(+p.x) && isFinite(+p.z); }
   function scene() { return GM.World && GM.World.scene ? GM.World.scene : null; }
   function tribCall(method, a, b, c, d) {
-    const T = GM.Tributes;
+    const T = GM.Contestants;
     if (!T || typeof T[method] !== 'function') return undefined;
-    try { return T[method](a, b, c, d); } catch (err) { GM.reportError('Powers.Tributes.' + method, err); return undefined; }
+    try { return T[method](a, b, c, d); } catch (err) { GM.reportError('Powers.Contestants.' + method, err); return undefined; }
   }
-  /** Living tributes (new array; only used by low-frequency code). */
-  function livingTributes() {
+  /** Living contestants (new array; only used by low-frequency code). */
+  function livingContestants() {
     const out = [];
-    const trs = GM.state.tributes;
+    const trs = GM.state.contestants;
     for (let i = 0; i < trs.length; i++) if (trs[i] && trs[i].alive) out.push(trs[i]);
     return out;
   }
   function aliveCount() {
     let n = 0;
-    const trs = GM.state.tributes;
+    const trs = GM.state.contestants;
     for (let i = 0; i < trs.length; i++) if (trs[i] && trs[i].alive) n++;
     return n;
   }
@@ -447,8 +447,8 @@
     if (d > maxR && d > 0) { x *= maxR / d; z *= maxR / d; }
     return { x: x, z: z };
   }
-  function nearestTributeTo(x, z, maxDist) {
-    const trs = GM.state.tributes;
+  function nearestContestantTo(x, z, maxDist) {
+    const trs = GM.state.contestants;
     let best = null, bd = maxDist * maxDist;
     for (let i = 0; i < trs.length; i++) {
       const t = trs[i];
@@ -459,10 +459,10 @@
     }
     return best;
   }
-  /** Where the feast table goes: in front of the cornucopia mouth (same rule as Items). */
+  /** Where the feast table goes: in front of the Nexus (same rule as Items). */
   function feastPos() {
     const Tr = GM.Terrain;
-    const lm = Tr && Tr.landmarks && Tr.landmarks.cornucopia;
+    const lm = Tr && Tr.landmarks && Tr.landmarks.nexus;
     let x = 0, z = 0, heading = null;
     if (lm) {
       x = +lm.x || 0; z = +lm.z || 0;
@@ -472,9 +472,9 @@
     }
     if (heading === null) {
       const W = GM.World;
-      const c = W && W.cornucopia;
+      const c = W && W.nexus;
       if (c && c.userData && typeof c.userData.mouthHeading === 'number') heading = c.userData.mouthHeading;
-      else if (W && typeof W.cornucopiaHeading === 'number') heading = W.cornucopiaHeading;
+      else if (W && typeof W.nexusHeading === 'number') heading = W.nexusHeading;
     }
     if (heading === null) heading = 0;
     return { x: x + Math.sin(heading) * 9, z: z + Math.cos(heading) * 9 };
@@ -642,8 +642,8 @@
       pillar.visible = false;
       root.add(pillar);
 
-      // --- reveal: one instanced beam per living tribute
-      const maxT = CFG.MAX_TRIBUTES;
+      // --- reveal: one instanced beam per living contestant
+      const maxT = CFG.MAX_CONTESTANTS;
       const revealMat = makeBeamMat(0xffffff, 0);
       const reveal = noPick(new THREE.InstancedMesh(beamGeo, revealMat, maxT));
       reveal.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -699,9 +699,9 @@
     if (vis && sc && vis.root.parent !== sc) sc.add(vis.root);
   }
 
-  function tributeColor(t) {
+  function contestantColor(t) {
     let c = colorCache[t.id];
-    if (!c) c = colorCache[t.id] = new THREE.Color(t.color || GM.districtColor(t.district || 1));
+    if (!c) c = colorCache[t.id] = new THREE.Color(t.color || GM.teamColor(t.team || 1));
     return c;
   }
   function clearColorCache() { for (const k in colorCache) delete colorCache[k]; }
@@ -710,7 +710,7 @@
   const aim = {
     active: false, id: null, x: 0, z: 0,      // requested point
     cx: 0, cz: 0, radius: 0,                  // where the reticle really is
-    tributeId: null, valid: false, dirty: true,
+    contestantId: null, valid: false, dirty: true,
     lastCx: NaN, lastCz: NaN, lastR: -1,
   };
 
@@ -738,11 +738,11 @@
   function resolveAim() {
     const def = BY_ID[aim.id];
     let cx, cz, R, small = 0, alpha = 1;
-    aim.tributeId = null;
-    if (def.target === 'tribute') {
-      const t = nearestTributeTo(aim.x, aim.z, 6);
+    aim.contestantId = null;
+    if (def.target === 'contestant') {
+      const t = nearestContestantTo(aim.x, aim.z, 6);
       small = 1;
-      if (t) { cx = t.pos.x; cz = t.pos.z; R = def.radius || 2.5; aim.tributeId = t.id; }
+      if (t) { cx = t.pos.x; cz = t.pos.z; R = def.radius || 2.5; aim.contestantId = t.id; }
       else { cx = aim.x; cz = aim.z; R = 1.4; alpha = 0.45; }
     } else if (def.id === 'shrink_zone') {
       const H = GM.Hazards;
@@ -810,15 +810,15 @@
     const left = st.revealUntil - st.time;
     const since = revealStart >= 0 ? st.time - revealStart : 1;
     const a = U.clamp01(Math.min(left / 2.5, since / 0.8));
-    const trs = st.tributes;
+    const trs = st.contestants;
     let n = 0;
-    for (let i = 0; i < trs.length && n < CFG.MAX_TRIBUTES; i++) {
+    for (let i = 0; i < trs.length && n < CFG.MAX_CONTESTANTS; i++) {
       const t = trs[i];
       if (!t || !t.alive || !t.pos) continue;
       tmpM.makeScale(0.3, 42, 0.3);
       tmpM.setPosition(t.pos.x, t.pos.y + 0.1, t.pos.z);
       mesh.setMatrixAt(n, tmpM);
-      mesh.setColorAt(n, tributeColor(t));
+      mesh.setColorAt(n, contestantColor(t));
       n++;
     }
     mesh.count = n;
@@ -971,7 +971,7 @@
     sfx('explosion', P, 0.6);
     shake(0.55, 0.7);
     if (t && t.alive && GM.state.phase === 'running') {
-      tribCall('damage', t, 100000, { cause: 'smite', attacker: null, mutt: null, weapon: null, pos: t.pos });
+      tribCall('damage', t, 100000, { cause: 'smite', attacker: null, beast: null, weapon: null, pos: t.pos });
       if (t.alive) tribCall('kill', t, { cause: 'smite', killer: null, attacker: null, weapon: null, pos: t.pos });
     }
   }
@@ -1153,18 +1153,18 @@
 
   function fail(id, reason) { Powers.lastFail = { id: id, reason: reason }; return false; }
 
-  function resolveTribute(target) {
+  function resolveContestant(target) {
     let t = null;
-    const trs = GM.state.tributes;
+    const trs = GM.state.contestants;
     if (typeof target === 'number') t = trs[target] || null;
     else if (target && typeof target === 'object') {
-      if (target.kind === 'tribute' || (target.pos && target.name != null && typeof target.id === 'number')) t = trs[target.id] === target ? target : trs[target.id] || null;
-      else if (isPoint(target)) t = nearestTributeTo(+target.x, +target.z, 6);
+      if (target.kind === 'contestant' || (target.pos && target.name != null && typeof target.id === 'number')) t = trs[target.id] === target ? target : trs[target.id] || null;
+      else if (isPoint(target)) t = nearestContestantTo(+target.x, +target.z, 6);
     }
     return t && t.alive && t.pos ? t : null;
   }
 
-  // Each effect gets a context {def, auto, option, x, z, pos, tribute} and returns
+  // Each effect gets a context {def, auto, option, x, z, pos, contestant} and returns
   // false (nothing happened: no cost) or {params, pos?, ids?, important?, ann?, log?}.
   let lastTerraformLog = -999;
   let lastTerraformMode = null;
@@ -1185,7 +1185,7 @@
 
     sponsor_gift(c) {
       const I = GM.Items;
-      const t = c.tribute;
+      const t = c.contestant;
       if (!I || typeof I.sponsorGift !== 'function' || !t) return false;
       let type = null;
       if (typeof I.neededGift === 'function') {
@@ -1309,16 +1309,16 @@
       return { params: {}, important: true, ann: { key: 'ann.gm.madness_gas', style: 'danger', duration: 3 } };
     },
 
-    mutts(c) {
-      const M = GM.Mutts;
+    beasts(c) {
+      const M = GM.Beasts;
       if (!M || typeof M.spawn !== 'function') return false;
       const list = M.spawn('wolf', c.x, c.z, 4);
       if (!list || !list.length) return false;
-      return { params: {}, important: true, ann: { key: 'ann.gm.mutts', style: 'danger', duration: 3.5 } };
+      return { params: {}, important: true, ann: { key: 'ann.gm.beasts', style: 'danger', duration: 3.5 } };
     },
 
     wasps(c) {
-      const M = GM.Mutts;
+      const M = GM.Beasts;
       if (!M || typeof M.spawn !== 'function') return false;
       const list = M.spawn('wasps', c.x, c.z);
       if (!list || !list.length) return false;
@@ -1356,7 +1356,7 @@
     },
 
     smite(c) {
-      const t = c.tribute;
+      const t = c.contestant;
       if (!t || !t.alive) return false;
       for (let i = 0; i < smites.length; i++) if (smites[i].t === t && !smites[i].struck) return false;
       startSmite(t);
@@ -1377,7 +1377,7 @@
   };
 
   /**
-   * Use a power. target: {x, z} for point powers, a tribute (or id) for tribute
+   * Use a power. target: {x, z} for point powers, a contestant (or id) for contestant
    * powers, null for the rest. optionId picks an option (default: the first).
    * opts {auto: true} marks assistant use (logged as "Assistant").
    */
@@ -1386,7 +1386,7 @@
     if (!def) return fail(id, 'missing');
     const chk = Powers.canUse(id);
     if (!chk.ok) return fail(id, chk.reason);
-    const c = { def: def, auto: !!(opts && opts.auto), option: null, x: 0, z: 0, pos: null, tribute: null };
+    const c = { def: def, auto: !!(opts && opts.auto), option: null, x: 0, z: 0, pos: null, contestant: null };
     if (def.options) {
       let o = null;
       for (let i = 0; i < def.options.length; i++) if (def.options[i].id === optionId) o = def.options[i];
@@ -1399,10 +1399,10 @@
       const q = clampArena(+p.x, +p.z, 3);
       c.x = q.x; c.z = q.z;
       c.pos = P3(q.x, surfaceY(q.x, q.z), q.z);
-    } else if (def.target === 'tribute') {
-      const t = resolveTribute(target);
+    } else if (def.target === 'contestant') {
+      const t = resolveContestant(target);
       if (!t) return fail(id, 'target');
-      c.tribute = t;
+      c.contestant = t;
       c.x = t.pos.x; c.z = t.pos.z;
       c.pos = P3(t.pos.x, t.pos.y, t.pos.z);
     }
@@ -1423,14 +1423,14 @@
       const params = res.params || {};
       const lopts = {
         pos: res.pos || c.pos || null,
-        tributeIds: res.ids || (c.tribute ? [c.tribute.id] : []),
+        contestantIds: res.ids || (c.contestant ? [c.contestant.id] : []),
         important: !!res.important,
       };
       if (c.auto) GM.log('gm', 'log.gm.byAssistant', { power: '@power.' + id }, lopts);
       else GM.log('gm', key, params, lopts);
     }
     if (res.ann) GM.announce(res.ann.key, res.ann.params || {}, { style: res.ann.style || 'gm', duration: res.ann.duration || 3.5 });
-    const evTarget = def.target === 'tribute' ? c.tribute : def.target === 'point' ? c.pos : null;
+    const evTarget = def.target === 'contestant' ? c.contestant : def.target === 'point' ? c.pos : null;
     GM.emit('power:used', { id: id, target: evTarget, option: c.option, auto: c.auto, cost: isSandbox() ? 0 : def.cost });
     return true;
   };
@@ -1441,7 +1441,7 @@
     if (!def || def.target === 'none' || !isPoint(point)) {
       aim.active = false;
       aim.id = null;
-      aim.tributeId = null;
+      aim.contestantId = null;
       return;
     }
     if (aim.id !== id) aim.dirty = true;
@@ -1510,7 +1510,7 @@
     lastTerraformMode = null;
     aim.active = false;
     aim.id = null;
-    aim.tributeId = null;
+    aim.contestantId = null;
     aim.dirty = true;
     clearColorCache();
     const shrink = BY_ID.shrink_zone;
@@ -1548,7 +1548,7 @@
   let boredLogAt = -999;
   let lowSince = -1;
   let scoreCache = 30;
-  const betrayals = Object.create(null);   // tribute id -> sim time of their last betrayal
+  const betrayals = Object.create(null);   // contestant id -> sim time of their last betrayal
 
   function popOf(t) { return t && typeof t.popularity === 'number' ? t.popularity : 0.3; }
   function bumpPopularity(t, amount) {
@@ -1600,7 +1600,7 @@
   Audience.score = function () {
     return Audience.history.length ? scoreCache : Audience.excitement;
   };
-  /** Audience grade for the whole Games so far: 'S' | 'A' | 'B' | 'C' | 'D'. */
+  /** Audience grade for the whole Show so far: 'S' | 'A' | 'B' | 'C' | 'D'. */
   Audience.grade = function () {
     const s = Audience.score();
     return s >= 62 ? 'S' : s >= 50 ? 'A' : s >= 38 ? 'B' : s >= 27 ? 'C' : 'D';
@@ -1610,12 +1610,12 @@
     const e = Audience.excitement;
     return 'audience.mood.' + (e < 20 ? 'bored' : e < 35 ? 'calm' : e < 55 ? 'interested' : e < 75 ? 'excited' : 'wild');
   };
-  /** The most popular living tribute (the winner after the Games), or null. */
+  /** The most popular living contestant (the winner after the Show), or null. */
   Audience.favorite = function () {
     const st = GM.state;
-    if (st.winner != null && st.tributes[st.winner]) return st.tributes[st.winner];
+    if (st.winner != null && st.contestants[st.winner]) return st.contestants[st.winner];
     let best = null;
-    const trs = st.tributes;
+    const trs = st.contestants;
     for (let i = 0; i < trs.length; i++) {
       const t = trs[i];
       if (t && t.alive && (!best || popOf(t) > popOf(best))) best = t;
@@ -1628,7 +1628,7 @@
     const h = Audience.history;
     h.push(Math.round(Audience.excitement * 10) / 10);
     if (h.length > HISTORY_MAX) {
-      // keep the whole Games in the sparkline: halve the resolution
+      // keep the whole Show in the sparkline: halve the resolution
       const out = [];
       for (let i = 0; i + 1 < h.length; i += 2) out.push(Math.round((h[i] + h[i + 1]) * 5) / 10);
       if (h.length % 2) out.push(h[h.length - 1]);
@@ -1640,8 +1640,8 @@
   }
 
   function initPopularity() {
-    const base = { career: 0.42, berserker: 0.36, protector: 0.38, lonewolf: 0.34, strategist: 0.32 };
-    const trs = GM.state.tributes;
+    const base = { elite: 0.42, berserker: 0.36, protector: 0.38, lonewolf: 0.34, strategist: 0.32 };
+    const trs = GM.state.contestants;
     for (let i = 0; i < trs.length; i++) {
       const t = trs[i];
       if (!t) continue;
@@ -1652,7 +1652,7 @@
 
   /** Slow drift toward a baseline: kills, long survival and being hurt make stars. */
   function popularityTick() {
-    const trs = GM.state.tributes;
+    const trs = GM.state.contestants;
     const total = trs.length || 1;
     const survival = 1 - aliveCount() / total;
     for (let i = 0; i < trs.length; i++) {
@@ -1737,10 +1737,10 @@
   function live() { return GM.state.phase === 'running'; }
 
   function onDied(e) {
-    if (!e || !e.tribute || !live()) return;
+    if (!e || !e.contestant || !live()) return;
     const st = GM.state;
-    const t = e.tribute;
-    const killer = e.killer && e.killer.kind !== 'mutt' && typeof e.killer === 'object' ? e.killer : null;
+    const t = e.contestant;
+    const killer = e.killer && e.killer.kind !== 'beast' && typeof e.killer === 'object' ? e.killer : null;
     const left = aliveCount();
     const finale = left >= 1 && left <= 3;
     if (e.cause === 'smite') {                    // judged when the strike was ordered
@@ -1787,7 +1787,7 @@
     const st = GM.state;
     if (e.byId != null) {
       betrayals[e.byId] = st.time;
-      bumpPopularity(st.tributes[e.byId], -0.12);
+      bumpPopularity(st.contestants[e.byId], -0.12);
     }
     Audience.add(30, 'audience.reason.betrayal');
   }
@@ -1797,7 +1797,7 @@
     Audience.add(12, 'audience.reason.alliance');
     const a = e && e.alliance;
     if (a && Array.isArray(a.members)) {
-      for (let i = 0; i < a.members.length; i++) bumpPopularity(GM.state.tributes[a.members[i]], 0.02);
+      for (let i = 0; i < a.members.length; i++) bumpPopularity(GM.state.contestants[a.members[i]], 0.02);
     }
   }
 
@@ -1812,7 +1812,7 @@
   let autoLastTime = -999;
   let autoNextTry = 0;
   let camperAcc = 0;
-  const campers = Object.create(null);    // tribute id -> {x, z, since}
+  const campers = Object.create(null);    // contestant id -> {x, z, since}
 
   /** Turn the assistant on or off (also mirrors settings.autoGM). */
   AutoGM.setEnabled = function (b) {
@@ -1841,7 +1841,7 @@
     if (camperAcc < 5) return;
     camperAcc = 0;
     const st = GM.state;
-    const trs = st.tributes;
+    const trs = st.contestants;
     for (let i = 0; i < trs.length; i++) {
       const t = trs[i];
       if (!t || !t.pos) continue;
@@ -1881,7 +1881,7 @@
     return p;
   }
 
-  /** Biggest group of tributes within r of one member (>= minSize), or null. */
+  /** Biggest group of contestants within r of one member (>= minSize), or null. */
   function findGroup(alive, r, minSize) {
     const r2 = r * r;
     let best = null, bestN = minSize - 1;
@@ -1907,7 +1907,7 @@
     return { x: c.x, z: c.z, n: members.length };
   }
 
-  /** The tribute that stayed in one spot the longest (>= 45 s), or null. */
+  /** The contestant that stayed in one spot the longest (>= 45 s), or null. */
   function findCamper(alive) {
     const now = GM.state.time;
     let best = null, bestT = 45;
@@ -1921,7 +1921,7 @@
     return best;
   }
 
-  /** The loneliest tribute and its nearest neighbour when they are far apart. */
+  /** The loneliest contestant and its nearest neighbour when they are far apart. */
   function findLonerPair(alive) {
     let best = null, bestMate = null, bestD = 45;
     for (let i = 0; i < alive.length; i++) {
@@ -1941,7 +1941,7 @@
   /** Pick and use the best fitting power. Returns its id or null. */
   function autoAct() {
     const st = GM.state;
-    const alive = livingTributes();
+    const alive = livingContestants();
     if (alive.length < 2) return null;
     const cands = [];
     function add(id, target, option, score) {
@@ -1954,14 +1954,14 @@
     if (alive.length <= 4 && zone && !zone.shrinking && (zone.radius || CFG.ARENA_RADIUS) > 60) {
       add('shrink_zone', centroid(alive), null, 9);
     }
-    // late in the Games: a feast pulls everyone together
+    // late in the Show: a feast pulls everyone together
     if (st.day >= 2 && !feastUsed && alive.length >= 4) add('feast', null, null, 8);
     else if (st.day >= 3 && alive.length >= 3) add('feast', null, null, 4);
-    // groups: mutts and hazards next to them
+    // groups: beasts and hazards next to them
     const grp = findGroup(alive, 24, 3);
     if (grp) {
       const a = GM.R.angle();
-      add('mutts', landNear(grp.x + Math.sin(a) * 16, grp.z + Math.cos(a) * 16), null, 7);
+      add('beasts', landNear(grp.x + Math.sin(a) * 16, grp.z + Math.cos(a) * 16), null, 7);
       add('wasps', landNear(grp.x + Math.sin(a) * 8, grp.z + Math.cos(a) * 8), null, 5);
       add('fireball', clampArena(grp.x + Math.sin(a + 1) * 10, grp.z + Math.cos(a + 1) * 10, 6), null, 4);
     }
@@ -2036,25 +2036,25 @@
 
     init() {
       buildVisuals();   // World (order 20) normally has its scene by now; else built lazily
-      GM.on('tribute:died', onDied);
+      GM.on('contestant:died', onDied);
       GM.on('combat:attack', onAttack);
       GM.on('power:used', onPowerUsed);
       GM.on('alliance:broken', onAllianceBroken);
       GM.on('alliance:formed', onAllianceFormed);
       GM.on('mind:snap', function () { if (live()) Audience.add(8, 'audience.reason.madness'); });
       GM.on('trap:triggered', function () { if (live()) Audience.add(8, 'audience.reason.trap'); });
-      GM.on('mutt:died', function (e) {
+      GM.on('beast:died', function (e) {
         if (!live() || !e || !e.killer) return;
-        Audience.add(6, 'audience.reason.mutt');
+        Audience.add(6, 'audience.reason.beast');
         bumpPopularity(e.killer, 0.05);
       });
-      GM.on('gift:sent', function (e) { if (e && e.tribute) bumpPopularity(e.tribute, 0.01); });
+      GM.on('gift:sent', function (e) { if (e && e.contestant) bumpPopularity(e.contestant, 0.01); });
       GM.on('feast:ready', function () { if (live()) Audience.add(15, 'audience.reason.feast'); });
       GM.on('zone:shrink', function () { if (live()) Audience.add(6, 'audience.reason.zone'); });
       GM.on('hazard:quake', function () { if (live()) lastEventTime = GM.state.time; });
       GM.on('game:start', function () {
         Audience.excitement = Math.max(Audience.excitement, 55);
-        Audience.add(20, 'audience.reason.bloodbath');
+        Audience.add(20, 'audience.reason.kickoff');
         trendRef = Audience.excitement;
         pushSample();
       });

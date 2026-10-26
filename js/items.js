@@ -5,7 +5,7 @@
  *   GM.ItemDefs[id]                 {id, kind, nameKey, icon, color, value, ...stats}
  *   GM.Items.list                   ground items (SPEC 7.5)
  *   GM.Items.spawn / remove / nearest / inRadius / value / pickup
- *   GM.Items.spawnCornucopiaLoot / spawnScatteredLoot / supplyDrop / sponsorGift
+ *   GM.Items.spawnNexusLoot / spawnScatteredLoot / supplyDrop / sponsorGift
  *   GM.Items.spawnFeast / placeTrap / traps / dropAll
  *   extras: weaponScore, isBetterWeapon, neededGift, steal, give, carriedCount,
  *           geometryOf, material, contentsLabel
@@ -15,7 +15,7 @@
  * glints. Crates, gifts, traps and the feast table are individual meshes
  * built from shared geometries/materials.
  *
- * Owner: TRIBUTES.
+ * Owner: CONTESTANTS.
  * ========================================================================== */
 (function () {
   'use strict';
@@ -119,19 +119,19 @@
       'log.item.feastCrate': '{name} took a feast crate: {items}.',
       'log.item.gift': '{name} opened a sponsor gift: {items}.',
       'log.item.giftStolen': '{name} took a gift that was for {owner}: {items}.',
-      'log.item.giftSent': 'A sponsor sends a silver parachute to {name}.',
+      'log.item.giftSent': 'A sponsor sends a gift parachute to {name}.',
       'log.item.supplyDrop': 'A supply crate is falling from the sky.',
       'log.item.supplyDropRich': 'A big supply crate is falling from the sky!',
-      'log.item.feast': 'The feast table is ready at the Cornucopia.',
+      'log.item.feast': 'The feast table is ready at the Nexus.',
       'log.item.trapSet': '{name} set a hidden trap.',
       'log.item.trapHit': '{victim} stepped into a hidden trap!',
       'log.item.trapHitBy': '{victim} stepped into a trap set by {owner}!',
-      'log.item.trapMutt': 'A mutt stepped into a trap set by {owner}.',
-      'log.item.nightlock': '{name} ate poison berries!',
+      'log.item.trapBeast': 'A beast stepped into a trap set by {owner}.',
+      'log.item.toxin': '{name} ate poison berries!',
       'log.item.steal': '{thief} stole {item} from {victim}.',
       'log.item.share': '{giver} gave {item} to {receiver}.',
 
-      'ann.feastReady': 'The feast is ready at the Cornucopia!',
+      'ann.feastReady': 'The feast is ready at the Nexus!',
     },
     hu: {
       'item.knife': 'Kés',
@@ -227,19 +227,19 @@
       'log.item.feastCrate': '{name} elvitt egy lakomaládát. Benne: {items}.',
       'log.item.gift': '{name} kinyitotta a szponzori ajándékot. Benne: {items}.',
       'log.item.giftStolen': '{name} elvett egy ajándékot, ami nem neki szólt (címzett: {owner}). Benne: {items}.',
-      'log.item.giftSent': 'Egy szponzor ezüst ejtőernyőt küld. Címzett: {name}.',
+      'log.item.giftSent': 'Egy szponzor ajándék-ejtőernyőt küld. Címzett: {name}.',
       'log.item.supplyDrop': 'Ellátmányláda zuhan az égből.',
       'log.item.supplyDropRich': 'Egy nagy ellátmányláda zuhan az égből!',
-      'log.item.feast': 'A lakoma asztala kész a Bőségszarunál.',
+      'log.item.feast': 'A lakoma asztala kész a Nexusnál.',
       'log.item.trapSet': '{name} rejtett csapdát állított.',
       'log.item.trapHit': 'Rejtett csapdába lépett: {victim}!',
       'log.item.trapHitBy': 'Csapdába lépett: {victim}! A csapdát {owner} állította.',
-      'log.item.trapMutt': 'Egy mutáns csapdába lépett. A csapdát {owner} állította.',
-      'log.item.nightlock': '{name} mérges bogyót evett!',
+      'log.item.trapBeast': 'Egy fenevad csapdába lépett. A csapdát {owner} állította.',
+      'log.item.toxin': '{name} mérges bogyót evett!',
       'log.item.steal': '{thief} ellopta ezt: {item}. Kitől: {victim}.',
       'log.item.share': '{giver} odaadta ezt: {item}. Kapta: {receiver}.',
 
-      'ann.feastReady': 'Kész a lakoma a Bőségszarunál!',
+      'ann.feastReady': 'Kész a lakoma a Nexusnál!',
     },
   });
 
@@ -266,7 +266,7 @@
     food: { kind: 'consumable', icon: '🍖', color: '#c8864a', value: 0.45, hunger: 45, cap: 6 },
     water: { kind: 'consumable', icon: '💧', color: '#4aa3df', value: 0.5, thirst: 50, cap: 6 },
     medkit: { kind: 'consumable', icon: '🩹', color: '#eeeeee', value: 0.6, heal: 45, healTime: 5, cap: 3 },
-    berries: { kind: 'consumable', icon: '🫐', color: '#5b4bb0', value: 0.2, hunger: 20, nightlock: 0.10, cap: 10 },
+    berries: { kind: 'consumable', icon: '🫐', color: '#5b4bb0', value: 0.2, hunger: 20, toxin: 0.10, cap: 10 },
     trap_kit: { kind: 'tool', icon: '🪤', color: '#8c8c8c', value: 0.3, cap: 4 },
     sleeping_bag: { kind: 'tool', icon: '🛌', color: '#3d6b4a', value: 0.3 },
     goggles: { kind: 'tool', icon: '🥽', color: '#2ecc71', value: 0.35 },
@@ -391,8 +391,8 @@
   function interest(o) {
     try { GM.addInterest(o); } catch (err) { GM.reportError('Items.interest', err); }
   }
-  function tribute(id) {
-    const ts = GM.state.tributes;
+  function contestant(id) {
+    const ts = GM.state.contestants;
     return id != null && ts[id] ? ts[id] : null;
   }
   function noPick(obj) {
@@ -409,12 +409,12 @@
   function running() { return GM.state.phase === 'running'; }
   function numOr(v, d) { return typeof v === 'number' && v === v ? v : d; }
 
-  /** Cornucopia centre + mouth direction (feature-detected from WORLD/Terrain). */
-  function cornucopia() {
+  /** Nexus centre + mouth direction (feature-detected from WORLD/Terrain). */
+  function nexus() {
     const Tr = T();
     const W = GM.World;
     let x = 0, z = 0, heading = null;
-    const lm = Tr && Tr.landmarks && Tr.landmarks.cornucopia;
+    const lm = Tr && Tr.landmarks && Tr.landmarks.nexus;
     if (lm) {
       x = numOr(lm.x, 0); z = numOr(lm.z, 0);
       if (typeof lm.heading === 'number') heading = lm.heading;
@@ -422,9 +422,9 @@
       else if (lm.mouth && typeof lm.mouth.x === 'number') heading = Math.atan2(lm.mouth.x - x, lm.mouth.z - z);
     }
     if (heading === null && W) {
-      const c = W.cornucopia;
+      const c = W.nexus;
       if (c && c.userData && typeof c.userData.mouthHeading === 'number') heading = c.userData.mouthHeading;
-      else if (typeof W.cornucopiaHeading === 'number') heading = W.cornucopiaHeading;
+      else if (typeof W.nexusHeading === 'number') heading = W.nexusHeading;
     }
     return { x: x, z: z, heading: heading === null ? 0 : heading };
   }
@@ -494,7 +494,7 @@
 
   /**
    * Geometry for an item type. Weapons are built with the grip at the origin
-   * and the blade/tip along +X (flat side up) so tributes can reuse them in hand.
+   * and the blade/tip along +X (flat side up) so contestants can reuse them in hand.
    */
   function buildGeometry(type) {
     switch (type) {
@@ -1050,7 +1050,7 @@
   }
 
   /**
-   * How much tribute t wants an item type right now (0..1).
+   * How much contestant t wants an item type right now (0..1).
    * Also accepts a ground item (crates use tier / feast / gift owner).
    */
   Items.value = function (t, type) {
@@ -1131,7 +1131,7 @@
     return U.clamp01(v);
   };
 
-  /** Number of supply units a tribute carries (for backpack visuals / AI). */
+  /** Number of supply units a contestant carries (for backpack visuals / AI). */
   Items.carriedCount = function (t) {
     const inv = t && t.inv;
     if (!inv) return 0;
@@ -1139,7 +1139,7 @@
       (inv.sleepingBag ? 1 : 0) + (inv.goggles ? 1 : 0);
   };
 
-  /** The single most useful gift for a tribute right now (sponsor logic). */
+  /** The single most useful gift for a contestant right now (sponsor logic). */
   Items.neededGift = function (t) {
     if (!t || !t.inv) return 'food';
     const inv = t.inv;
@@ -1160,7 +1160,7 @@
     for (let i = 0; i < cands.length; i++) {
       if (cands[i][1] > bestV) { bestV = cands[i][1]; best = cands[i][0]; }
     }
-    // a well-fed, armed, healthy tribute gets a trident as a sponsor showpiece
+    // a well-fed, armed, healthy contestant gets a trident as a sponsor showpiece
     if (bestV < 0.2 && Items.weaponScore(inv.melee) < ItemDefs.trident.score) best = 'trident';
     return best;
   };
@@ -1315,20 +1315,20 @@
 
   function logItem(key, params, t, item, important) {
     try {
-      GM.log('item', key, params, { pos: t ? t.pos : item && item.pos, tributeIds: t ? [t.id] : [], important: !!important });
+      GM.log('item', key, params, { pos: t ? t.pos : item && item.pos, contestantIds: t ? [t.id] : [], important: !!important });
     } catch (err) { GM.reportError('Items.log', err); }
   }
   function emitPickup(t, type, source) {
-    GM.emit('item:pickup', { tribute: t, type: type, source: source });
+    GM.emit('item:pickup', { contestant: t, type: type, source: source });
   }
-  function touchTribute(t) {
-    const Tr = GM.Tributes;
+  function touchContestant(t) {
+    const Tr = GM.Contestants;
     if (Tr && typeof Tr.refreshGear === 'function') {
       try { Tr.refreshGear(t); } catch (err) { GM.reportError('Items.refreshGear', err); }
     }
   }
   function pickupGesture(t) {
-    const Tr = GM.Tributes;
+    const Tr = GM.Contestants;
     if (Tr && typeof Tr.gesture === 'function') {
       try { Tr.gesture(t, 'pickup', 0.6); } catch (err) { GM.reportError('Items.gesture', err); }
     }
@@ -1343,7 +1343,7 @@
   }
 
   /**
-   * Tribute t picks up a ground item (must be within 1.6 m; crates 2.2 m).
+   * Contestant t picks up a ground item (must be within 1.6 m; crates 2.2 m).
    * Auto-equips better weapons (the old one is dropped), opens bundles.
    * Returns true when anything was taken.
    */
@@ -1369,13 +1369,13 @@
         else leftovers.push(ty);
       }
       Items.remove(item);
-      // things the tribute cannot use stay on the ground for others
+      // things the contestant cannot use stay on the ground for others
       for (let i = 0; i < leftovers.length; i++) drops.push({ type: leftovers[i], amount: defaultAmount(leftovers[i]) });
       spawnDrops(t, drops, source);
       emitPickup(t, item.type, source);
       const label = Items.contentsLabel(taken.length ? taken : contents);
       if (item.gift) {
-        const owner = tribute(item.forId);
+        const owner = contestant(item.forId);
         if (owner && owner !== t) logItem('log.item.giftStolen', { name: t.name, owner: owner.name, items: label }, t, item, true);
         else logItem('log.item.gift', { name: t.name, items: label }, t, item, true);
         sfx('heal', t.pos, 0.6);
@@ -1391,7 +1391,7 @@
         sfx('drop', item.pos, 0.7);
       } else sfx('click', item.pos, 0.5);
       pickupGesture(t);
-      touchTribute(t);
+      touchContestant(t);
       return true;
     }
 
@@ -1420,12 +1420,12 @@
       sfx('click', item.pos, 0.35);
     }
     pickupGesture(t);
-    touchTribute(t);
+    touchContestant(t);
     return true;
   };
 
   /**
-   * Thief takes the most valuable thing from victim (sleeping / careless tributes).
+   * Thief takes the most valuable thing from victim (sleeping / careless contestants).
    * Returns the item type or null. Must be within 2 m.
    */
   Items.steal = function (thief, victim) {
@@ -1460,14 +1460,14 @@
       emitPickup(thief, ty, 'steal');
       logItem('log.item.steal', { thief: thief.name, victim: victim.name, item: '@item.' + ty + '.a' }, thief, null, false);
       pickupGesture(thief);
-      touchTribute(thief);
-      touchTribute(victim);
+      touchContestant(thief);
+      touchContestant(victim);
       return ty;
     }
     return null;
   };
 
-  /** Give one unit of a supply (food/water/medkit/berries) to another tribute. */
+  /** Give one unit of a supply (food/water/medkit/berries) to another contestant. */
   Items.give = function (from, to, type) {
     if (!from || !to || !from.inv || !to.inv || from === to || !from.alive || !to.alive) return false;
     const d = ItemDefs[type];
@@ -1479,12 +1479,12 @@
     from.inv[type]--;
     emitPickup(to, type, 'share');
     logItem('log.item.share', { giver: from.name, receiver: to.name, item: '@item.' + type + '.a' }, from, null, false);
-    touchTribute(from);
-    touchTribute(to);
+    touchContestant(from);
+    touchContestant(to);
     return true;
   };
 
-  /** Drop all of a (dead) tribute's items around the body. */
+  /** Drop all of a (dead) contestant's items around the body. */
   Items.dropAll = function (t) {
     if (!t || !t.inv) return [];
     const inv = t.inv;
@@ -1510,7 +1510,7 @@
     if (inv.goggles) add('goggles', 1);
     const fresh = emptyInv();
     for (const k in fresh) inv[k] = fresh[k];
-    touchTribute(t);
+    touchContestant(t);
     return out;
   };
 
@@ -1526,19 +1526,19 @@
   function polar(cx, cz, ang, dist) { return { x: cx + Math.sin(ang) * dist, z: cz + Math.cos(ang) * dist }; }
 
   /**
-   * Cornucopia loot: the best weapons at the horn mouth, other weapons and
+   * Nexus loot: the best weapons in front of the Nexus, other weapons and
    * supplies further out, orange backpacks on a ring near the pedestals.
    */
-  Items.spawnCornucopiaLoot = function (count) {
+  Items.spawnNexusLoot = function (count) {
     count = Math.max(6, (count | 0) || 38);
     const R = GM.R;
-    const c = cornucopia();
+    const c = nexus();
     const nt = Math.max(2, Math.round(count / 1.6));
     const placed = [];
     const out = [];
     const put = function (type, x, z, amount) {
       const it = Items.spawn(type, x, z, amount != null ? { amount: amount } : null);
-      it.source = 'cornucopia';
+      it.source = 'nexus';
       placed.push({ x: x, z: z });
       out.push(it);
       return it;
@@ -1547,7 +1547,7 @@
     const nB = Math.max(2, Math.round(count * 0.22));
     const nS = Math.max(2, count - nW - nB);
 
-    // --- weapons: sorted best first, the best right in the horn mouth
+    // --- weapons: sorted best first, the best right at the front
     const weapons = ['sword'];
     if (nt >= 4) weapons.push('bow');
     if (nt >= 26 && R.chance(0.6)) weapons.push('bow');
@@ -1568,7 +1568,7 @@
       put(weapons[i], p.x, p.z);
     }
 
-    // --- supplies: all around the horn, a bit further out
+    // --- supplies: all around the Nexus, a bit further out
     const supplies = [];
     const armors = 1 + Math.floor(nt / 12);
     for (let i = 0; i < armors && supplies.length < nS; i++) supplies.push('armor');
@@ -1668,7 +1668,7 @@
     return item;
   };
 
-  /** A silver parachute with one gift lands next to tribute t. */
+  /** A silver parachute with one gift lands next to contestant t. */
   Items.sponsorGift = function (t, type) {
     if (!t || !t.alive) return null;
     if (!type || !ItemDefs[type] || ItemDefs[type].kind === 'bundle') type = Items.neededGift(t);
@@ -1681,7 +1681,7 @@
     });
     item.source = 'gift';
     logItem('log.item.giftSent', { name: t.name }, t, item, true);
-    GM.emit('gift:sent', { tribute: t, type: type });
+    GM.emit('gift:sent', { contestant: t, type: type });
     interest({
       pos: t.pos, score: 4, duration: GIFT_HEIGHT / GIFT_SPEED + 6,
       label: { key: 'item.interest.gift', params: { name: t.name } }, followId: t.id, kind: 'gift', key: 'gift:' + item.id,
@@ -1698,11 +1698,11 @@
     feastEmptyAt = 0;
   }
 
-  /** Rich loot crates on a banquet table at the Cornucopia. Sets state.feast.ready. */
+  /** Rich loot crates on a banquet table at the Nexus. Sets state.feast.ready. */
   Items.spawnFeast = function () {
     const st = GM.state;
     const R = GM.R;
-    const c = cornucopia();
+    const c = nexus();
     let fx0, fz0;
     if (st.feast && typeof st.feast.x === 'number' && typeof st.feast.z === 'number') { fx0 = st.feast.x; fz0 = st.feast.z; }
     else { fx0 = c.x + Math.sin(c.heading) * 9; fz0 = c.z + Math.cos(c.heading) * 9; }
@@ -1759,7 +1759,7 @@
   };
 
   // ================================================================= traps
-  /** Tribute t hides a trap at its feet (uses one trap kit). Owner is immune. */
+  /** Contestant t hides a trap at its feet (uses one trap kit). Owner is immune. */
   Items.placeTrap = function (t) {
     if (!t || !t.alive || !t.inv || (t.inv.traps || 0) <= 0) return false;
     const x = t.pos.x, z = t.pos.z;
@@ -1787,12 +1787,12 @@
     }
     Items.traps.push(trap);
     logItem('log.item.trapSet', { name: t.name }, t, null, false);
-    GM.emit('item:used', { tribute: t, type: 'trap_kit' });
-    const Tr = GM.Tributes;
+    GM.emit('item:used', { contestant: t, type: 'trap_kit' });
+    const Tr = GM.Contestants;
     if (Tr && typeof Tr.gesture === 'function') {
       try { Tr.gesture(t, 'trap', 1.4); } catch (err) { GM.reportError('Items.gesture', err); }
     }
-    touchTribute(t);
+    touchContestant(t);
     return true;
   };
 
@@ -1818,7 +1818,7 @@
       trap.mesh.scale.setScalar(1);
       trap.mesh.castShadow = true;
     }
-    const owner = tribute(trap.ownerId);
+    const owner = contestant(trap.ownerId);
     const p = { x: trap.pos.x, y: trap.pos.y + 0.3, z: trap.pos.z };
     fx('burst', p, { count: 14, color: 0x5a4630, color2: 0x7a0f12, speed: 3.5, up: 3, size: 0.16, life: 0.8 });
     fx('ring', trap.pos, 0xb03030, 2.5, 0.5);
@@ -1827,11 +1827,11 @@
       trap.victimId = t.id;
       if (owner) logItem('log.item.trapHitBy', { victim: t.name, owner: owner.name }, t, null, true);
       else logItem('log.item.trapHit', { victim: t.name }, t, null, true);
-      GM.emit('trap:triggered', { tribute: t, ownerId: trap.ownerId, pos: trap.pos });
-      const Tr = GM.Tributes;
+      GM.emit('trap:triggered', { contestant: t, ownerId: trap.ownerId, pos: trap.pos });
+      const Tr = GM.Contestants;
       if (Tr && typeof Tr.damage === 'function') {
         try {
-          Tr.damage(t, TRAP_DAMAGE, { cause: 'trap', attacker: null, mutt: null, weapon: null, pos: trap.pos, trapOwnerId: trap.ownerId });
+          Tr.damage(t, TRAP_DAMAGE, { cause: 'trap', attacker: null, beast: null, weapon: null, pos: trap.pos, trapOwnerId: trap.ownerId });
           if (t.alive && typeof Tr.stun === 'function') Tr.stun(t, TRAP_STUN);
         } catch (err) { GM.reportError('Items.trapDamage', err); }
       }
@@ -1841,10 +1841,10 @@
         followId: t.id, kind: 'trap', key: 'trap:' + trap.id,
       });
     } else if (m) {
-      if (owner) logItem('log.item.trapMutt', { owner: owner.name }, owner, null, false);
-      const M = GM.Mutts;
+      if (owner) logItem('log.item.trapBeast', { owner: owner.name }, owner, null, false);
+      const M = GM.Beasts;
       if (M && typeof M.damage === 'function') {
-        try { M.damage(m, TRAP_DAMAGE, owner || null); } catch (err) { GM.reportError('Items.trapMutt', err); }
+        try { M.damage(m, TRAP_DAMAGE, owner || null); } catch (err) { GM.reportError('Items.trapBeast', err); }
       }
     }
   }
@@ -1852,8 +1852,8 @@
   function checkTraps() {
     const traps = Items.traps;
     if (!traps.length) return;
-    const ts = GM.state.tributes;
-    const mutts = GM.state.mutts || [];
+    const ts = GM.state.contestants;
+    const beasts = GM.state.beasts || [];
     const r2 = TRAP_RADIUS * TRAP_RADIUS;
     for (let i = 0; i < traps.length; i++) {
       const trap = traps[i];
@@ -1865,8 +1865,8 @@
         if (dx * dx + dz * dz < r2) { triggerTrap(trap, t, null); break; }
       }
       if (!trap.armed) continue;
-      for (let k = 0; k < mutts.length; k++) {
-        const m = mutts[k];
+      for (let k = 0; k < beasts.length; k++) {
+        const m = beasts[k];
         if (!m || !m.alive || m.type !== 'wolf' || !m.pos) continue;
         const dx = m.pos.x - trap.pos.x, dz = m.pos.z - trap.pos.z;
         if (dx * dx + dz * dz < r2) { triggerTrap(trap, null, m); break; }
@@ -2128,8 +2128,8 @@
       clearAll();
       reattach();
       const n = settings && settings.roster && settings.roster.length ? settings.roster.length
-        : (GM.state.tributes.length || CFG.DEFAULT_TRIBUTES);
-      try { Items.spawnCornucopiaLoot(Math.round(1.6 * n)); } catch (err) { GM.reportError('Items.cornucopiaLoot', err); }
+        : (GM.state.contestants.length || CFG.DEFAULT_CONTESTANTS);
+      try { Items.spawnNexusLoot(Math.round(1.6 * n)); } catch (err) { GM.reportError('Items.nexusLoot', err); }
       try { Items.spawnScatteredLoot(40); } catch (err) { GM.reportError('Items.scatteredLoot', err); }
     },
     update: update,

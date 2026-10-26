@@ -21,7 +21,7 @@ const read = (p) => fs.readFileSync(path.join(root, p), 'utf8');
 
 const html = read('index.html');
 
-const title = (html.match(/<title>([\s\S]*?)<\/title>/) || [, "The Game Master's Arena"])[1].trim();
+const title = (html.match(/<title>([\s\S]*?)<\/title>/) || [, "Arena Showrunner"])[1].trim();
 const fonts = (html.match(/<!-- FONTS:BEGIN[^>]*-->([\s\S]*?)<!-- FONTS:END -->/) || [, ''])[1].trim();
 const css = read('css/style.css');
 

@@ -1,10 +1,10 @@
 /* ==========================================================================
- * ui.js — GM.UI: the Gamemakers' control room.
+ * ui.js — GM.UI: the Showrunners' control room.
  *
  * Builds every piece of DOM inside #ui-root once at init and keeps it live:
- *   setup sheet (arena code, tribute count, mix, editable roster, options),
+ *   setup sheet (arena code, contestant count, mix, editable roster, options),
  *   top bar (day, clock, weather, alive, viewers + excitement, GM energy,
- *   speed, language, sound, help), roster panel, selected-tribute panel,
+ *   speed, language, sound, help), roster panel, selected-contestant panel,
  *   powers panel with targeting, kill feed, event log, announcements,
  *   countdown, night recap, victory screen, help overlay, camera HUD,
  *   live feed frames and a responsive drawer layout.
@@ -16,12 +16,12 @@
  *   targeting() -> {id, def, option, mode, x, z, hasPoint, radius} | null
  *   startTargeting(id, optionId) / cancelTargeting()
  *   usePower(id)                          same as clicking the power button
- *   pickTribute(id)                       roster click: select + follow (or target)
+ *   pickContestant(id)                       roster click: select + follow (or target)
  *   showHelp() / hideHelp() / toggleHelp()
  *   toast(key, params)                    small message at the bottom of the view
- *   setDockTab('powers'|'tribute'|'log') / openDrawer('left'|'right'|null)
+ *   setDockTab('powers'|'contestant'|'log') / openDrawer('left'|'right'|null)
  *   refresh()                             force a full refresh
- *   hoverId                               tribute id hovered in the roster (minimap ring)
+ *   hoverId                               contestant id hovered in the roster (minimap ring)
  *
  * Owner: UI. Contract: SPEC.md section 8.13.
  * ========================================================================== */
@@ -40,10 +40,10 @@
         'ui.top.alive': 'Alive',
         'ui.top.viewers': 'Viewers',
         'ui.top.excitement': 'Excitement',
-        'ui.top.excitementTip': 'How excited the audience is. Exciting Games give you more energy.',
-        'ui.top.viewersTip': 'People watching the Games right now.',
+        'ui.top.excitementTip': 'How excited the audience is. Exciting shows give you more energy.',
+        'ui.top.viewersTip': 'People watching the Show right now.',
         'ui.top.energy': 'Energy',
-        'ui.top.energyTip': 'Game Master energy. Powers cost energy. It comes back over time.',
+        'ui.top.energyTip': 'Showrunner energy. Powers cost energy. It comes back over time.',
         'ui.top.sandbox': 'Sandbox',
         'ui.top.speed': 'Speed',
         'ui.top.pause': 'Pause (Space)',
@@ -53,48 +53,48 @@
         'ui.top.unmute': 'Sound on (M)',
         'ui.top.help': 'Help (H)',
         'ui.top.lang': 'Language (L)',
-        'ui.top.exit': 'End these Games and go back to the setup',
+        'ui.top.exit': 'End this Show and go back to the setup',
         'ui.top.exitConfirm': 'Click again to leave',
         'ui.top.errors': '{n} errors',
         'ui.top.errors_one': '1 error',
         'ui.top.errorsTip': 'Some parts had problems. Click to see them.',
-        'ui.top.roster': 'Tributes',
+        'ui.top.roster': 'Contestants',
         'ui.top.monitors': 'Map and live feeds',
-        'ui.top.dayTip': 'Day of the Games and time in the arena',
+        'ui.top.dayTip': 'Day of the Show and time in the arena',
         'ui.top.weatherTip': 'Weather in the arena',
-        'ui.top.aliveTip': 'Tributes still alive',
+        'ui.top.aliveTip': 'Contestants still alive',
         'ui.top.countdown': 'Get ready',
 
         // roster
-        'ui.roster.title': 'Tributes',
+        'ui.roster.title': 'Contestants',
         'ui.roster.count': '{alive} / {total} alive',
         'ui.roster.sort': 'Sort',
-        'ui.roster.empty': 'No tributes yet.',
-        'ui.roster.pick': 'Click: watch this tribute',
+        'ui.roster.empty': 'No contestants yet.',
+        'ui.roster.pick': 'Click: watch this contestant',
         'ui.roster.pickTarget': 'Click: choose as target',
-        'ui.sort.district': 'District',
+        'ui.sort.team': 'Team',
         'ui.sort.kills': 'Kills',
         'ui.sort.health': 'Health',
         'ui.sort.name': 'Name',
         'ui.kills': '{n} kills',
         'ui.kills_one': '1 kill',
 
-        // selected tribute
-        'ui.sel.title': 'Tribute',
-        'ui.sel.none': 'Click a tribute to see them up close.',
+        // selected contestant
+        'ui.sel.title': 'Contestant',
+        'ui.sel.none': 'Click a contestant to see them up close.',
         'ui.sel.noneSub': 'Use the list, the map or click in the arena. Tab jumps to the next one.',
         'ui.sel.follow': 'Follow with the camera (F)',
         'ui.sel.unfollow': 'Stop following',
         'ui.sel.close': 'Close',
-        'ui.sel.gift': 'Send a gift to this tribute',
-        'ui.sel.smite': 'Capitol strike on this tribute',
+        'ui.sel.gift': 'Send a gift to this contestant',
+        'ui.sel.smite': 'Studio strike on this contestant',
         'ui.sel.smiteConfirm': 'Click again to strike',
         'ui.sel.health': 'Health',
         'ui.sel.stamina': 'Stamina',
         'ui.sel.food': 'Food',
         'ui.sel.water': 'Water',
         'ui.sel.rest': 'Rest',
-        'ui.sel.healthTip': 'Health. At zero the tribute dies.',
+        'ui.sel.healthTip': 'Health. At zero the contestant dies.',
         'ui.sel.staminaTip': 'Stamina. Running and swimming use it.',
         'ui.sel.foodTip': 'Food. A full bar means not hungry.',
         'ui.sel.waterTip': 'Water. A full bar means not thirsty.',
@@ -115,16 +115,16 @@
         'ui.sel.killedBy': 'Killed by {name}',
         'ui.sel.cause': 'Cause: {cause}',
         'ui.sel.place': 'Place {n}',
-        'ui.sel.victor': 'Victor',
+        'ui.sel.victor': 'Winner',
         'ui.sel.popularity': 'Audience favour',
         'ui.sel.thinks': 'Thinking',
         'ui.emo.fear': 'Fear',
         'ui.emo.rage': 'Rage',
         'ui.emo.confidence': 'Confidence',
         'ui.emo.sanity': 'Sanity',
-        'ui.emo.fearTip': 'Fear. Scared tributes run and hide.',
-        'ui.emo.rageTip': 'Rage. Angry tributes attack and seek revenge.',
-        'ui.emo.confidenceTip': 'Confidence. Confident tributes take risks.',
+        'ui.emo.fearTip': 'Fear. Scared contestants run and hide.',
+        'ui.emo.rageTip': 'Rage. Angry contestants attack and seek revenge.',
+        'ui.emo.confidenceTip': 'Confidence. Confident contestants take risks.',
         'ui.emo.sanityTip': 'Sanity. Low sanity makes strange choices.',
 
         // status fallbacks
@@ -158,7 +158,7 @@
         'ui.trait.patience': 'Patience',
         'ui.trait.stability': 'Calm mind',
         // archetype fallbacks
-        'ui.arch.career': 'Career',
+        'ui.arch.elite': 'Elite',
         'ui.arch.survivor': 'Survivor',
         'ui.arch.scavenger': 'Scavenger',
         'ui.arch.opportunist': 'Opportunist',
@@ -166,14 +166,14 @@
         'ui.arch.berserker': 'Berserker',
         'ui.arch.protector': 'Protector',
         'ui.arch.lonewolf': 'Lone wolf',
-        'ui.arch.career.desc': 'Trained to kill. Rushes the Cornucopia and hunts in a pack.',
+        'ui.arch.elite.desc': 'Trained to kill. Rushes the Nexus and hunts in a pack.',
         'ui.arch.survivor.desc': 'Careful and clever. Hides, finds food and fights only when trapped.',
         'ui.arch.scavenger.desc': 'Runs from danger and steals what others leave behind.',
         'ui.arch.opportunist.desc': 'Waits while others fight, then finishes the weak. Betrays allies.',
         'ui.arch.strategist.desc': 'Calm planner. Sets traps and waits in ambush.',
         'ui.arch.berserker.desc': 'Wild and angry. Charges at enemies, sometimes even at friends.',
         'ui.arch.protector.desc': 'Loyal friend. Makes allies, defends them and never betrays.',
-        'ui.arch.lonewolf.desc': 'Hunts alone, often at night. Picks tributes who are alone.',
+        'ui.arch.lonewolf.desc': 'Hunts alone, often at night. Picks contestants who are alone.',
         // item fallbacks
         'ui.item.knife': 'Knife',
         'ui.item.sickle': 'Sickle',
@@ -197,7 +197,7 @@
         'ui.item.crate': 'Supply crate',
 
         // powers
-        'ui.pow.title': 'Game Master powers',
+        'ui.pow.title': 'Showrunner powers',
         'ui.pow.cat.all': 'All',
         'ui.pow.cat.gift': 'Gifts',
         'ui.pow.cat.nature': 'Nature',
@@ -209,26 +209,26 @@
         'ui.pow.radius': 'Area: {n} m',
         'ui.pow.target.none': 'Works at once',
         'ui.pow.target.point': 'Aim at a place in the arena',
-        'ui.pow.target.tribute': 'Aim at a tribute',
+        'ui.pow.target.contestant': 'Aim at a contestant',
         'ui.pow.reason.cooldown': 'Not ready yet: {n} s',
         'ui.pow.reason.energy': 'Not enough energy',
-        'ui.pow.reason.phase': 'Only while the Games run',
+        'ui.pow.reason.phase': 'Only while the Show runs',
         'ui.pow.reason.missing': 'Powers are not available',
         'ui.pow.reason.failed': 'It did not work here',
         'ui.pow.ready': 'Ready',
-        'ui.pow.unavailable': 'The Game Master console is offline.',
+        'ui.pow.unavailable': 'The Showrunner console is offline.',
         'ui.pow.choose': 'Choose one',
         'ui.pow.now': 'now',
         'ui.pow.assistant': 'Assistant',
-        'ui.pow.assistantTip': 'A helper Game Master acts when the audience is bored.',
+        'ui.pow.assistantTip': 'A helper Showrunner acts when the audience is bored.',
         'ui.pow.energyTip': 'Your energy. It comes back faster when the audience is excited.',
         'ui.target.point': 'Click in the arena or on the map',
-        'ui.target.tribute': 'Click a tribute in the arena or in the list',
+        'ui.target.contestant': 'Click a contestant in the arena or in the list',
         'ui.target.cancel': 'Right-click or Esc: cancel',
         'ui.target.keep': 'Hold Shift to use it again',
-        'ui.target.needTribute': 'Click on a tribute.',
+        'ui.target.needContestant': 'Click on a contestant.',
         'ui.target.ground': 'Click on the ground.',
-        'ui.target.dead': 'This tribute is dead.',
+        'ui.target.dead': 'This contestant is dead.',
         'ui.target.over': 'Target: {name}',
         'ui.target.option': 'Mode',
 
@@ -236,9 +236,9 @@
         'ui.log.title': 'Event log',
         'ui.log.f.all': 'All',
         'ui.log.f.kills': 'Kills',
-        'ui.log.f.gm': 'Game Master',
+        'ui.log.f.gm': 'Showrunner',
         'ui.log.f.events': 'Events',
-        'ui.log.selOnly': 'Only the selected tribute',
+        'ui.log.selOnly': 'Only the selected contestant',
         'ui.log.empty': 'Nothing has happened yet.',
         'ui.log.focus': 'Click: the camera looks there',
 
@@ -251,20 +251,20 @@
         'ui.cam.mode.director': 'DIRECTOR',
         'ui.cam.mode.overhead': 'MAP',
         'ui.cam.btn.director': 'Director: the camera finds the action (3)',
-        'ui.cam.btn.follow': 'Follow the selected tribute (2)',
+        'ui.cam.btn.follow': 'Follow the selected contestant (2)',
         'ui.cam.btn.free': 'Free camera (1)',
         'ui.cam.btn.overhead': 'Map view from above (4)',
         'ui.cam.noSignal': 'No camera signal',
 
         // overlays
-        'ui.cd.title': 'The Games begin in',
+        'ui.cd.title': 'The Show begins in',
         'ui.paused': 'Paused',
         'ui.pausedHint': 'Press Space to continue',
         'ui.results': 'Results',
         'ui.ann.info': 'Announcement',
         'ui.ann.danger': 'Alert',
-        'ui.ann.gold': 'Capitol',
-        'ui.ann.gm': 'Game Master',
+        'ui.ann.gold': 'Studio',
+        'ui.ann.gm': 'Showrunner',
         'ui.toast.tags': 'Name tags: {v}',
         'ui.toast.feeds': 'Live feeds: {v}',
         'ui.toast.sound': 'Sound: {v}',
@@ -272,12 +272,12 @@
         'ui.toast.paused': 'Paused',
         'ui.toast.assistant': 'Assistant: {v}',
         'ui.toast.used': 'Used: {power}',
-        'ui.toast.noTributes': 'No living tributes.',
+        'ui.toast.noContestants': 'No living contestants.',
         'ui.dock.powers': 'Powers',
-        'ui.dock.tribute': 'Tribute',
+        'ui.dock.contestant': 'Contestant',
         'ui.dock.log': 'Log',
         'ui.err.title': 'Errors',
-        'ui.err.hint': 'Some parts had problems. The Games keep running.',
+        'ui.err.hint': 'Some parts had problems. The Show keeps running.',
         'ui.err.none': 'No errors.',
 
         // live feeds
@@ -300,33 +300,33 @@
         'recap.close': 'Click to close',
 
         // victory
-        'victory.title': 'Victor',
-        'victory.none': 'No victor',
-        'victory.noneSub': 'The last tributes died together.',
+        'victory.title': 'Winner',
+        'victory.none': 'No winner',
+        'victory.noneSub': 'The last contestants died together.',
         'victory.days': 'Days',
         'victory.time': 'Game time',
         'victory.deaths': 'Deaths',
-        'victory.kills': 'Victor kills',
+        'victory.kills': 'Winner kills',
         'victory.mostKills': 'Most kills',
         'victory.powers': 'Powers used',
         'victory.grade': 'Audience grade',
         'victory.peak': 'Most viewers',
-        'victory.bloodbath': 'Bloodbath deaths',
+        'victory.kickoff': 'Opening rush deaths',
         'victory.fallen': 'The fallen',
-        'victory.excitement': 'Excitement during the Games',
-        'victory.newGames': 'New Games',
+        'victory.excitement': 'Excitement during the Show',
+        'victory.newShow': 'New Show',
         'victory.watch': 'Keep watching',
-        'victory.grade.S': 'Legendary! The Capitol will never forget these Games.',
+        'victory.grade.S': 'Legendary! The Studio will never forget this Show.',
         'victory.grade.A': 'A great show. The audience loved it.',
         'victory.grade.B': 'A good show.',
         'victory.grade.C': 'A bit slow. The audience got bored at times.',
-        'victory.grade.D': 'Boring. The Capitol is not happy.',
+        'victory.grade.D': 'Boring. The Studio is not happy.',
         'victory.none.dash': '—',
         'victory.day': 'Day {n}',
 
         // help
         'help.title': 'How to play',
-        'help.intro': 'You are the Game Master. The tributes act by themselves: they look for food, make friends, hide, hunt and fight. You watch them and change the arena. Send gifts, change the weather, start fires, release mutts. Make the Games exciting for the audience!',
+        'help.intro': 'You are the Showrunner. The contestants act by themselves: they look for food, make friends, hide, hunt and fight. You watch them and change the arena. Send gifts, change the weather, start fires, release beasts. Make the Show exciting for the audience!',
         'help.camera': 'Camera',
         'help.game': 'Game',
         'help.k.move': 'Move the camera',
@@ -336,17 +336,17 @@
         'help.k.zoom': 'Zoom',
         'help.k.modes': 'Free / follow / director / map',
         'help.k.cycle': 'Next camera mode',
-        'help.k.follow': 'Follow the selected tribute',
+        'help.k.follow': 'Follow the selected contestant',
         'help.k.pause': 'Pause / play',
         'help.k.speed': 'Slower / faster',
-        'help.k.tab': 'Next / previous tribute',
+        'help.k.tab': 'Next / previous contestant',
         'help.k.esc': 'Cancel / close',
         'help.k.lang': 'Change language',
         'help.k.help': 'This help',
         'help.k.tags': 'Name tags on / off',
         'help.k.mute': 'Sound on / off',
         'help.k.powers': 'Go to the powers',
-        'help.k.click': 'Select a tribute',
+        'help.k.click': 'Select a contestant',
         'help.key.drag': 'Drag',
         'help.key.wheel': 'Wheel',
         'help.key.click': 'Click',
@@ -355,17 +355,17 @@
         'help.powers': 'Your powers',
         'help.powersIntro': 'Powers cost energy. Energy comes back over time, faster when the audience is excited. After you use a power, it needs some time to be ready again.',
         'help.aim': 'How to aim',
-        'help.aimText': 'Click a power. Then click a place in the arena or on the map. Some powers need a tribute: click the tribute in the arena or in the list. Right-click or Esc cancels.',
-        'help.tributes': 'The tributes',
-        'help.tributesText': 'Every tribute has a personality. Some hunt, some hide, some make friends and later betray them. Hunger, thirst, fear and anger change what they do. Click a tribute to see what they think.',
+        'help.aimText': 'Click a power. Then click a place in the arena or on the map. Some powers need a contestant: click the contestant in the arena or in the list. Right-click or Esc cancels.',
+        'help.contestants': 'The contestants',
+        'help.contestantsText': 'Every contestant has a personality. Some hunt, some hide, some make friends and later betray them. Hunger, thirst, fear and anger change what they do. Click a contestant to see what they think.',
         'help.audience': 'The audience',
         'help.audienceText': 'Fights, deaths and surprises excite the audience. Excited viewers give you more energy. When nothing happens, they get bored.',
-        'help.tip': 'From day 4 the force field starts to close, so the Games always end.',
+        'help.tip': 'From day 4 the force field starts to close, so the Show always ends.',
         'help.noPowers': 'The powers are not available right now.',
 
         // setup
-        'setup.kicker': 'Gamemaker console',
-        'setup.tagline': 'Build the arena. Choose the tributes. Then control the Games.',
+        'setup.kicker': 'Showrunner console',
+        'setup.tagline': 'Build the arena. Choose the contestants. Then control the Show.',
         'setup.arena': 'Arena',
         'setup.seed': 'Arena code',
         'setup.seedHint': 'A number or a word. The same code always makes the same arena.',
@@ -374,31 +374,31 @@
         'setup.randomTip': 'Make a new random arena',
         'setup.seedValue': 'Arena #{n}',
         'setup.loading': 'Building the arena…',
-        'setup.tributes': 'Tributes',
-        'setup.count': 'Number of tributes',
-        'setup.mix': 'Tribute mix',
+        'setup.contestants': 'Contestants',
+        'setup.count': 'Number of contestants',
+        'setup.mix': 'Contestant mix',
         'setup.mix.balanced': 'Balanced',
         'setup.mix.bloodthirsty': 'Bloodthirsty',
         'setup.mix.peaceful': 'Peaceful',
         'setup.mix.chaos': 'Chaos',
         'setup.mix.balanced.desc': 'A bit of every personality.',
-        'setup.mix.bloodthirsty.desc': 'More killers. Short and bloody Games.',
-        'setup.mix.peaceful.desc': 'More survivors and friends. Longer Games.',
+        'setup.mix.bloodthirsty.desc': 'More killers. A short, bloody Show.',
+        'setup.mix.peaceful.desc': 'More survivors and friends. A longer Show.',
         'setup.mix.chaos.desc': 'Totally random personalities.',
         'setup.roster': 'Roster',
-        'setup.regen': 'New tributes',
+        'setup.regen': 'New contestants',
         'setup.regenTip': 'Make new names and personalities (your changes are removed)',
         'setup.name': 'Name',
         'setup.arch': 'Personality',
         'setup.namePh': 'Name',
         'setup.gender': 'Change: girl / boy',
         'setup.edited': 'Changed by you',
-        'setup.noRoster': 'Tribute data is missing. The Games cannot start.',
+        'setup.noRoster': 'Contestant data is missing. The Show cannot start.',
         'setup.options': 'Options',
         'setup.sandbox': 'Sandbox',
         'setup.sandbox.desc': 'Unlimited energy, short wait times.',
         'setup.autogm': 'Assistant',
-        'setup.autogm.desc': 'A helper Game Master acts when the audience is bored.',
+        'setup.autogm.desc': 'A helper Showrunner acts when the audience is bored.',
         'setup.quality': 'Graphics',
         'setup.quality.high': 'High',
         'setup.quality.low': 'Low',
@@ -406,20 +406,20 @@
         'setup.feeds': 'Live feeds',
         'setup.feeds.desc': 'Three small extra cameras.',
         'setup.nameTags': 'Name tags',
-        'setup.nameTags.desc': 'Names above the tributes.',
+        'setup.nameTags.desc': 'Names above the contestants.',
         'setup.language': 'Language',
-        'setup.start': 'Start the Games',
-        'setup.summary': '{n} tributes · {d} districts',
+        'setup.start': 'Start the Show',
+        'setup.summary': '{n} contestants · {d} teams',
         'setup.help': 'How to play',
       },
       hu: {
         'ui.top.alive': 'Élők',
         'ui.top.viewers': 'Nézők',
         'ui.top.excitement': 'Izgalom',
-        'ui.top.excitementTip': 'Mennyire izgatott a közönség. Az izgalmas Viadal több energiát ad.',
-        'ui.top.viewersTip': 'Ennyien nézik most a Viadalt.',
+        'ui.top.excitementTip': 'Mennyire izgatott a közönség. Az izgalmas Műsor több energiát ad.',
+        'ui.top.viewersTip': 'Ennyien nézik most a Műsort.',
         'ui.top.energy': 'Energia',
-        'ui.top.energyTip': 'A Játékmester energiája. A képességek energiába kerülnek. Idővel visszatöltődik.',
+        'ui.top.energyTip': 'A Showrunner energiája. A képességek energiába kerülnek. Idővel visszatöltődik.',
         'ui.top.sandbox': 'Homokozó',
         'ui.top.speed': 'Sebesség',
         'ui.top.pause': 'Szünet (Szóköz)',
@@ -429,46 +429,46 @@
         'ui.top.unmute': 'Hang be (M)',
         'ui.top.help': 'Súgó (H)',
         'ui.top.lang': 'Nyelv (L)',
-        'ui.top.exit': 'A Viadal befejezése, vissza a beállításokhoz',
+        'ui.top.exit': 'A Műsor befejezése, vissza a beállításokhoz',
         'ui.top.exitConfirm': 'Kattints újra a kilépéshez',
         'ui.top.errors': '{n} hiba',
         'ui.top.errors_one': '1 hiba',
         'ui.top.errorsTip': 'Néhány résznél hiba történt. Kattints a részletekért.',
-        'ui.top.roster': 'Kiválasztottak',
+        'ui.top.roster': 'Versenyzők',
         'ui.top.monitors': 'Térkép és élő adások',
-        'ui.top.dayTip': 'A Viadal napja és az idő az arénában',
+        'ui.top.dayTip': 'A Műsor napja és az idő az arénában',
         'ui.top.weatherTip': 'Időjárás az arénában',
-        'ui.top.aliveTip': 'Élő kiválasztottak',
+        'ui.top.aliveTip': 'Élő versenyzők',
         'ui.top.countdown': 'Készülj',
 
-        'ui.roster.title': 'Kiválasztottak',
+        'ui.roster.title': 'Versenyzők',
         'ui.roster.count': '{alive} / {total} él',
         'ui.roster.sort': 'Rendezés',
-        'ui.roster.empty': 'Még nincsenek kiválasztottak.',
-        'ui.roster.pick': 'Kattintás: kövesd ezt a kiválasztottat',
+        'ui.roster.empty': 'Még nincsenek versenyzők.',
+        'ui.roster.pick': 'Kattintás: kövesd ezt a versenyzőt',
         'ui.roster.pickTarget': 'Kattintás: legyen ez a célpont',
-        'ui.sort.district': 'Körzet',
+        'ui.sort.team': 'Csapat',
         'ui.sort.kills': 'Ölések',
         'ui.sort.health': 'Élet',
         'ui.sort.name': 'Név',
         'ui.kills': '{n} ölés',
         'ui.kills_one': '1 ölés',
 
-        'ui.sel.title': 'Kiválasztott',
-        'ui.sel.none': 'Kattints egy kiválasztottra, hogy közelről lásd.',
+        'ui.sel.title': 'Versenyző',
+        'ui.sel.none': 'Kattints egy versenyzőre, hogy közelről lásd.',
         'ui.sel.noneSub': 'Használd a listát, a térképet, vagy kattints az arénába. A Tab a következőre ugrik.',
         'ui.sel.follow': 'Követés a kamerával (F)',
         'ui.sel.unfollow': 'Követés vége',
         'ui.sel.close': 'Bezárás',
-        'ui.sel.gift': 'Ajándék küldése ennek a kiválasztottnak',
-        'ui.sel.smite': 'Kapitóliumi csapás erre a kiválasztottra',
+        'ui.sel.gift': 'Ajándék küldése ennek a versenyzőnek',
+        'ui.sel.smite': 'Stúdiós csapás erre a versenyzőre',
         'ui.sel.smiteConfirm': 'Kattints újra a csapáshoz',
         'ui.sel.health': 'Élet',
         'ui.sel.stamina': 'Kitartás',
         'ui.sel.food': 'Étel',
         'ui.sel.water': 'Víz',
         'ui.sel.rest': 'Pihenés',
-        'ui.sel.healthTip': 'Élet. Nullánál a kiválasztott meghal.',
+        'ui.sel.healthTip': 'Élet. Nullánál a versenyző meghal.',
         'ui.sel.staminaTip': 'Kitartás. A futás és az úszás fogyasztja.',
         'ui.sel.foodTip': 'Étel. Tele csík: nem éhes.',
         'ui.sel.waterTip': 'Víz. Tele csík: nem szomjas.',
@@ -496,9 +496,9 @@
         'ui.emo.rage': 'Düh',
         'ui.emo.confidence': 'Önbizalom',
         'ui.emo.sanity': 'Józan ész',
-        'ui.emo.fearTip': 'Félelem. A félő kiválasztott menekül és elbújik.',
-        'ui.emo.rageTip': 'Düh. A dühös kiválasztott támad és bosszút áll.',
-        'ui.emo.confidenceTip': 'Önbizalom. A magabiztos kiválasztott kockáztat.',
+        'ui.emo.fearTip': 'Félelem. A félő versenyző menekül és elbújik.',
+        'ui.emo.rageTip': 'Düh. A dühös versenyző támad és bosszút áll.',
+        'ui.emo.confidenceTip': 'Önbizalom. A magabiztos versenyző kockáztat.',
         'ui.emo.sanityTip': 'Józan ész. Ha alacsony, furcsa döntéseket hoz.',
 
         'ui.status.stun': 'Kábult',
@@ -528,7 +528,7 @@
         'ui.trait.cunning': 'Ravaszság',
         'ui.trait.patience': 'Türelem',
         'ui.trait.stability': 'Nyugodt elme',
-        'ui.arch.career': 'Hivatásos',
+        'ui.arch.elite': 'Elit',
         'ui.arch.survivor': 'Túlélő',
         'ui.arch.scavenger': 'Guberáló',
         'ui.arch.opportunist': 'Opportunista',
@@ -536,14 +536,14 @@
         'ui.arch.berserker': 'Őrjöngő',
         'ui.arch.protector': 'Védelmező',
         'ui.arch.lonewolf': 'Magányos farkas',
-        'ui.arch.career.desc': 'Ölni tanították. A Bőségszaruhoz rohan, és falkában vadászik.',
+        'ui.arch.elite.desc': 'Ölni tanították. A Nexushoz rohan, és falkában vadászik.',
         'ui.arch.survivor.desc': 'Óvatos és ügyes. Elbújik, ételt keres, és csak végső esetben harcol.',
         'ui.arch.scavenger.desc': 'Elfut a veszély elől, és ellopja, amit mások hátrahagynak.',
         'ui.arch.opportunist.desc': 'Kivárja, amíg mások harcolnak, aztán végez a gyengékkel. Elárulja a társait.',
         'ui.arch.strategist.desc': 'Nyugodt tervező. Csapdákat állít és lesben vár.',
         'ui.arch.berserker.desc': 'Vad és dühös. Rátámad az ellenségre, néha még a barátaira is.',
         'ui.arch.protector.desc': 'Hűséges barát. Szövetséget köt, megvédi a társait, és sosem árul el senkit.',
-        'ui.arch.lonewolf.desc': 'Egyedül vadászik, gyakran éjjel. A magányos kiválasztottakat keresi.',
+        'ui.arch.lonewolf.desc': 'Egyedül vadászik, gyakran éjjel. A magányos versenyzőket keresi.',
         'ui.item.knife': 'Kés',
         'ui.item.sickle': 'Sarló',
         'ui.item.axe': 'Balta',
@@ -565,7 +565,7 @@
         'ui.item.backpack': 'Hátizsák',
         'ui.item.crate': 'Ellátmányláda',
 
-        'ui.pow.title': 'A Játékmester képességei',
+        'ui.pow.title': 'A Showrunner képességei',
         'ui.pow.cat.all': 'Mind',
         'ui.pow.cat.gift': 'Ajándék',
         'ui.pow.cat.nature': 'Természet',
@@ -577,35 +577,35 @@
         'ui.pow.radius': 'Terület: {n} m',
         'ui.pow.target.none': 'Azonnal hat',
         'ui.pow.target.point': 'Célozz egy helyre az arénában',
-        'ui.pow.target.tribute': 'Célozz egy kiválasztottra',
+        'ui.pow.target.contestant': 'Célozz egy versenyzőre',
         'ui.pow.reason.cooldown': 'Még nem kész: {n} mp',
         'ui.pow.reason.energy': 'Nincs elég energia',
-        'ui.pow.reason.phase': 'Csak a Viadal alatt',
+        'ui.pow.reason.phase': 'Csak a Műsor alatt',
         'ui.pow.reason.missing': 'A képességek nem érhetők el',
         'ui.pow.reason.failed': 'Itt nem sikerült',
         'ui.pow.ready': 'Kész',
-        'ui.pow.unavailable': 'A Játékmester-pult nem elérhető.',
+        'ui.pow.unavailable': 'A Showrunner-pult nem elérhető.',
         'ui.pow.choose': 'Válassz egyet',
         'ui.pow.now': 'most',
         'ui.pow.assistant': 'Segéd',
-        'ui.pow.assistantTip': 'Egy segéd Játékmester közbelép, ha unatkozik a közönség.',
+        'ui.pow.assistantTip': 'Egy segéd Showrunner közbelép, ha unatkozik a közönség.',
         'ui.pow.energyTip': 'Az energiád. Gyorsabban töltődik, ha izgatott a közönség.',
         'ui.target.point': 'Kattints az arénába vagy a térképre',
-        'ui.target.tribute': 'Kattints egy kiválasztottra az arénában vagy a listában',
+        'ui.target.contestant': 'Kattints egy versenyzőre az arénában vagy a listában',
         'ui.target.cancel': 'Jobb klikk vagy Esc: mégse',
         'ui.target.keep': 'Tartsd lenyomva a Shiftet, és újra használhatod',
-        'ui.target.needTribute': 'Kattints egy kiválasztottra.',
+        'ui.target.needContestant': 'Kattints egy versenyzőre.',
         'ui.target.ground': 'Kattints a földre.',
-        'ui.target.dead': 'Ez a kiválasztott halott.',
+        'ui.target.dead': 'Ez a versenyző halott.',
         'ui.target.over': 'Célpont: {name}',
         'ui.target.option': 'Mód',
 
         'ui.log.title': 'Eseménynapló',
         'ui.log.f.all': 'Mind',
         'ui.log.f.kills': 'Ölések',
-        'ui.log.f.gm': 'Játékmester',
+        'ui.log.f.gm': 'Showrunner',
         'ui.log.f.events': 'Események',
-        'ui.log.selOnly': 'Csak a kijelölt kiválasztott',
+        'ui.log.selOnly': 'Csak a kijelölt versenyző',
         'ui.log.empty': 'Még nem történt semmi.',
         'ui.log.focus': 'Kattintás: a kamera odanéz',
 
@@ -617,19 +617,19 @@
         'ui.cam.mode.director': 'RENDEZŐ',
         'ui.cam.mode.overhead': 'TÉRKÉP',
         'ui.cam.btn.director': 'Rendező: a kamera magától megtalálja az akciót (3)',
-        'ui.cam.btn.follow': 'A kijelölt kiválasztott követése (2)',
+        'ui.cam.btn.follow': 'A kijelölt versenyző követése (2)',
         'ui.cam.btn.free': 'Szabad kamera (1)',
         'ui.cam.btn.overhead': 'Térkép nézet felülről (4)',
         'ui.cam.noSignal': 'Nincs kamerajel',
 
-        'ui.cd.title': 'A Viadal kezdetéig',
+        'ui.cd.title': 'A Műsor kezdetéig',
         'ui.paused': 'Szünet',
         'ui.pausedHint': 'Nyomd meg a Szóközt a folytatáshoz',
         'ui.results': 'Eredmények',
         'ui.ann.info': 'Közlemény',
         'ui.ann.danger': 'Riasztás',
-        'ui.ann.gold': 'Kapitólium',
-        'ui.ann.gm': 'Játékmester',
+        'ui.ann.gold': 'Stúdió',
+        'ui.ann.gm': 'Showrunner',
         'ui.toast.tags': 'Névcímkék: {v}',
         'ui.toast.feeds': 'Élő adások: {v}',
         'ui.toast.sound': 'Hang: {v}',
@@ -637,12 +637,12 @@
         'ui.toast.paused': 'Szünet',
         'ui.toast.assistant': 'Segéd: {v}',
         'ui.toast.used': 'Használva: {power}',
-        'ui.toast.noTributes': 'Nincs élő kiválasztott.',
+        'ui.toast.noContestants': 'Nincs élő versenyző.',
         'ui.dock.powers': 'Képességek',
-        'ui.dock.tribute': 'Kiválasztott',
+        'ui.dock.contestant': 'Versenyző',
         'ui.dock.log': 'Napló',
         'ui.err.title': 'Hibák',
-        'ui.err.hint': 'Néhány résznél hiba történt. A Viadal fut tovább.',
+        'ui.err.hint': 'Néhány résznél hiba történt. A Műsor fut tovább.',
         'ui.err.none': 'Nincs hiba.',
 
         'feed.title': 'Élő adások',
@@ -657,14 +657,14 @@
         'recap.title': 'Elesettek – {n}. nap',
         'recap.sub': 'Ma éjjel az égbolt a halottak arcát mutatja.',
         'recap.none': 'Ma senki sem halt meg.',
-        'recap.count': 'Ma {n} kiválasztott esett el',
-        'recap.count_one': 'Ma 1 kiválasztott esett el',
+        'recap.count': 'Ma {n} versenyző esett el',
+        'recap.count_one': 'Ma 1 versenyző esett el',
         'recap.by': 'Megölte: {name}',
         'recap.close': 'Kattints a bezáráshoz',
 
         'victory.title': 'Győztes',
         'victory.none': 'Nincs győztes',
-        'victory.noneSub': 'Az utolsó kiválasztottak együtt haltak meg.',
+        'victory.noneSub': 'Az utolsó versenyzők együtt haltak meg.',
         'victory.days': 'Napok',
         'victory.time': 'Játékidő',
         'victory.deaths': 'Halottak',
@@ -673,21 +673,21 @@
         'victory.powers': 'Használt képességek',
         'victory.grade': 'A közönség értékelése',
         'victory.peak': 'Legtöbb néző',
-        'victory.bloodbath': 'A vérfürdő halottai',
+        'victory.kickoff': 'A nyitó roham halottai',
         'victory.fallen': 'Az elesettek',
-        'victory.excitement': 'Izgalom a Viadal alatt',
-        'victory.newGames': 'Új Viadal',
+        'victory.excitement': 'Izgalom a Műsor alatt',
+        'victory.newShow': 'Új Műsor',
         'victory.watch': 'Tovább nézem',
-        'victory.grade.S': 'Legendás! A Kapitólium sosem felejti el ezt a Viadalt.',
+        'victory.grade.S': 'Legendás! A Stúdió sosem felejti el ezt a Műsort.',
         'victory.grade.A': 'Remek műsor. A közönség imádta.',
         'victory.grade.B': 'Jó műsor.',
         'victory.grade.C': 'Kicsit lassú. A közönség néha unatkozott.',
-        'victory.grade.D': 'Unalmas. A Kapitólium nem elégedett.',
+        'victory.grade.D': 'Unalmas. A Stúdió nem elégedett.',
         'victory.none.dash': '—',
         'victory.day': '{n}. nap',
 
         'help.title': 'Hogyan játssz?',
-        'help.intro': 'Te vagy a Játékmester. A kiválasztottak maguktól cselekszenek: ételt keresnek, barátokat szereznek, elbújnak, vadásznak és harcolnak. Te figyeled őket, és megváltoztatod az arénát. Küldj ajándékot, változtasd meg az időjárást, gyújts tüzet, engedj szabadon mutánsokat. Tedd izgalmassá a Viadalt a közönségnek!',
+        'help.intro': 'Te vagy a Showrunner. A versenyzők maguktól cselekszenek: ételt keresnek, barátokat szereznek, elbújnak, vadásznak és harcolnak. Te figyeled őket, és megváltoztatod az arénát. Küldj ajándékot, változtasd meg az időjárást, gyújts tüzet, engedj szabadon fenevadakat. Tedd izgalmassá a Műsort a közönségnek!',
         'help.camera': 'Kamera',
         'help.game': 'Játék',
         'help.k.move': 'Kamera mozgatása',
@@ -697,17 +697,17 @@
         'help.k.zoom': 'Nagyítás',
         'help.k.modes': 'Szabad / követés / rendező / térkép',
         'help.k.cycle': 'Következő kameramód',
-        'help.k.follow': 'A kijelölt kiválasztott követése',
+        'help.k.follow': 'A kijelölt versenyző követése',
         'help.k.pause': 'Szünet / folytatás',
         'help.k.speed': 'Lassabb / gyorsabb',
-        'help.k.tab': 'Következő / előző kiválasztott',
+        'help.k.tab': 'Következő / előző versenyző',
         'help.k.esc': 'Mégse / bezárás',
         'help.k.lang': 'Nyelv váltása',
         'help.k.help': 'Ez a súgó',
         'help.k.tags': 'Névcímkék be / ki',
         'help.k.mute': 'Hang be / ki',
         'help.k.powers': 'Ugrás a képességekhez',
-        'help.k.click': 'Kiválasztott kijelölése',
+        'help.k.click': 'Versenyző kijelölése',
         'help.key.drag': 'Húzás',
         'help.key.wheel': 'Görgő',
         'help.key.click': 'Kattintás',
@@ -716,16 +716,16 @@
         'help.powers': 'A képességeid',
         'help.powersIntro': 'A képességek energiába kerülnek. Az energia idővel visszatöltődik, gyorsabban, ha izgatott a közönség. Használat után egy képességnek idő kell, hogy újra kész legyen.',
         'help.aim': 'Hogyan célozz?',
-        'help.aimText': 'Kattints egy képességre. Aztán kattints egy helyre az arénában vagy a térképen. Néhány képességhez kiválasztott kell: kattints rá az arénában vagy a listában. A jobb klikk vagy az Esc visszavonja.',
-        'help.tributes': 'A kiválasztottak',
-        'help.tributesText': 'Minden kiválasztottnak saját személyisége van. Van, aki vadászik, van, aki elbújik, és van, aki barátokat szerez, majd elárulja őket. Az éhség, a szomjúság, a félelem és a düh megváltoztatja, mit tesznek. Kattints egy kiválasztottra, és látod, mire gondol.',
+        'help.aimText': 'Kattints egy képességre. Aztán kattints egy helyre az arénában vagy a térképen. Néhány képességhez versenyző kell: kattints rá az arénában vagy a listában. A jobb klikk vagy az Esc visszavonja.',
+        'help.contestants': 'A versenyzők',
+        'help.contestantsText': 'Minden versenyzőnek saját személyisége van. Van, aki vadászik, van, aki elbújik, és van, aki barátokat szerez, majd elárulja őket. Az éhség, a szomjúság, a félelem és a düh megváltoztatja, mit tesznek. Kattints egy versenyzőre, és látod, mire gondol.',
         'help.audience': 'A közönség',
         'help.audienceText': 'A harcok, a halálok és a meglepetések izgalomba hozzák a közönséget. Az izgatott nézők több energiát adnak. Ha nem történik semmi, unatkoznak.',
-        'help.tip': 'A 4. naptól bezárul az erőtér, így a Viadal mindig véget ér.',
+        'help.tip': 'A 4. naptól bezárul az erőtér, így a Műsor mindig véget ér.',
         'help.noPowers': 'A képességek most nem érhetők el.',
 
-        'setup.kicker': 'Játékmester-pult',
-        'setup.tagline': 'Építsd meg az arénát. Állítsd össze a kiválasztottakat. Aztán irányítsd a Viadalt.',
+        'setup.kicker': 'Showrunner-pult',
+        'setup.tagline': 'Építsd meg az arénát. Állítsd össze a versenyzőket. Aztán irányítsd a Műsort.',
         'setup.arena': 'Aréna',
         'setup.seed': 'Aréna kód',
         'setup.seedHint': 'Szám vagy szó. Ugyanaz a kód mindig ugyanazt az arénát adja.',
@@ -734,31 +734,31 @@
         'setup.randomTip': 'Új, véletlen aréna',
         'setup.seedValue': 'Aréna #{n}',
         'setup.loading': 'Az aréna épül…',
-        'setup.tributes': 'Kiválasztottak',
-        'setup.count': 'Kiválasztottak száma',
+        'setup.contestants': 'Versenyzők',
+        'setup.count': 'Versenyzők száma',
         'setup.mix': 'Összetétel',
         'setup.mix.balanced': 'Kiegyensúlyozott',
         'setup.mix.bloodthirsty': 'Vérszomjas',
         'setup.mix.peaceful': 'Békés',
         'setup.mix.chaos': 'Káosz',
         'setup.mix.balanced.desc': 'Minden személyiségből egy kicsit.',
-        'setup.mix.bloodthirsty.desc': 'Több gyilkos. Rövid, véres Viadal.',
-        'setup.mix.peaceful.desc': 'Több túlélő és barát. Hosszabb Viadal.',
+        'setup.mix.bloodthirsty.desc': 'Több gyilkos. Rövid, véres Műsor.',
+        'setup.mix.peaceful.desc': 'Több túlélő és barát. Hosszabb Műsor.',
         'setup.mix.chaos.desc': 'Teljesen véletlen személyiségek.',
         'setup.roster': 'Névsor',
-        'setup.regen': 'Új kiválasztottak',
+        'setup.regen': 'Új versenyzők',
         'setup.regenTip': 'Új nevek és személyiségek (a módosításaid elvesznek)',
         'setup.name': 'Név',
         'setup.arch': 'Személyiség',
         'setup.namePh': 'Név',
         'setup.gender': 'Váltás: lány / fiú',
         'setup.edited': 'Általad módosítva',
-        'setup.noRoster': 'Hiányoznak a kiválasztottak adatai. A Viadal nem indulhat.',
+        'setup.noRoster': 'Hiányoznak a versenyzők adatai. A Műsor nem indulhat.',
         'setup.options': 'Beállítások',
         'setup.sandbox': 'Homokozó',
         'setup.sandbox.desc': 'Végtelen energia, rövid várakozás.',
         'setup.autogm': 'Segéd',
-        'setup.autogm.desc': 'Egy segéd Játékmester közbelép, ha unatkozik a közönség.',
+        'setup.autogm.desc': 'Egy segéd Showrunner közbelép, ha unatkozik a közönség.',
         'setup.quality': 'Grafika',
         'setup.quality.high': 'Magas',
         'setup.quality.low': 'Alacsony',
@@ -766,19 +766,19 @@
         'setup.feeds': 'Élő adások',
         'setup.feeds.desc': 'Három kis extra kamera.',
         'setup.nameTags': 'Névcímkék',
-        'setup.nameTags.desc': 'Nevek a kiválasztottak felett.',
+        'setup.nameTags.desc': 'Nevek a versenyzők felett.',
         'setup.language': 'Nyelv',
-        'setup.start': 'Kezdődjön a Viadal',
-        'setup.summary': '{n} kiválasztott · {d} körzet',
+        'setup.start': 'Kezdődjön a Műsor',
+        'setup.summary': '{n} versenyző · {d} csapat',
         'setup.help': 'Hogyan játssz?',
       },
     });
   }
 
   // ============================================================= constants
-  const ARCH_FALLBACK = ['career', 'survivor', 'scavenger', 'opportunist', 'strategist', 'berserker', 'protector', 'lonewolf'];
+  const ARCH_FALLBACK = ['elite', 'survivor', 'scavenger', 'opportunist', 'strategist', 'berserker', 'protector', 'lonewolf'];
   const ARCH_ICON = {
-    career: '⚔️', survivor: '🌿', scavenger: '🎒', opportunist: '🦊',
+    elite: '⚔️', survivor: '🌿', scavenger: '🎒', opportunist: '🦊',
     strategist: '♟️', berserker: '💢', protector: '🛡️', lonewolf: '🎯',
   };
   const MOOD_ICON = {
@@ -790,7 +790,7 @@
     stalk: '👁️', drink: '💧', eat: '🍖', forage: '🍄', rest: '🪵', sleep: '💤', heal: '🩹',
     ally: '🤝', follow: '👣', guard: '🛡️', trap: '🪤', ambush: '🕸️', steal: '🫳',
     investigate: '🔍', feast: '🍗', avoid: '↩️', escape_zone: '🔷', panic: '😱', mad: '🌀',
-    berserk: '💢', bloodbath: '🩸', scatter: '💨',
+    berserk: '💢', kickoff: '💥', scatter: '💨',
   };
   const ITEM_ICON = {
     knife: '🔪', sickle: '🌙', axe: '🪓', sword: '🗡️', mace: '🔨', spear: '🔱', trident: '🔱',
@@ -800,7 +800,7 @@
   };
   const CAUSE_ICON = {
     weapon: '🗡️', fists: '👊', fire: '🔥', fireball: '☄️', explosion: '💥', lightning: '⚡',
-    mutt: '🐺', wasps: '🐝', gas: '☠️', drown: '🌊', starve: '🍽️', thirst: '💧', cold: '❄️',
+    beast: '🐺', wasps: '🐝', gas: '☠️', drown: '🌊', starve: '🍽️', thirst: '💧', cold: '❄️',
     forcefield: '🔷', trap: '🪤', poison: '🫐', quake: '🌋', fall: '🪨', smite: '👁️', unknown: '✝',
   };
   const WEATHER_ICON = { clear: '☀️', rain: '🌧️', storm: '⛈️', fog: '🌫️', snow: '🌨️', heat: '🌡️' };
@@ -829,7 +829,7 @@
     mind: { g: '◌', f: 'events' }, system: { g: '◈', f: 'events' },
   };
   const LOG_FILTERS = ['all', 'kills', 'gm', 'events'];
-  const SORTS = ['district', 'kills', 'health', 'name'];
+  const SORTS = ['team', 'kills', 'health', 'name'];
   const CAM_MODES = [
     { id: 'director', icon: 'clapper' }, { id: 'follow', icon: 'video' },
     { id: 'free', icon: 'move' }, { id: 'overhead', icon: 'map' },
@@ -878,8 +878,8 @@
   }
 
   // ------------------------------------------------------------- game data
-  function tributeById(id) {
-    const a = GM.state.tributes;
+  function contestantById(id) {
+    const a = GM.state.contestants;
     return id != null && a && a[id] ? a[id] : null;
   }
   function archIds() {
@@ -925,7 +925,7 @@
   }
   function statusName(s) { return tk('status.' + s, 'ui.status.' + s) || s; }
   function traitName(s) { return tk('trait.' + s, 'ui.trait.' + s) || s; }
-  function tributeColor(tr) { return (tr && tr.color) || GM.districtColor((tr && tr.district) || 1); }
+  function contestantColor(tr) { return (tr && tr.color) || GM.teamColor((tr && tr.team) || 1); }
 
   function powersDefs() {
     const P = GM.Powers;
@@ -1114,15 +1114,15 @@
     acc: 0,
     slowAcc: 0,
     feedAcc: 0,
-    sort: 'district',
+    sort: 'team',
     logFilter: 'all',
     logSelOnly: false,
     powCat: 'all',
     dockTab: 'powers',
     drawer: null,
-    cards: [],             // roster cards indexed by tribute id
-    cardsFor: null,        // tributes array the cards were built for
-    order: [],             // reused sort buffer (tribute ids)
+    cards: [],             // roster cards indexed by contestant id
+    cardsFor: null,        // contestants array the cards were built for
+    order: [],             // reused sort buffer (contestant ids)
     orderKey: '',
     selId: -1,
     selSig: {},
@@ -1160,7 +1160,7 @@
   /** Armed power (targeting). One reused object — the minimap reads it. */
   const tgt = {
     active: false, id: null, def: null, option: null, mode: null,
-    x: 0, z: 0, hasPoint: false, radius: 0, hoverTribute: null, hintUntil: 0, hintKey: null,
+    x: 0, z: 0, hasPoint: false, radius: 0, hoverContestant: null, hintUntil: 0, hintKey: null,
   };
   const aimPt = { x: 0, y: 0, z: 0 };
 
@@ -1187,14 +1187,14 @@
   }
   function isMuted() { const A = GM.Audio; return !!(A && A.muted); }
   function aliveCount() {
-    const a = GM.state.tributes;
+    const a = GM.state.contestants;
     let n = 0;
     for (let i = 0; i < a.length; i++) if (a[i] && a[i].alive) n++;
     return n;
   }
-  /** Nearest tribute to a world point (alive only when aliveOnly). */
-  function nearestTribute(x, z, maxDist, aliveOnly) {
-    const a = GM.state.tributes;
+  /** Nearest contestant to a world point (alive only when aliveOnly). */
+  function nearestContestant(x, z, maxDist, aliveOnly) {
+    const a = GM.state.contestants;
     let best = null, bd = maxDist * maxDist;
     for (let i = 0; i < a.length; i++) {
       const tr = a[i];
@@ -1377,7 +1377,7 @@
   const setup = {
     seed: 0,
     seedText: '',
-    count: CFG.DEFAULT_TRIBUTES,
+    count: CFG.DEFAULT_CONTESTANTS,
     mix: 'balanced',
     salt: 0,
     roster: [],
@@ -1391,7 +1391,7 @@
 
   function initSetupPrefs() {
     const p = loadPrefs();
-    if (p.count) setup.count = U.clamp(p.count | 0, CFG.MIN_TRIBUTES, CFG.MAX_TRIBUTES);
+    if (p.count) setup.count = U.clamp(p.count | 0, CFG.MIN_CONTESTANTS, CFG.MAX_CONTESTANTS);
     if (p.mix && MIXES.some(function (m) { return m.id === p.mix; })) setup.mix = p.mix;
     if (p.opts && typeof p.opts === 'object') {
       const o = setup.opts;
@@ -1455,9 +1455,9 @@
       ]),
     ]));
 
-    // ---- 02 tributes
+    // ---- 02 contestants
     dom.countIn = h('input', {
-      class: 'range', id: 'count-in', type: 'range', min: CFG.MIN_TRIBUTES, max: CFG.MAX_TRIBUTES, step: 1,
+      class: 'range', id: 'count-in', type: 'range', min: CFG.MIN_CONTESTANTS, max: CFG.MAX_CONTESTANTS, step: 1,
     });
     dom.countIn.addEventListener('input', function () { setCount(+dom.countIn.value); });
     dom.countOut = h('output', { class: 'count-out mono', for: 'count-in' });
@@ -1469,8 +1469,8 @@
       }, [h('span', { class: 'mix-ico' }, [m.icon]), h('span', { class: 'mix-name', i18n: 'setup.mix.' + m.id })]));
     });
     dom.mixDesc = h('p', { class: 'hint mix-desc' });
-    body.appendChild(h('section', { class: 'card s-tributes' }, [
-      h('h2', { class: 'card-title' }, [h('span', { class: 'idx mono' }, ['02']), h('span', { i18n: 'setup.tributes' })]),
+    body.appendChild(h('section', { class: 'card s-contestants' }, [
+      h('h2', { class: 'card-title' }, [h('span', { class: 'idx mono' }, ['02']), h('span', { i18n: 'setup.contestants' })]),
       h('div', { class: 'count-row' }, [h('label', { class: 'lbl', for: 'count-in', i18n: 'setup.count' }), dom.countOut]),
       dom.countIn,
       h('div', { class: 'lbl lbl-gap', i18n: 'setup.mix' }),
@@ -1526,7 +1526,7 @@
     sheet.appendChild(body);
 
     // ---- footer
-    dom.startBtn = h('button', { type: 'button', class: 'start-btn', onclick: startGames }, [
+    dom.startBtn = h('button', { type: 'button', class: 'start-btn', onclick: startShow }, [
       h('span', { class: 'start-glow', 'aria-hidden': 'true' }),
       h('span', { class: 'start-label', i18n: 'setup.start' }),
       h('span', { class: 'start-sub mono' }),
@@ -1555,7 +1555,7 @@
     ]);
   }
 
-  /** Local roster fallback when GM.Tributes.generateRoster is missing. */
+  /** Local roster fallback when GM.Contestants.generateRoster is missing. */
   function fallbackRoster(count, mix, seed) {
     const rnd = GM.makeRng((seed ^ 0x2545f491) >>> 0);
     const ids = archIds();
@@ -1569,13 +1569,13 @@
       const k = Math.floor(i / 2);
       out.push({
         name: pool[k % pool.length] + (k >= pool.length ? ' ' + (Math.floor(k / pool.length) + 1) : ''),
-        district: k + 1, gender: g, archetype: ids[Math.floor(rnd() * ids.length)],
+        team: k + 1, gender: g, archetype: ids[Math.floor(rnd() * ids.length)],
       });
     }
     return out;
   }
   function genRoster(count, mix, seed) {
-    const T = GM.Tributes;
+    const T = GM.Contestants;
     if (T && typeof T.generateRoster === 'function') {
       try {
         const r = T.generateRoster(count, mix, seed);
@@ -1592,11 +1592,11 @@
     for (let i = 0; i < fresh.length; i++) {
       const g = fresh[i];
       const o = old[i];
-      const district = g.district || Math.floor(i / 2) + 1;
+      const team = g.team || Math.floor(i / 2) + 1;
       if (keepEdits !== false && o && o.edited) {
-        out.push({ name: o.name, orig: o.orig, district, gender: o.gender, archetype: o.archetype, edited: true });
+        out.push({ name: o.name, orig: o.orig, team, gender: o.gender, archetype: o.archetype, edited: true });
       } else {
-        out.push({ name: g.name, orig: g.name, district, gender: g.gender === 'm' ? 'm' : 'f', archetype: g.archetype || 'survivor', edited: false });
+        out.push({ name: g.name, orig: g.name, team, gender: g.gender === 'm' ? 'm' : 'f', archetype: g.archetype || 'survivor', edited: false });
       }
     }
     setup.roster = out;
@@ -1656,9 +1656,9 @@
   function paintRow(row) {
     const r = setup.roster[row.i];
     if (!r) return;
-    css(row.el, '--dc', GM.districtColor(r.district));
-    txt(row.d, r.district);
-    attr(row.d, 'title', t('common.district', { n: r.district }));
+    css(row.el, '--dc', GM.teamColor(r.team));
+    txt(row.d, r.team);
+    attr(row.d, 'title', t('common.team', { n: r.team }));
     txt(row.g, r.gender === 'f' ? '♀' : '♂');
     tog(row.g, 'm', r.gender === 'm');
     if (document.activeElement !== row.name && row.name.value !== r.name) row.name.value = r.name;
@@ -1679,20 +1679,20 @@
       show(row.el, i < n);
       if (i < n) paintRow(row);
     }
-    let districts = 0;
-    for (let i = 0; i < n; i++) districts = Math.max(districts, setup.roster[i].district);
-    txt(dom.rosterSum, t('setup.summary', { n, d: districts }));
-    txt(dom.startSub, t('setup.summary', { n, d: districts }));
-    show(dom.noRoster, n < CFG.MIN_TRIBUTES);
-    tog(dom.startBtn, 'disabled', n < CFG.MIN_TRIBUTES);
+    let teams = 0;
+    for (let i = 0; i < n; i++) teams = Math.max(teams, setup.roster[i].team);
+    txt(dom.rosterSum, t('setup.summary', { n, d: teams }));
+    txt(dom.startSub, t('setup.summary', { n, d: teams }));
+    show(dom.noRoster, n < CFG.MIN_CONTESTANTS);
+    tog(dom.startBtn, 'disabled', n < CFG.MIN_CONTESTANTS);
   }
   function setCount(n) {
-    n = U.clamp(n | 0, CFG.MIN_TRIBUTES, CFG.MAX_TRIBUTES);
+    n = U.clamp(n | 0, CFG.MIN_CONTESTANTS, CFG.MAX_CONTESTANTS);
     if (n === setup.count && setup.roster.length === n) { txt(dom.countOut, n); return; }
     setup.count = n;
     txt(dom.countOut, n);
     if (+dom.countIn.value !== n) dom.countIn.value = String(n);
-    css(dom.countIn, '--fill', pct((n - CFG.MIN_TRIBUTES) / (CFG.MAX_TRIBUTES - CFG.MIN_TRIBUTES)));
+    css(dom.countIn, '--fill', pct((n - CFG.MIN_CONTESTANTS) / (CFG.MAX_CONTESTANTS - CFG.MIN_CONTESTANTS)));
     regenRoster(true);
     savePrefs();
   }
@@ -1739,7 +1739,7 @@
     txt(dom.seedVal, t('setup.seedValue', { n: setup.seed }));
     dom.countIn.value = String(setup.count);
     txt(dom.countOut, setup.count);
-    css(dom.countIn, '--fill', pct((setup.count - CFG.MIN_TRIBUTES) / (CFG.MAX_TRIBUTES - CFG.MIN_TRIBUTES)));
+    css(dom.countIn, '--fill', pct((setup.count - CFG.MIN_CONTESTANTS) / (CFG.MAX_CONTESTANTS - CFG.MIN_CONTESTANTS)));
     syncMix();
     syncOptions();
     syncLangButtons();
@@ -1783,7 +1783,7 @@
       tog(dom.startBtn, 'busy', false);
     }, 40);
   }
-  function startGames() {
+  function startShow() {
     if (setup.busy || GM.state.phase !== 'setup') return;
     const G = GM.Game;
     if (!G || typeof G.newGame !== 'function') return;
@@ -1792,14 +1792,14 @@
     for (let i = 0; i < setup.roster.length; i++) {
       const r = setup.roster[i];
       const name = String(r.name || '').replace(/\s+/g, ' ').trim().slice(0, 20) || r.orig || '#' + (i + 1);
-      roster.push({ name, district: r.district, gender: r.gender, archetype: r.archetype });
+      roster.push({ name, team: r.team, gender: r.gender, archetype: r.archetype });
     }
     const o = setup.opts;
     const s = {
       seed: setup.seed >>> 0,
-      tributeCount: roster.length,
+      contestantCount: roster.length,
       mix: setup.mix,
-      roster: roster.length >= CFG.MIN_TRIBUTES ? roster : null,
+      roster: roster.length >= CFG.MIN_CONTESTANTS ? roster : null,
       sandbox: !!o.sandbox,
       autoGM: !!o.autoGM,
       quality: o.quality === 'low' ? 'low' : 'high',
@@ -1838,7 +1838,7 @@
     g.drawImage(img, 0, 0, size, size);
     const view = (M.viewHalf || CFG.MAP_SIZE / 2);
     const k = size / (view * 2);
-    // force field ring + pedestal ring + cornucopia
+    // force field ring + pedestal ring + nexus
     g.strokeStyle = 'rgba(120,220,255,0.85)';
     g.lineWidth = Math.max(1, dpr * 1.2);
     g.beginPath();
@@ -1965,12 +1965,12 @@
     p.appendChild(dom.rosterEmpty);
     dom.rosterList.addEventListener('click', function (e) {
       const el = e.target.closest ? e.target.closest('.tcard') : null;
-      if (el) pickTribute(+el.getAttribute('data-id'));
+      if (el) pickContestant(+el.getAttribute('data-id'));
     });
     dom.rosterList.addEventListener('keydown', function (e) {
       if (e.key !== 'Enter') return;
       const el = e.target.closest ? e.target.closest('.tcard') : null;
-      if (el) { e.preventDefault(); pickTribute(+el.getAttribute('data-id')); }
+      if (el) { e.preventDefault(); pickContestant(+el.getAttribute('data-id')); }
     });
     dom.rosterList.addEventListener('mouseover', function (e) {
       const el = e.target.closest ? e.target.closest('.tcard') : null;
@@ -2007,7 +2007,7 @@
           const sel = GM.selected();
           const id = sel && sel.alive ? sel.id : (C.subjectId && C.subjectId());
           if (id != null && C.follow) { C.follow(id); return; }
-          const a = GM.state.tributes;
+          const a = GM.state.contestants;
           for (let i = 0; i < a.length; i++) if (a[i] && a[i].alive) { if (C.follow) C.follow(a[i].id); return; }
           return;
         }
@@ -2056,7 +2056,7 @@
     const dock = (dom.dock = h('div', { class: 'dock', 'data-tab': ui.dockTab }));
     dom.dockTabs = {};
     const tabs = h('div', { class: 'dock-tabs', role: 'tablist' });
-    [['powers', 'bolt', 'ui.dock.powers'], ['tribute', 'user', 'ui.dock.tribute'], ['log', 'list', 'ui.dock.log']].forEach(function (d) {
+    [['powers', 'bolt', 'ui.dock.powers'], ['contestant', 'user', 'ui.dock.contestant'], ['log', 'list', 'ui.dock.log']].forEach(function (d) {
       const b = h('button', { type: 'button', class: 'dock-tab', role: 'tab', 'data-tab': d[0], onclick: function () {
         if (ui.dockTab === d[0]) tog(dom.dock, 'min', !dom.dock.classList.contains('min'));
         else { tog(dom.dock, 'min', false); setDockTab(d[0]); }
@@ -2065,7 +2065,7 @@
       tabs.appendChild(b);
     });
     dock.appendChild(tabs);
-    const panes = h('div', { class: 'dock-panes' }, [buildPowersPane(), buildTributePane(), buildLogPane()]);
+    const panes = h('div', { class: 'dock-panes' }, [buildPowersPane(), buildContestantPane(), buildLogPane()]);
     dock.appendChild(panes);
     return dock;
   }
@@ -2101,8 +2101,8 @@
     return { el, fill, val };
   }
 
-  function buildTributePane() {
-    const p = (dom.paneTribute = h('section', { class: 'pane pane-tribute', 'data-pane': 'tribute', role: 'tabpanel' }));
+  function buildContestantPane() {
+    const p = (dom.paneContestant = h('section', { class: 'pane pane-contestant', 'data-pane': 'contestant', role: 'tabpanel' }));
     dom.selEmpty = h('div', { class: 'sel-empty' }, [svg('user', 'big'), h('p', { class: 'se-t', i18n: 'ui.sel.none' }), h('p', { class: 'se-h', i18n: 'ui.sel.noneSub' })]);
     const s = (dom.sel = h('div', { class: 'sel', hidden: true }));
     dom.selSw = h('span', { class: 'sel-sw mono' });
@@ -2181,7 +2181,7 @@
     s.appendChild(dom.selDesc);
     dom.selAllies.addEventListener('click', function (e) {
       const el = e.target.closest ? e.target.closest('[data-id]') : null;
-      if (el) pickTribute(+el.getAttribute('data-id'));
+      if (el) pickContestant(+el.getAttribute('data-id'));
     });
     p.appendChild(dom.selEmpty);
     p.appendChild(s);
@@ -2208,8 +2208,8 @@
       if (!row || !row.__e) return;
       const en = row.__e;
       if (en.pos && GM.Cameras && GM.Cameras.focus) GM.Cameras.focus(en.pos);
-      else if (en.tributeIds && en.tributeIds.length) {
-        const tr = tributeById(en.tributeIds[0]);
+      else if (en.contestantIds && en.contestantIds.length) {
+        const tr = contestantById(en.contestantIds[0]);
         if (tr && tr.pos && GM.Cameras && GM.Cameras.focus) GM.Cameras.focus(tr.pos);
       }
     });
@@ -2294,7 +2294,7 @@
         ]),
         h('div', { class: 'help-cols' }, [
           h('section', { class: 'help-sec' }, [h('h3', { i18n: 'help.aim' }), h('p', { i18n: 'help.aimText' })]),
-          h('section', { class: 'help-sec' }, [h('h3', { i18n: 'help.tributes' }), h('p', { i18n: 'help.tributesText' })]),
+          h('section', { class: 'help-sec' }, [h('h3', { i18n: 'help.contestants' }), h('p', { i18n: 'help.contestantsText' })]),
           h('section', { class: 'help-sec' }, [h('h3', { i18n: 'help.audience' }), h('p', { i18n: 'help.audienceText' })]),
         ]),
         h('section', { class: 'help-sec' }, [h('h3', { i18n: 'help.powers' }), h('p', { i18n: 'help.powersIntro' }), dom.helpPowers]),
@@ -2316,7 +2316,7 @@
         const id = +b.getAttribute('data-id');
         ui.victoryClosed = true;
         hideVictory();
-        pickTribute(id);
+        pickContestant(id);
       }
     });
 
@@ -2363,7 +2363,7 @@
     c.kills = h('span', { class: 'tc-k mono' });
     c.info = h('span', { class: 'tc-info' });
     c.el = h('div', { class: 'tcard', role: 'listitem', tabindex: '0', 'data-id': tr.id }, [
-      h('span', { class: 'tc-d mono' }, [String(tr.district)]),
+      h('span', { class: 'tc-d mono' }, [String(tr.team)]),
       h('span', { class: 'tc-main' }, [
         h('span', { class: 'tc-top' }, [c.name, c.arch]),
         h('span', { class: 'tc-hp' }, [c.hp]),
@@ -2371,13 +2371,13 @@
       ]),
       h('span', { class: 'tc-side' }, [c.act, c.kills]),
     ]);
-    c.el.style.setProperty('--dc', tributeColor(tr));
+    c.el.style.setProperty('--dc', contestantColor(tr));
     txt(c.name, tr.name);
     setTip(c.el, 'ui.roster.pick');
     return c;
   }
   function buildCards() {
-    const list = GM.state.tributes;
+    const list = GM.state.contestants;
     ui.cardsFor = list;
     ui.cards.length = 0;
     ui.orderKey = '';
@@ -2401,11 +2401,11 @@
       case 'kills': return (b.kills || 0) - (a.kills || 0) || (b.health || 0) - (a.health || 0) || a.id - b.id;
       case 'health': return (b.health || 0) - (a.health || 0) || a.id - b.id;
       case 'name': return String(a.name).localeCompare(String(b.name)) || a.id - b.id;
-      default: return a.district - b.district || a.id - b.id;
+      default: return a.team - b.team || a.id - b.id;
     }
   }
   function refreshRoster(force) {
-    const list = GM.state.tributes;
+    const list = GM.state.contestants;
     if (list !== ui.cardsFor) { buildCards(); return; }
     const selId = GM.state.selectedId;
     const targetMode = tgt.active;
@@ -2435,7 +2435,7 @@
       } else {
         css(c.hp, '--v', '0');
         txt(c.act, causeIcon(tr.deathCause, tr.deathWeapon));
-        const killer = tr.killedBy != null ? tributeById(tr.killedBy) : null;
+        const killer = tr.killedBy != null ? contestantById(tr.killedBy) : null;
         txt(c.info, killer ? t('ui.sel.killedBy', { name: killer.name }) : causeName(tr.deathCause || 'unknown'));
       }
       txt(c.kills, tr.kills > 0 ? '☠' + tr.kills : '');
@@ -2473,11 +2473,11 @@
     }
   }
   /** Roster / map click: use an armed power on it, or select + follow. */
-  function pickTribute(id) {
-    const tr = tributeById(id);
+  function pickContestant(id) {
+    const tr = contestantById(id);
     if (!tr) return;
     if (tgt.active) {
-      if (tgt.mode === 'tribute') {
+      if (tgt.mode === 'contestant') {
         if (!tr.alive) { flashHint('ui.target.dead'); return; }
         fireArmed(tr);
       } else if (tr.pos) {
@@ -2492,11 +2492,11 @@
     if (ui.drawer === 'left') openDrawer(null);
     play('click');
   }
-  function cycleTribute(dir) {
-    const list = GM.state.tributes;
+  function cycleContestant(dir) {
+    const list = GM.state.contestants;
     const ord = [];
     for (let i = 0; i < list.length; i++) if (list[i] && list[i].alive) ord.push(list[i]);
-    if (!ord.length) { toast('ui.toast.noTributes'); return; }
+    if (!ord.length) { toast('ui.toast.noContestants'); return; }
     ord.sort(sortKey);
     let idx = -1;
     for (let i = 0; i < ord.length; i++) if (ord[i].id === GM.state.selectedId) { idx = i; break; }
@@ -2513,12 +2513,12 @@
     show(dom.selEmpty, !tr);
     show(dom.sel, !!tr);
     if (!tr) return;
-    const col = tributeColor(tr);
+    const col = contestantColor(tr);
     css(dom.sel, '--dc', col);
-    txt(dom.selSw, tr.district);
+    txt(dom.selSw, tr.team);
     txt(dom.selName, tr.name);
     dom.selSub.textContent = '';
-    dom.selSub.appendChild(h('span', { class: 'ss-d', text: t('common.district', { n: tr.district }) }));
+    dom.selSub.appendChild(h('span', { class: 'ss-d', text: t('common.team', { n: tr.team }) }));
     dom.selSub.appendChild(h('span', { class: 'ss-a', text: archIcon(tr.archetype) + ' ' + archName(tr.archetype) }));
     txt(dom.selDesc, archDesc(tr.archetype));
     // traits
@@ -2562,7 +2562,7 @@
     // death info
     let dead = '';
     if (!alive) {
-      const killer = tr.killedBy != null ? tributeById(tr.killedBy) : null;
+      const killer = tr.killedBy != null ? contestantById(tr.killedBy) : null;
       dead = '<span class="sd-ico">' + esc(causeIcon(tr.deathCause, tr.deathWeapon)) + '</span><span class="sd-body"><b>' +
         esc(t('ui.sel.fallen', { day: tr.deathDay || GM.state.day })) + '</b><span>' +
         esc(killer ? t('ui.sel.killedBy', { name: killer.name }) : t('ui.sel.cause', { cause: causeName(tr.deathCause || 'unknown') })) +
@@ -2634,9 +2634,9 @@
       let html = '';
       if (al && Array.isArray(al.members)) {
         for (let i = 0; i < al.members.length; i++) {
-          const m = tributeById(al.members[i]);
+          const m = contestantById(al.members[i]);
           if (!m || m.id === tr.id) continue;
-          html += '<button type="button" class="chip-i ally' + (m.alive ? '' : ' gone') + '" data-id="' + m.id + '" style="--dc:' + esc(tributeColor(m)) + '">' +
+          html += '<button type="button" class="chip-i ally' + (m.alive ? '' : ' gone') + '" data-id="' + m.id + '" style="--dc:' + esc(contestantColor(m)) + '">' +
             '<span class="ci-dot"></span><span class="ci-l">' + esc(m.name) + '</span>' +
             (al.leaderId === m.id ? '<span class="ci-x">' + esc(t('ui.sel.leader')) + '</span>' : '') + '</button>';
         }
@@ -2683,7 +2683,7 @@
         h('span', { class: 'pw-meta' }, [h('span', { class: 'pw-bolt' }, ['⚡']), cost]),
         cdt,
       ];
-      if (d.target === 'point' || d.target === 'tribute') kids.push(h('span', { class: 'pw-tgt' }, [svg(d.target === 'tribute' ? 'user' : 'crosshair')]));
+      if (d.target === 'point' || d.target === 'contestant') kids.push(h('span', { class: 'pw-tgt' }, [svg(d.target === 'contestant' ? 'user' : 'crosshair')]));
       if (d.options && d.options.length) kids.push(h('span', { class: 'pw-opt' }, [svg('chevron')]));
       const b = h('button', { type: 'button', class: 'pow', 'data-id': d.id, 'data-cat': d.category || 'rule' }, kids);
       b.setAttribute('data-tip', d.nameKey || 'power.' + d.id);
@@ -2786,7 +2786,7 @@
     if (!d.target || d.target === 'none') { firePower(id, null, null); return; }
     startTargeting(id, null);
   }
-  /** Use a tribute power directly on a tribute (selected-panel buttons). */
+  /** Use a contestant power directly on a contestant (selected-panel buttons). */
   function usePowerOn(id, tr) {
     const d = powerDef(id);
     if (!d) { toast('ui.pow.reason.missing'); return false; }
@@ -2807,7 +2807,7 @@
     tgt.mode = d.target;
     tgt.radius = +d.radius || 0;
     tgt.hasPoint = false;
-    tgt.hoverTribute = null;
+    tgt.hoverContestant = null;
     tgt.hintKey = null;
     tgt.hintUntil = 0;
     document.body.classList.add('gm-targeting');
@@ -2825,7 +2825,7 @@
     tgt.def = null;
     tgt.option = null;
     tgt.mode = null;
-    tgt.hoverTribute = null;
+    tgt.hoverContestant = null;
     document.body.classList.remove('gm-targeting');
     tog(dom.root, 'targeting', false);
     show(dom.tgtHint, false);
@@ -2867,8 +2867,8 @@
     let text;
     const warn = tgt.hintKey && now() < tgt.hintUntil;
     if (warn) text = t(tgt.hintKey);
-    else if (tgt.mode === 'tribute' && tgt.hoverTribute) text = t('ui.target.over', { name: tgt.hoverTribute.name });
-    else text = t(tgt.mode === 'tribute' ? 'ui.target.tribute' : 'ui.target.point');
+    else if (tgt.mode === 'contestant' && tgt.hoverContestant) text = t('ui.target.over', { name: tgt.hoverContestant.name });
+    else text = t(tgt.mode === 'contestant' ? 'ui.target.contestant' : 'ui.target.point');
     txt(dom.tgtText, text);
     tog(dom.tgtHint, 'warn', !!warn);
   }
@@ -2906,10 +2906,10 @@
     if (tgt.active) {
       if (e.button === 2) { cancelTargeting(); return; }
       if (e.button !== 0) return;
-      if (tgt.mode === 'tribute') {
-        let tr = e.tribute && e.tribute.kind !== 'mutt' ? e.tribute : null;
-        if (!tr && e.point) tr = nearestTribute(e.point.x, e.point.z, 5, false);
-        if (!tr) { flashHint('ui.target.needTribute'); return; }
+      if (tgt.mode === 'contestant') {
+        let tr = e.contestant && e.contestant.kind !== 'beast' ? e.contestant : null;
+        if (!tr && e.point) tr = nearestContestant(e.point.x, e.point.z, 5, false);
+        if (!tr) { flashHint('ui.target.needContestant'); return; }
         if (!tr.alive) { flashHint('ui.target.dead'); return; }
         fireArmed(tr);
       } else {
@@ -2918,22 +2918,22 @@
       }
       return;
     }
-    if (e.button === 0 && e.tribute && e.tribute.kind !== 'mutt' && e.tribute.id != null) {
-      GM.select(e.tribute.id);
-      scrollCardIntoView(e.tribute.id);
+    if (e.button === 0 && e.contestant && e.contestant.kind !== 'beast' && e.contestant.id != null) {
+      GM.select(e.contestant.id);
+      scrollCardIntoView(e.contestant.id);
     }
   }
   function onCanvasHover(e) {
     if (!tgt.active || !e) return;
-    if (tgt.mode === 'tribute') {
+    if (tgt.mode === 'contestant') {
       let tr = null;
       const C = GM.Cameras;
-      if (C && typeof C.pickTribute === 'function') {
-        try { tr = C.pickTribute(e.clientX, e.clientY); } catch (err) { tr = null; }
+      if (C && typeof C.pickContestant === 'function') {
+        try { tr = C.pickContestant(e.clientX, e.clientY); } catch (err) { tr = null; }
       }
-      if (!tr && e.point) tr = nearestTribute(e.point.x, e.point.z, 4, true);
-      tgt.hoverTribute = tr && tr.alive ? tr : null;
-      if (tgt.hoverTribute && tgt.hoverTribute.pos) aimPoint(tgt.hoverTribute.pos.x, tgt.hoverTribute.pos.z);
+      if (!tr && e.point) tr = nearestContestant(e.point.x, e.point.z, 4, true);
+      tgt.hoverContestant = tr && tr.alive ? tr : null;
+      if (tgt.hoverContestant && tgt.hoverContestant.pos) aimPoint(tgt.hoverContestant.pos.x, tgt.hoverContestant.pos.z);
       else if (e.point) aimPoint(e.point.x, e.point.z);
       renderTargetHint();
     } else if (e.point) {
@@ -2945,9 +2945,9 @@
     if (!tgt.active) return false;
     x = +x; z = +z;
     if (!(x === x && z === z)) return false;
-    if (tgt.mode === 'tribute') {
-      const tr = nearestTribute(x, z, 10, true);
-      if (!tr) { flashHint('ui.target.needTribute'); return true; }
+    if (tgt.mode === 'contestant') {
+      const tr = nearestContestant(x, z, 10, true);
+      if (!tr) { flashHint('ui.target.needContestant'); return true; }
       fireArmed(tr);
       return true;
     }
@@ -2983,7 +2983,7 @@
   }
   function markSelHit(row, id) {
     const en = row.__e;
-    const hit = !!(en && id != null && en.tributeIds && en.tributeIds.indexOf(id) >= 0);
+    const hit = !!(en && id != null && en.contestantIds && en.contestantIds.indexOf(id) >= 0);
     tog(row, 'sel-hit', hit);
   }
   function makeDayRow(day) {
@@ -3067,14 +3067,14 @@
       (k.killer ? '' : '<span class="kf-c">' + esc(causeName(k.cause)) + '</span>');
   }
   function onDied(e) {
-    const tr = e && e.tribute;
+    const tr = e && e.contestant;
     if (!tr || !dom.killfeed) return;
-    const killer = e.killer && e.killer.kind !== 'mutt' ? e.killer : null;
+    const killer = e.killer && e.killer.kind !== 'beast' ? e.killer : null;
     const k = {
       killer: killer ? killer.name : null,
-      killerColor: killer ? tributeColor(killer) : '',
+      killerColor: killer ? contestantColor(killer) : '',
       victim: tr.name,
-      victimColor: tributeColor(tr),
+      victimColor: contestantColor(tr),
       icon: causeIcon(e.cause || tr.deathCause, e.weapon || tr.deathWeapon),
       cause: e.cause || tr.deathCause || 'unknown',
       until: now() + KF_LIFE,
@@ -3118,8 +3118,8 @@
     a.kick = h('div', { class: 'ann-kick mono' });
     a.txtEl = h('div', { class: 'ann-text' });
     const kids = [h('span', { class: 'ann-line', 'aria-hidden': 'true' }), a.kick, a.txtEl];
-    if (e.key === 'ann.bloodbath' && has('ann.bloodbathSub')) {
-      a.subKey = 'ann.bloodbathSub';
+    if (e.key === 'ann.kickoff' && has('ann.kickoffSub')) {
+      a.subKey = 'ann.kickoffSub';
       a.subEl = h('div', { class: 'ann-sub' });
       kids.push(a.subEl);
     }
@@ -3167,13 +3167,13 @@
     const fallen = Array.isArray(d.fallen) ? d.fallen : [];
     let cards = '';
     for (let i = 0; i < fallen.length; i++) {
-      const tr = tributeById(fallen[i]);
+      const tr = contestantById(fallen[i]);
       if (!tr) continue;
-      const killer = tr.killedBy != null ? tributeById(tr.killedBy) : null;
-      cards += '<div class="rc-card" style="--dc:' + esc(tributeColor(tr)) + ';--i:' + i + '">' +
-        '<div class="rc-face"><span class="rc-init">' + esc(String(tr.name || '?').charAt(0)) + '</span><span class="rc-d mono">' + esc(tr.district) + '</span></div>' +
+      const killer = tr.killedBy != null ? contestantById(tr.killedBy) : null;
+      cards += '<div class="rc-card" style="--dc:' + esc(contestantColor(tr)) + ';--i:' + i + '">' +
+        '<div class="rc-face"><span class="rc-init">' + esc(String(tr.name || '?').charAt(0)) + '</span><span class="rc-d mono">' + esc(tr.team) + '</span></div>' +
         '<div class="rc-name">' + esc(tr.name) + '</div>' +
-        '<div class="rc-dist">' + esc(t('common.district', { n: tr.district })) + '</div>' +
+        '<div class="rc-dist">' + esc(t('common.team', { n: tr.team })) + '</div>' +
         '<div class="rc-cause"><span>' + esc(causeIcon(tr.deathCause, tr.deathWeapon)) + '</span>' +
         esc(killer ? t('recap.by', { name: killer.name }) : causeName(tr.deathCause || 'unknown')) + '</div></div>';
     }
@@ -3231,25 +3231,25 @@
   }
   function renderVictory() {
     const st = GM.state;
-    const win = st.winner != null ? tributeById(st.winner) : null;
-    const list = st.tributes;
+    const win = st.winner != null ? contestantById(st.winner) : null;
+    const list = st.contestants;
     let most = null;
     for (let i = 0; i < list.length; i++) if (list[i] && (!most || (list[i].kills || 0) > (most.kills || 0))) most = list[i];
     if (most && !(most.kills > 0)) most = null;
     const grade = audienceGrade();
     const peak = Math.max(ui.peakViewers || 0, (st.stats && st.stats.peakViewers) || 0);
-    let bloodbath = 0;
-    for (let i = 0; i < st.deaths.length; i++) if (st.deaths[i].day === 1 && st.deaths[i].time < 60) bloodbath++;
+    let kickoff = 0;
+    for (let i = 0; i < st.deaths.length; i++) if (st.deaths[i].day === 1 && st.deaths[i].time < 60) kickoff++;
     const stat = function (lbl, val, cls) {
       return '<div class="vs' + (cls ? ' ' + cls : '') + '"><span class="vs-l">' + esc(lbl) + '</span><span class="vs-v mono">' + val + '</span></div>';
     };
     let hero;
     if (win) {
-      hero = '<div class="vh" style="--dc:' + esc(tributeColor(win)) + '">' +
-        '<div class="vh-crest"><span class="vh-d mono">' + esc(win.district) + '</span></div>' +
+      hero = '<div class="vh" style="--dc:' + esc(contestantColor(win)) + '">' +
+        '<div class="vh-crest"><span class="vh-d mono">' + esc(win.team) + '</span></div>' +
         '<div class="vh-body"><div class="vh-kick mono">' + esc(t('victory.title')) + '</div>' +
         '<h2 class="vh-name">' + esc(win.name) + '</h2>' +
-        '<div class="vh-sub">' + esc(t('common.district', { n: win.district })) + ' · ' + esc(archIcon(win.archetype) + ' ' + archName(win.archetype)) + '</div>' +
+        '<div class="vh-sub">' + esc(t('common.team', { n: win.team })) + ' · ' + esc(archIcon(win.archetype) + ' ' + archName(win.archetype)) + '</div>' +
         '<button type="button" class="btn btn-ghost vh-watch" data-act="focus" data-id="' + win.id + '">' + svgMarkup('video') + '<span>' + esc(t('ui.sel.follow')) + '</span></button>' +
         '</div></div>';
     } else {
@@ -3261,7 +3261,7 @@
     stats += stat(t('victory.days'), esc(st.day));
     stats += stat(t('victory.time'), esc(U.formatDuration(st.endTime || st.time)));
     stats += stat(t('victory.deaths'), esc(st.deaths.length));
-    stats += stat(t('victory.bloodbath'), esc(bloodbath));
+    stats += stat(t('victory.kickoff'), esc(kickoff));
     if (win) stats += stat(t('victory.kills'), esc(win.kills || 0));
     stats += stat(t('victory.mostKills'), most ? esc(most.name) + ' <small>☠' + esc(most.kills) + '</small>' : esc(t('victory.none.dash')));
     stats += stat(t('victory.powers'), esc((st.stats && st.stats.powersUsed) || 0));
@@ -3281,10 +3281,10 @@
     let fallen = '';
     for (let i = st.deaths.length - 1; i >= 0; i--) {
       const d = st.deaths[i];
-      const tr = tributeById(d.id);
+      const tr = contestantById(d.id);
       if (!tr) continue;
-      const killer = d.killerId != null ? tributeById(d.killerId) : null;
-      fallen += '<li style="--dc:' + esc(tributeColor(tr)) + '"><span class="vf-p mono">' + esc(tr.placement || '') + '</span>' +
+      const killer = d.killerId != null ? contestantById(d.killerId) : null;
+      fallen += '<li style="--dc:' + esc(contestantColor(tr)) + '"><span class="vf-p mono">' + esc(tr.placement || '') + '</span>' +
         '<span class="vf-n">' + esc(tr.name) + '</span><span class="vf-c">' + esc(causeIcon(d.cause, d.weapon)) + ' ' +
         esc(killer ? t('recap.by', { name: killer.name }) : causeName(d.cause || 'unknown')) + '</span>' +
         '<span class="vf-d mono">' + esc(t('victory.day', { n: d.day })) + '</span></li>';
@@ -3296,7 +3296,7 @@
       '<div class="v-grid"><div class="v-left"><div class="v-stats">' + stats + '</div>' + gradeBlock + chart + '</div>' +
       '<div class="v-right"><div class="vs-l">' + esc(t('victory.fallen')) + '</div><ol class="v-fallen">' + fallen + '</ol></div></div>' +
       '<div class="v-actions"><button type="button" class="btn btn-ghost" data-act="watch">' + svgMarkup('eye') + '<span>' + esc(t('victory.watch')) + '</span></button>' +
-      '<button type="button" class="start-btn v-new" data-act="new"><span class="start-glow" aria-hidden="true"></span><span class="start-label">' + esc(t('victory.newGames')) + '</span></button></div>' +
+      '<button type="button" class="start-btn v-new" data-act="new"><span class="start-glow" aria-hidden="true"></span><span class="start-label">' + esc(t('victory.newShow')) + '</span></button></div>' +
       '</div>';
   }
   function showVictory() {
@@ -3429,7 +3429,7 @@
     txt(dom.wxIco, WEATHER_ICON[w] || '☀️');
     txt(dom.wxTxt, has('weather.' + w) ? t('weather.' + w) : w);
     attr(dom.wxIco.parentNode, 'data-wx', w);
-    const total = st.tributes.length;
+    const total = st.contestants.length;
     const alive = aliveCount();
     txt(dom.aliveTxt, alive);
     txt(dom.aliveTot, '/' + total);
@@ -3570,7 +3570,7 @@
     tog(dom.btnRight, 'on', ui.drawer === 'right');
   }
   function setDockTab(tab) {
-    if (tab !== 'powers' && tab !== 'tribute' && tab !== 'log') return;
+    if (tab !== 'powers' && tab !== 'contestant' && tab !== 'log') return;
     ui.dockTab = tab;
     if (!dom.dock) return;
     dom.dock.setAttribute('data-tab', tab);
@@ -3579,7 +3579,7 @@
       attr(dom.dockTabs[k], 'aria-selected', k === tab ? 'true' : 'false');
     }
     if (tab === 'log') { ui.logUnseen = 0; show(dom.dockTabs.log.querySelector('.dt-badge'), false); }
-    if (tab === 'tribute') refreshSel(false);
+    if (tab === 'contestant') refreshSel(false);
   }
 
   // ================================================================= keys
@@ -3619,7 +3619,7 @@
     }
     if (k === '+' || k === '=' || code === 'NumpadAdd') { if (GM.Game) GM.Game.stepSpeed(1); toast('ui.toast.speed', { n: GM.state.speed }); return; }
     if (k === '-' || k === '_' || code === 'NumpadSubtract') { if (GM.Game) GM.Game.stepSpeed(-1); toast('ui.toast.speed', { n: GM.state.speed }); return; }
-    if (k === 'Tab') { e.preventDefault(); cycleTribute(e.shiftKey ? -1 : 1); return; }
+    if (k === 'Tab') { e.preventDefault(); cycleContestant(e.shiftKey ? -1 : 1); return; }
     if (code === 'KeyN' || k === 'n' || k === 'N') { toggleNameTags(); return; }
     if (code === 'KeyP' || k === 'p' || k === 'P') {
       setDockTab('powers');
@@ -3747,7 +3747,7 @@
       setup.mapVer = -1;
     });
     GM.on('game:new', function () {
-      if (ui.cardsFor !== GM.state.tributes) buildCards();
+      if (ui.cardsFor !== GM.state.contestants) buildCards();
       buildPowerButtons(true);
       setDockTab(ui.dockTab);
       refreshAll();
@@ -3768,10 +3768,10 @@
       refreshSel(false);
       refreshRoster(false);
       if (ui.logSelOnly) applyLogSel();
-      if (e && e.id != null && !tgt.active && ui.dockTab !== 'tribute' && isGamePhase(GM.state.phase)) setDockTab('tribute');
+      if (e && e.id != null && !tgt.active && ui.dockTab !== 'contestant' && isGamePhase(GM.state.phase)) setDockTab('contestant');
     });
     GM.on('log', function (en) { if (en && isGamePhase(GM.state.phase)) ui.logQueue.push(en); });
-    GM.on('tribute:died', onDied);
+    GM.on('contestant:died', onDied);
     GM.on('announce', onAnnounce);
     GM.on('recap:night', onRecap);
     GM.on('lang:changed', retranslate);
@@ -3883,8 +3883,8 @@
     cancelTargeting() { safe('cancelTargeting', cancelTargeting); },
     /** Same as clicking the power button. */
     usePower(id) { safe('usePower', usePower, id); },
-    /** Roster click: select + follow, or use the armed power on this tribute. */
-    pickTribute(id) { safe('pickTribute', pickTribute, id); },
+    /** Roster click: select + follow, or use the armed power on this contestant. */
+    pickContestant(id) { safe('pickContestant', pickContestant, id); },
     showHelp() { safe('showHelp', showHelp); },
     hideHelp() { safe('hideHelp', hideHelp); },
     toggleHelp() { safe('toggleHelp', toggleHelp); },

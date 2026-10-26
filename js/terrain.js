@@ -6,7 +6,7 @@
  * cheap to call from AI code many times per frame.
  *
  * Layout (deterministic from the seed):
- *   - flat plaza (radius CFG.CORNUCOPIA_RADIUS, y ~2) with the cornucopia at 0,0
+ *   - flat plaza (radius CFG.NEXUS_RADIUS, y ~2) with the nexus at 0,0
  *   - meadows, noise-driven forest belts (clearing of ~30 m around the plaza)
  *   - 1-3 lakes 45-120 m from the centre with sandy shores, maybe a stream
  *   - 2-4 rocky hills, rock shelters / caves at their feet
@@ -32,7 +32,7 @@
   // ---------------------------------------------------------------- strings
   GM.i18n.add({
     en: {
-      'terrain.biome.plaza': 'Cornucopia plaza',
+      'terrain.biome.plaza': 'Nexus plaza',
       'terrain.biome.sand': 'Beach',
       'terrain.biome.grass': 'Meadow',
       'terrain.biome.forest': 'Forest',
@@ -40,14 +40,14 @@
       'terrain.biome.snow': 'Snowy peak',
       'terrain.biome.water': 'Water',
       'terrain.biome.swamp': 'Swamp',
-      'terrain.cornucopia': 'Cornucopia',
+      'terrain.nexus': 'Nexus',
       'terrain.lake': 'Lake',
       'terrain.stream': 'Stream',
       'terrain.hill': 'Hill',
       'terrain.cave': 'Cave',
       'terrain.thicket': 'Thick forest',
       'terrain.mountains': 'Mountains',
-      'terrain.place.plaza': 'at the Cornucopia',
+      'terrain.place.plaza': 'at the Nexus',
       'terrain.place.sand': 'on the beach',
       'terrain.place.grass': 'in the meadow',
       'terrain.place.forest': 'in the forest',
@@ -70,7 +70,7 @@
       'terrain.dir.c': 'centre',
     },
     hu: {
-      'terrain.biome.plaza': 'A Bőségszaru tere',
+      'terrain.biome.plaza': 'A Nexus tere',
       'terrain.biome.sand': 'Homokos part',
       'terrain.biome.grass': 'Rét',
       'terrain.biome.forest': 'Erdő',
@@ -78,14 +78,14 @@
       'terrain.biome.snow': 'Havas csúcs',
       'terrain.biome.water': 'Víz',
       'terrain.biome.swamp': 'Mocsár',
-      'terrain.cornucopia': 'Bőségszaru',
+      'terrain.nexus': 'Nexus',
       'terrain.lake': 'Tó',
       'terrain.stream': 'Patak',
       'terrain.hill': 'Domb',
       'terrain.cave': 'Barlang',
       'terrain.thicket': 'Sűrű erdő',
       'terrain.mountains': 'Hegyek',
-      'terrain.place.plaza': 'a Bőségszarunál',
+      'terrain.place.plaza': 'a Nexusnál',
       'terrain.place.sand': 'a parton',
       'terrain.place.grass': 'a réten',
       'terrain.place.forest': 'az erdőben',
@@ -119,7 +119,7 @@
   const NCELL = SIZE / NAV;               // 3 m
   const NN = NAV * NAV;
   const ARENA_R = CFG.ARENA_RADIUS;
-  const PLAZA_R = CFG.CORNUCOPIA_RADIUS;
+  const PLAZA_R = CFG.NEXUS_RADIUS;
   const PLAZA_Y = 2;
   const HALF_PI = Math.PI / 2;
   const SQRT2 = Math.SQRT2;
@@ -453,7 +453,7 @@
   // ---------------------------------------------------------------- colours
   // All colours are 0..255. World converts them to 0..1 for the mesh.
   const _plz = { r: 0, g: 0, b: 0 };
-  /** Stone pattern of the Cornucopia plaza (rings, gold inlay, pedestal ring). */
+  /** Stone pattern of the Nexus plaza (rings, gold inlay, pedestal ring). */
   function plazaColor(x, z, v, out) {
     const r = Math.sqrt(x * x + z * z);
     let cr = 178, cg = 170, cb = 150;
@@ -741,7 +741,7 @@
   // --------------------------------------------------- landmarks & hiding
   let thickets = [];
   let hideSpots = [];
-  let landmarks = { cornucopia: { x: 0, z: 0 }, lakes: [], hills: [], caves: [], thickets: [], stream: [] };
+  let landmarks = { nexus: { x: 0, z: 0 }, lakes: [], hills: [], caves: [], thickets: [], stream: [] };
 
   function findThickets() {
     const cand = [];
@@ -809,7 +809,7 @@
     const streamPts = [];
     for (const p of ctx.stream) if (p.x * p.x + p.z * p.z < (ARENA_R - 2) * (ARENA_R - 2)) streamPts.push({ x: p.x, z: p.z });
     landmarks = {
-      cornucopia: { x: 0, z: 0, heading: 0, mouth: { x: 0, z: 3 }, radius: PLAZA_R },
+      nexus: { x: 0, z: 0, heading: 0, mouth: { x: 0, z: 3 }, radius: PLAZA_R },
       lakes: ctx.lakes.map((L) => ({ x: L.x, z: L.z, r: L.r })),
       hills: ctx.hills.map((H) => ({ x: H.x, z: H.z, r: H.r, h: heightAt(H.x, H.z) })),
       caves: ctx.caves.map((C) => ({ x: C.x, z: C.z, heading: C.heading })),
@@ -982,7 +982,7 @@
   // ---------------------------------------------------------------- deform
   /**
    * Sculpt the ground. mode 'raise' | 'lower' | 'crater' | 'smooth' | 'flatten'.
-   * The Cornucopia plaza is reinforced (barely changes). Emits 'terrain:changed'.
+   * The Nexus plaza is reinforced (barely changes). Emits 'terrain:changed'.
    */
   function deform(x, z, radius, amount, mode) {
     if (!ready) return;

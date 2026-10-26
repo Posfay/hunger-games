@@ -1,22 +1,22 @@
 /* ==========================================================================
- * mutts.js — Capitol creatures released by the Game Master.
+ * beasts.js — Studio creatures released by the Showrunner.
  *
- *   GM.Mutts.list                          same array as GM.state.mutts
- *   GM.Mutts.spawn(type, x, z, count) -> [mutt]    'wolf' | 'wasps'
- *   GM.Mutts.damage(m, amount, attacker) -> damage done
- *   GM.Mutts.nearest(pos, maxDist) -> mutt | null  (living)
- *   GM.Mutts.inRadius(pos, r) -> [mutt]            (living)
+ *   GM.Beasts.list                          same array as GM.state.beasts
+ *   GM.Beasts.spawn(type, x, z, count) -> [beast]    'wolf' | 'wasps'
+ *   GM.Beasts.damage(m, amount, attacker) -> damage done
+ *   GM.Beasts.nearest(pos, maxDist) -> beast | null  (living)
+ *   GM.Beasts.inRadius(pos, r) -> [beast]            (living)
  *
  * Wolves: low-poly quadrupeds with glowing eyes. They rise out of the ground,
  *   hunt as a pack (shared target, surround from different sides, bite with a
  *   lunge), cannot swim (they wait at the shore), avoid fire, sink back into
- *   the ground after 90 s. Killable by tributes.
- * Wasps (tracker jackers): a nest breaks open and swarms of tiny instanced
- *   wasps chase tributes, sting (4 dmg + 'stung' hallucinations) and lose the
+ *   the ground after 90 s. Killable by contestants.
+ * Wasps (killer wasps): a nest breaks open and swarms of tiny instanced
+ *   wasps chase contestants, sting (4 dmg + 'stung' hallucinations) and lose the
  *   trail when the victim dives into deep water. Weapons cannot hurt them;
  *   fire, poison gas, lightning and explosions can.
  *
- * Owner: GAMEMAKER.
+ * Owner: SHOWRUNNER.
  * ========================================================================== */
 (function () {
   'use strict';
@@ -27,56 +27,56 @@
 
   GM.i18n.add({
     en: {
-      'mutt.wolf': 'Wolf mutt',
-      'mutt.wolves': 'Wolf mutts',
-      'mutt.wasps': 'Tracker jackers',
-      'mutt.swarm': 'Tracker jacker swarm',
-      'mutt.nest': 'Tracker jacker nest',
-      'mutt.interest.wolves': 'Mutts hunt {name}',
-      'mutt.interest.pack': 'Mutt pack',
-      'mutt.interest.wasps': 'Tracker jackers chase {name}',
-      'mutt.interest.swarm': 'Tracker jacker swarm',
-      'mutt.interest.killed': '{name} killed a mutt',
-      'mutt.interest.spawn': 'Mutts come out of the ground',
-      'log.hazard.muttAttack': 'Mutts attack {name}!',
-      'log.hazard.muttKilled': '{name} killed a wolf mutt.',
-      'log.hazard.muttsGone': 'The mutts went back into the ground.',
-      'log.hazard.muttsWaiting': 'The mutts wait at the water for {name}.',
-      'log.hazard.stung': 'Tracker jackers stung {name}.',
-      'log.hazard.waspsLost': '{name} escaped the tracker jackers in the water.',
-      'log.hazard.waspsGone': 'The tracker jackers flew away.',
-      'log.hazard.waspsBurned': 'The fire killed a tracker jacker swarm.',
+      'beast.wolf': 'Wolf beast',
+      'beast.wolves': 'Wolf beasts',
+      'beast.wasps': 'Killer wasps',
+      'beast.swarm': 'Killer wasp swarm',
+      'beast.nest': 'Killer wasp nest',
+      'beast.interest.wolves': 'Beasts hunt {name}',
+      'beast.interest.pack': 'Beast pack',
+      'beast.interest.wasps': 'Killer wasps chase {name}',
+      'beast.interest.swarm': 'Killer wasp swarm',
+      'beast.interest.killed': '{name} killed a beast',
+      'beast.interest.spawn': 'Beasts come out of the ground',
+      'log.hazard.beastAttack': 'Beasts attack {name}!',
+      'log.hazard.beastKilled': '{name} killed a wolf beast.',
+      'log.hazard.beastsGone': 'The beasts went back into the ground.',
+      'log.hazard.beastsWaiting': 'The beasts wait at the water for {name}.',
+      'log.hazard.stung': 'Killer wasps stung {name}.',
+      'log.hazard.waspsLost': '{name} escaped the killer wasps in the water.',
+      'log.hazard.waspsGone': 'The killer wasps flew away.',
+      'log.hazard.waspsBurned': 'The fire killed a killer wasp swarm.',
     },
     hu: {
-      'mutt.wolf': 'Farkasmutáns',
-      'mutt.wolves': 'Farkasmutánsok',
-      'mutt.wasps': 'Vérdarazsak',
-      'mutt.swarm': 'Vérdarázsraj',
-      'mutt.nest': 'Vérdarázsfészek',
-      'mutt.interest.wolves': 'Mutánsok vadásznak rá: {name}',
-      'mutt.interest.pack': 'Mutánsfalka',
-      'mutt.interest.wasps': 'Vérdarazsak üldözik: {name}',
-      'mutt.interest.swarm': 'Vérdarázsraj',
-      'mutt.interest.killed': 'Mutánst ölt: {name}',
-      'mutt.interest.spawn': 'Mutánsok bújnak elő a földből',
-      'log.hazard.muttAttack': 'Mutánsok támadnak! Célpont: {name}.',
-      'log.hazard.muttKilled': 'Megölt egy farkasmutánst: {name}.',
-      'log.hazard.muttsGone': 'A mutánsok visszabújtak a földbe.',
-      'log.hazard.muttsWaiting': 'A mutánsok a parton várnak rá: {name}.',
-      'log.hazard.stung': 'Vérdarazsak csípték meg: {name}.',
-      'log.hazard.waspsLost': 'A vízben menekült el a vérdarazsak elől: {name}.',
-      'log.hazard.waspsGone': 'A vérdarazsak elrepültek.',
-      'log.hazard.waspsBurned': 'A tűz megölt egy vérdarázsrajt.',
+      'beast.wolf': 'Farkasfenevad',
+      'beast.wolves': 'Farkasfenevadak',
+      'beast.wasps': 'Gyilkosdarazsak',
+      'beast.swarm': 'Gyilkosdarázsraj',
+      'beast.nest': 'Gyilkosdarázsfészek',
+      'beast.interest.wolves': 'Fenevadak vadásznak rá: {name}',
+      'beast.interest.pack': 'Fenevadfalka',
+      'beast.interest.wasps': 'Gyilkosdarazsak üldözik: {name}',
+      'beast.interest.swarm': 'Gyilkosdarázsraj',
+      'beast.interest.killed': 'Fenevadat ölt: {name}',
+      'beast.interest.spawn': 'Fenevadak bújnak elő a földből',
+      'log.hazard.beastAttack': 'Fenevadak támadnak! Célpont: {name}.',
+      'log.hazard.beastKilled': 'Megölt egy farkasfenevadat: {name}.',
+      'log.hazard.beastsGone': 'A fenevadak visszabújtak a földbe.',
+      'log.hazard.beastsWaiting': 'A fenevadak a parton várnak rá: {name}.',
+      'log.hazard.stung': 'Gyilkosdarazsak csípték meg: {name}.',
+      'log.hazard.waspsLost': 'A vízben menekült el a gyilkosdarazsak elől: {name}.',
+      'log.hazard.waspsGone': 'A gyilkosdarazsak elrepültek.',
+      'log.hazard.waspsBurned': 'A tűz megölt egy gyilkosdarázsrajt.',
     },
   });
 
   const THREE = window.THREE;
   if (!THREE) return;
 
-  const Mutts = (GM.Mutts = {});
-  Object.defineProperty(Mutts, 'list', {
+  const Beasts = (GM.Beasts = {});
+  Object.defineProperty(Beasts, 'list', {
     enumerable: true,
-    get: function () { return GM.state.mutts; },
+    get: function () { return GM.state.beasts; },
   });
 
   // ------------------------------------------------------------- constants
@@ -100,7 +100,7 @@
   const NOOP = function () {};
 
   // ------------------------------------------------------------------ state
-  let muttUid = 1000;
+  let beastUid = 1000;
   let packUid = 0;
   const packs = [];                  // wolf packs {id, members, targetId, ...}
   const nests = [];                  // decorative nests
@@ -166,33 +166,33 @@
   function fx(method, a, b, c, d, e) {
     const F = GM.FX;
     if (!F || typeof F[method] !== 'function') return;
-    try { F[method](a, b, c, d, e); } catch (err) { GM.reportError('Mutts.FX.' + method, err); }
+    try { F[method](a, b, c, d, e); } catch (err) { GM.reportError('Beasts.FX.' + method, err); }
   }
   function sfx(name, pos, volume, rate) {
     const A = GM.Audio;
     if (!A || typeof A.play !== 'function') return;
-    try { A.play(name, { pos: pos, volume: volume == null ? 1 : volume, rate: rate || 1 }); } catch (err) { GM.reportError('Mutts.audio', err); }
+    try { A.play(name, { pos: pos, volume: volume == null ? 1 : volume, rate: rate || 1 }); } catch (err) { GM.reportError('Beasts.audio', err); }
   }
   function aiNoise(pos, radius, kind) {
     const AI = GM.AI;
     if (!AI || typeof AI.noise !== 'function') return;
-    try { AI.noise(pos, radius, kind, null); } catch (err) { GM.reportError('Mutts.noise', err); }
+    try { AI.noise(pos, radius, kind, null); } catch (err) { GM.reportError('Beasts.noise', err); }
   }
   function interest(o) {
-    try { GM.addInterest(o); } catch (err) { GM.reportError('Mutts.interest', err); }
+    try { GM.addInterest(o); } catch (err) { GM.reportError('Beasts.interest', err); }
   }
   function tribCall(method, a, b, c, d) {
-    const Tr = GM.Tributes;
+    const Tr = GM.Contestants;
     if (!Tr || typeof Tr[method] !== 'function') return;
-    try { Tr[method](a, b, c, d); } catch (err) { GM.reportError('Mutts.Tributes.' + method, err); }
+    try { Tr[method](a, b, c, d); } catch (err) { GM.reportError('Beasts.Contestants.' + method, err); }
   }
-  function hurtTribute(t, amount, cause, m) {
-    const Tr = GM.Tributes;
+  function hurtContestant(t, amount, cause, m) {
+    const Tr = GM.Contestants;
     if (!Tr || typeof Tr.damage !== 'function' || !t || !t.alive) return 0;
     try {
-      return Tr.damage(t, amount, { cause: cause, attacker: null, mutt: m, weapon: null, pos: m.pos }) || 0;
+      return Tr.damage(t, amount, { cause: cause, attacker: null, beast: m, weapon: null, pos: m.pos }) || 0;
     } catch (err) {
-      GM.reportError('Mutts.damageTribute', err);
+      GM.reportError('Beasts.damageContestant', err);
       return 0;
     }
   }
@@ -201,7 +201,7 @@
     try {
       if (AI && typeof AI.applyStatus === 'function') AI.applyStatus(t, 'stung', 15);
       else tribCall('setStatus', t, 'stung', 15);
-    } catch (err) { GM.reportError('Mutts.sting', err); }
+    } catch (err) { GM.reportError('Beasts.sting', err); }
   }
   function scene() { return GM.World && GM.World.scene ? GM.World.scene : null; }
   function noPick(obj) {
@@ -209,7 +209,7 @@
     return obj;
   }
   function P3(x, y, z) { return { x: x, y: y, z: z }; }
-  function tributeInDeepWater(t) {
+  function contestantInDeepWater(t) {
     if (t.swimming) return true;
     return waterDepthAt(t.pos.x, t.pos.z) > 1.0;
   }
@@ -341,7 +341,7 @@
     if (waspMesh.instanceColor) waspMesh.instanceColor.needsUpdate = true;
     waspMesh.count = 0;
     waspMesh.frustumCulled = false;
-    waspMesh.name = 'mutts-wasps';
+    waspMesh.name = 'beasts-wasps';
     sc.add(noPick(waspMesh));
 
     hazeMat = new THREE.SpriteMaterial({ map: glowTex, color: 0x3a2f0c, transparent: true, opacity: 0.28, depthWrite: false });
@@ -354,7 +354,7 @@
       hazeSprites.push(sp);
     }
 
-    // --- tracker jacker nests (lumpy paper ball, cracks open)
+    // --- killer wasp nests (lumpy paper ball, cracks open)
     const ico = new THREE.IcosahedronGeometry(0.8, 1);
     const pa = ico.getAttribute('position');
     for (let i = 0; i < pa.count; i++) {
@@ -433,10 +433,10 @@
 
   // ================================================================ SPAWN
   /**
-   * Spawn mutts around (x, z).
+   * Spawn beasts around (x, z).
    *   'wolf'  -> `count` wolves forming one pack (default 4)
    *   'wasps' -> `count` swarms from one nest (default 2)
-   * Returns the new mutt objects.
+   * Returns the new beast objects.
    */
   function spawn(type, x, z, count) {
     buildVisuals();
@@ -475,9 +475,9 @@
       if (waterDepthAt(px, pz) > 0.7 || !inArena(px, pz, 3)) { px = x; pz = z; }
       const scale = WOLF_SCALE * (0.9 + GM.R.random() * 0.25);
       const m = {
-        kind: 'mutt',
+        kind: 'beast',
         type: 'wolf',
-        id: ++muttUid,
+        id: ++beastUid,
         pos: new THREE.Vector3(px, groundY(px, pz), pz),
         vel: new THREE.Vector3(),
         heading: a + Math.PI,
@@ -512,9 +512,9 @@
         v.root.rotation.y = m.heading;
       }
       pack.members.push(m);
-      st.mutts.push(m);
+      st.beasts.push(m);
       out.push(m);
-      GM.emit('mutt:spawned', { mutt: m });
+      GM.emit('beast:spawned', { beast: m });
     }
     const y = groundY(x, z);
     const P = P3(x, y, z);
@@ -524,7 +524,7 @@
     fx('ring', P3(x, y + 0.3, z), 0x8a1a10, 9, 0.9);
     sfx('howl', P, 1);
     aiNoise(P, 90, 'scream');
-    interest({ pos: P, score: 8, duration: 6, kind: 'mutt', key: 'pack:' + pack.id, label: { key: 'mutt.interest.spawn' } });
+    interest({ pos: P, score: 8, duration: 6, kind: 'beast', key: 'pack:' + pack.id, label: { key: 'beast.interest.spawn' } });
     retargetPack(pack);
     return out;
   }
@@ -554,9 +554,9 @@
       if (slot < 0) break;
       const a = GM.R.angle();
       const m = {
-        kind: 'mutt',
+        kind: 'beast',
         type: 'wasps',
-        id: ++muttUid,
+        id: ++beastUid,
         pos: new THREE.Vector3(x + Math.sin(a) * 0.5, Math.max(y, waterY()) + 1.2, z + Math.cos(a) * 0.5),
         vel: new THREE.Vector3(),
         heading: a,
@@ -588,14 +588,14 @@
         m.mesh = hazeSprites[slot];
         hazeSprites[slot].visible = true;
       }
-      st.mutts.push(m);
+      st.beasts.push(m);
       out.push(m);
-      GM.emit('mutt:spawned', { mutt: m });
+      GM.emit('beast:spawned', { beast: m });
     }
     const P = P3(x, y, z);
     sfx('buzz', P, 1);
     aiNoise(P, 40, 'scream');
-    interest({ pos: P, score: 7, duration: 5, kind: 'mutt', key: 'nest:' + x.toFixed(0) + ':' + z.toFixed(0), label: { key: 'mutt.interest.swarm' } });
+    interest({ pos: P, score: 7, duration: 5, kind: 'beast', key: 'nest:' + x.toFixed(0) + ':' + z.toFixed(0), label: { key: 'beast.interest.swarm' } });
     return out;
   }
 
@@ -617,7 +617,7 @@
     if (!n) return;
     cx /= n; cz /= n;
     pack.cx = cx; pack.cz = cz;
-    const trs = st.tributes;
+    const trs = st.contestants;
     let best = null, bestScore = Infinity;
     for (let k = 0; k < trs.length; k++) {
       const t = trs[k];
@@ -625,7 +625,7 @@
       const dx = t.pos.x - cx, dz = t.pos.z - cz;
       const d = Math.sqrt(dx * dx + dz * dz);
       let s = d;
-      if (tributeInDeepWater(t)) s += 60;
+      if (contestantInDeepWater(t)) s += 60;
       if (t.hidden && d > 14) s += 20;
       if ((t.health || 0) < 40) s -= 8;
       if (t.id === pack.targetId) s -= 6;
@@ -701,11 +701,11 @@
       pack.howl = 18 + GM.R.random() * 10;
       sfx('howl', P3(pack.cx, groundY(pack.cx, pack.cz), pack.cz), 0.9);
     }
-    const t = pack.targetId != null ? st.tributes[pack.targetId] : null;
+    const t = pack.targetId != null ? st.contestants[pack.targetId] : null;
     if (t && t.alive) {
       const dx = t.pos.x - pack.cx, dz = t.pos.z - pack.cz;
       if (dx * dx + dz * dz < 900) {
-        interest({ pos: t.pos, score: 7, duration: 3, kind: 'mutt', key: 'pack:' + pack.id, followId: t.id, label: { key: 'mutt.interest.wolves', params: { name: t.name } } });
+        interest({ pos: t.pos, score: 7, duration: 3, kind: 'beast', key: 'pack:' + pack.id, followId: t.id, label: { key: 'beast.interest.wolves', params: { name: t.name } } });
       }
     }
   }
@@ -732,7 +732,7 @@
       if (m.stateT >= 1.8) m._remove = true;
       return;
     }
-    // lifetime over (or the Games ended): sink back into the ground
+    // lifetime over (or the Show ended): sink back into the ground
     if (now >= m.expires || st.phase === 'ended') {
       beginLeave(m);
       return;
@@ -741,23 +741,23 @@
     const pack = packById(m.packId);
     let tgt = null;
     if (m.aggroId != null && m.aggroUntil > now) {
-      const a = st.tributes[m.aggroId];
+      const a = st.contestants[m.aggroId];
       if (a && a.alive) tgt = a;
     }
     if (!tgt && pack && pack.targetId != null) {
-      const a = st.tributes[pack.targetId];
+      const a = st.contestants[pack.targetId];
       if (a && a.alive) tgt = a;
     }
     // opportunistic bite: someone right next to the wolf
     if (tgt) {
       const dx = tgt.pos.x - m.pos.x, dz = tgt.pos.z - m.pos.z;
       if (dx * dx + dz * dz > 36) {
-        const trs = st.tributes;
+        const trs = st.contestants;
         for (let k = 0; k < trs.length; k++) {
           const o = trs[k];
           if (!o || !o.alive || o === tgt) continue;
           const ox = o.pos.x - m.pos.x, oz = o.pos.z - m.pos.z;
-          if (ox * ox + oz * oz < 9 && !tributeInDeepWater(o)) { tgt = o; break; }
+          if (ox * ox + oz * oz < 9 && !contestantInDeepWater(o)) { tgt = o; break; }
         }
       }
     }
@@ -767,7 +767,7 @@
     if (tgt) {
       const dx = tgt.pos.x - m.pos.x, dz = tgt.pos.z - m.pos.z;
       const d = Math.sqrt(dx * dx + dz * dz);
-      const inWater = tributeInDeepWater(tgt);
+      const inWater = contestantInDeepWater(tgt);
       if (d > 9 && pack) {
         // fan out and come from different sides
         const base = Math.atan2(pack.cx - tgt.pos.x, pack.cz - tgt.pos.z);
@@ -790,7 +790,7 @@
       } else if (d < 1.2) spd = 0;
       if (inWater && pack && !pack.waitLogged.has(tgt.id) && d < 14) {
         pack.waitLogged.add(tgt.id);
-        GM.log('hazard', 'log.hazard.muttsWaiting', { name: tgt.name }, { pos: tgt.pos, tributeIds: [tgt.id] });
+        GM.log('hazard', 'log.hazard.beastsWaiting', { name: tgt.name }, { pos: tgt.pos, contestantIds: [tgt.id] });
         if (m.growlCd <= 0) { m.growlCd = 3; sfx('growl', m.pos, 0.8); }
       }
     } else if (pack) {
@@ -803,7 +803,7 @@
       gx = m.pos.x; gz = m.pos.z; spd = 0;
     }
     steer(m, gx, gz, spd, dt);
-    separate(m, st.mutts);
+    separate(m, st.beasts);
     const gy = groundY(m.pos.x, m.pos.z);
     const wl = waterY();
     m.pos.y = gy < wl - 0.55 ? wl - 0.55 : gy;
@@ -814,7 +814,7 @@
     m.biteCd = WOLF_BITE_CD + GM.R.random() * 0.3;
     m.lunge = 0.32;
     const dmg = WOLF_BITE * (isNight() ? 1.15 : 1);
-    hurtTribute(t, dmg, 'mutt', m);
+    hurtContestant(t, dmg, 'beast', m);
     const y = t.pos.y + 1;
     fx('burst', P3(t.pos.x, y, t.pos.z), { count: 8, color: 0x7a0a0a, color2: 0x3a0404, speed: 3, spread: 0.3, up: 1.5, gravity: -9.8, size: 0.14, life: 0.6, additive: false });
     if (m.growlCd <= 0) {
@@ -822,10 +822,10 @@
       sfx('growl', m.pos, 1, 0.9 + GM.R.random() * 0.2);
     }
     if (t.alive && d > 0.05) tribCall('knockback', t, dx / d, dz / d, 1.2);
-    interest({ pos: t.pos, score: 7, duration: 4, kind: 'mutt', key: 'pack:' + (pack ? pack.id : m.id), followId: t.id, label: { key: 'mutt.interest.wolves', params: { name: t.name } } });
+    interest({ pos: t.pos, score: 7, duration: 4, kind: 'beast', key: 'pack:' + (pack ? pack.id : m.id), followId: t.id, label: { key: 'beast.interest.wolves', params: { name: t.name } } });
     if (pack && !pack.attacked.has(t.id)) {
       pack.attacked.add(t.id);
-      GM.log('hazard', 'log.hazard.muttAttack', { name: t.name }, { pos: t.pos, tributeIds: [t.id], important: true });
+      GM.log('hazard', 'log.hazard.beastAttack', { name: t.name }, { pos: t.pos, contestantIds: [t.id], important: true });
     }
   }
 
@@ -846,34 +846,34 @@
         if (!any && !pack.gone) {
           pack.gone = true;
           pack.alive = 0;
-          if (GM.state.phase === 'running') GM.log('hazard', 'log.hazard.muttsGone', {}, { pos: m.pos });
+          if (GM.state.phase === 'running') GM.log('hazard', 'log.hazard.beastsGone', {}, { pos: m.pos });
         }
       }
     } else if (wasAlive && !m.burned) {
       let any = false;
-      const list = GM.state.mutts;
+      const list = GM.state.beasts;
       for (let i = 0; i < list.length; i++) if (list[i].type === 'wasps' && list[i].alive) { any = true; break; }
       if (!any && GM.state.phase === 'running') GM.log('hazard', 'log.hazard.waspsGone', {}, { pos: m.pos });
     }
-    if (wasAlive) GM.emit('mutt:expired', { mutt: m });
+    if (wasAlive) GM.emit('beast:expired', { beast: m });
   }
 
   // ================================================================= WASPS
   function pickSwarmTarget(m) {
     const st = GM.state;
-    const trs = st.tributes;
+    const trs = st.contestants;
     const now = st.time;
     let best = null, bestScore = Infinity;
     for (let k = 0; k < trs.length; k++) {
       const t = trs[k];
       if (!t || !t.alive || !t.pos) continue;
       if (m.ignoreId === t.id && m.ignoreUntil > now) continue;
-      if (tributeInDeepWater(t)) continue;
+      if (contestantInDeepWater(t)) continue;
       const dx = t.pos.x - m.pos.x, dz = t.pos.z - m.pos.z;
       const d = Math.sqrt(dx * dx + dz * dz);
       if (d > 45) continue;
       let s = d;
-      const list = st.mutts;
+      const list = st.beasts;
       for (let i = 0; i < list.length; i++) {
         const o = list[i];
         if (o !== m && o.alive && o.type === 'wasps' && o.targetId === t.id) s += 15;
@@ -909,7 +909,7 @@
     }
     const rain = GM.Env && (GM.Env.weather === 'rain' || GM.Env.weather === 'storm') ? 0.75 : 1;
     const speed = WASP_SPEED * rain;
-    let tgt = m.targetId != null ? st.tributes[m.targetId] : null;
+    let tgt = m.targetId != null ? st.contestants[m.targetId] : null;
     if (tgt && !tgt.alive) tgt = null;
 
     if (m.state === 'lost') {
@@ -936,7 +936,7 @@
     }
 
     if (m.state === 'chase' && tgt) {
-      if (tributeInDeepWater(tgt)) {
+      if (contestantInDeepWater(tgt)) {
         // the victim dived: the swarm loses the trail
         m.state = 'lost';
         m.lostT = 3.5;
@@ -944,7 +944,7 @@
         m.ignoreUntil = now + 10;
         if (!m.lostLogged.has(tgt.id)) {
           m.lostLogged.add(tgt.id);
-          GM.log('hazard', 'log.hazard.waspsLost', { name: tgt.name }, { pos: tgt.pos, tributeIds: [tgt.id] });
+          GM.log('hazard', 'log.hazard.waspsLost', { name: tgt.name }, { pos: tgt.pos, contestantIds: [tgt.id] });
         }
         m.targetId = null;
         return;
@@ -956,17 +956,17 @@
       moveSwarm(m, tx, tz, d > 1 ? speed : 3, dt, wl, tgt.pos.y + 1.3);
       if (d <= 2.4 && m.stingCd <= 0) {
         m.stingCd = WASP_STING_CD + GM.R.random() * 0.15;
-        hurtTribute(tgt, WASP_STING, 'wasps', m);
+        hurtContestant(tgt, WASP_STING, 'wasps', m);
         if (tgt.alive) sting(tgt);
         fx('burst', P3(tgt.pos.x, tgt.pos.y + 1.4, tgt.pos.z), { count: 4, color: 0xffd23a, color2: 0x7a0a0a, speed: 2, spread: 0.4, up: 0.5, gravity: -3, size: 0.1, life: 0.4, additive: false });
         if (!m.stung.has(tgt.id)) {
           m.stung.add(tgt.id);
-          GM.log('hazard', 'log.hazard.stung', { name: tgt.name }, { pos: tgt.pos, tributeIds: [tgt.id], important: true });
+          GM.log('hazard', 'log.hazard.stung', { name: tgt.name }, { pos: tgt.pos, contestantIds: [tgt.id], important: true });
           sfx('scream', tgt.pos, 0.7);
         }
       }
       if (d < 20) {
-        interest({ pos: tgt.pos, score: 7, duration: 3, kind: 'mutt', key: 'swarm:' + m.id, followId: tgt.id, label: { key: 'mutt.interest.wasps', params: { name: tgt.name } } });
+        interest({ pos: tgt.pos, score: 7, duration: 3, kind: 'beast', key: 'swarm:' + m.id, followId: tgt.id, label: { key: 'beast.interest.wasps', params: { name: tgt.name } } });
       }
     } else {
       // hover around the nest
@@ -995,7 +995,7 @@
   }
 
   // ================================================================ DAMAGE
-  /** Damage a mutt. Tracker jackers ignore weapons (attacker set); hazards hurt everything. */
+  /** Damage a beast. Killer wasps ignore weapons (attacker set); hazards hurt everything. */
   function damage(m, amount, attacker) {
     if (!m || !m.alive || !(amount > 0)) return 0;
     if (m.type === 'wasps' && attacker) {
@@ -1007,21 +1007,21 @@
     m.hitFlash = 0.14;
     if (m.type === 'wolf') {
       fx('burst', P3(m.pos.x, m.pos.y + 0.9, m.pos.z), { count: 6, color: 0x4a0808, color2: 0x220202, speed: 2.5, spread: 0.3, up: 1.2, gravity: -9.8, size: 0.13, life: 0.5, additive: false });
-      if (attacker && attacker.kind === 'tribute' && attacker.alive) {
+      if (attacker && attacker.kind === 'contestant' && attacker.alive) {
         m.aggroId = attacker.id;
         m.aggroUntil = GM.state.time + 6;
         if (m.growlCd <= 0) { m.growlCd = 1.2; sfx('growl', m.pos, 0.9, 1.1); }
       }
     }
-    if (m.health <= 0) killMutt(m, attacker || null);
+    if (m.health <= 0) killBeast(m, attacker || null);
     return dealt;
   }
 
-  function killMutt(m, attacker) {
+  function killBeast(m, attacker) {
     if (!m.alive) return;
     m.alive = false;
     m.health = 0;
-    const killer = attacker && attacker.kind === 'tribute' ? attacker : null;
+    const killer = attacker && attacker.kind === 'contestant' ? attacker : null;
     if (m.type === 'wolf') {
       m.state = 'dead';
       m.stateT = 0;
@@ -1030,8 +1030,8 @@
       sfx('growl', m.pos, 0.8, 0.6);
       fx('burst', P3(m.pos.x, m.pos.y + 0.6, m.pos.z), { count: 12, color: 0x4a0808, color2: 0x1a0202, speed: 3, spread: 0.6, up: 2, gravity: -9.8, size: 0.16, life: 0.8, additive: false });
       if (killer) {
-        GM.log('combat', 'log.hazard.muttKilled', { name: killer.name }, { pos: m.pos, tributeIds: [killer.id], important: true });
-        interest({ pos: m.pos, score: 6, duration: 5, kind: 'mutt', key: 'muttkill:' + m.id, followId: killer.id, label: { key: 'mutt.interest.killed', params: { name: killer.name } } });
+        GM.log('combat', 'log.hazard.beastKilled', { name: killer.name }, { pos: m.pos, contestantIds: [killer.id], important: true });
+        interest({ pos: m.pos, score: 6, duration: 5, kind: 'beast', key: 'beastkill:' + m.id, followId: killer.id, label: { key: 'beast.interest.killed', params: { name: killer.name } } });
       }
       const pack = packById(m.packId);
       if (pack) {
@@ -1046,12 +1046,12 @@
       fx('burst', P3(m.pos.x, m.pos.y, m.pos.z), { count: 20, color: 0x2a2208, color2: 0xffc814, speed: 2, spread: 1.2, up: 0.5, gravity: -6, size: 0.1, life: 1, additive: false });
       if (GM.state.phase === 'running') GM.log('hazard', 'log.hazard.waspsBurned', {}, { pos: m.pos });
     }
-    GM.emit('mutt:died', { mutt: m, killer: killer });
+    GM.emit('beast:died', { beast: m, killer: killer });
   }
 
   function nearest(pos, maxDist) {
     if (!pos) return null;
-    const list = GM.state.mutts;
+    const list = GM.state.beasts;
     const md = maxDist == null ? Infinity : maxDist;
     let best = null, bd = md * md;
     for (let i = 0; i < list.length; i++) {
@@ -1067,7 +1067,7 @@
   function inRadius(pos, r) {
     const out = [];
     if (!pos) return out;
-    const list = GM.state.mutts;
+    const list = GM.state.beasts;
     const rr = r * r;
     for (let i = 0; i < list.length; i++) {
       const m = list[i];
@@ -1196,7 +1196,7 @@
   }
 
   // ============================================================ LIFECYCLE
-  function removeMutt(m) {
+  function removeBeast(m) {
     if (m.type === 'wolf') {
       releaseWolfVisual(m.visual);
       m.visual = null;
@@ -1209,8 +1209,8 @@
   }
 
   function clearAll() {
-    const list = GM.state.mutts;
-    for (let i = 0; i < list.length; i++) removeMutt(list[i]);
+    const list = GM.state.beasts;
+    for (let i = 0; i < list.length; i++) removeBeast(list[i]);
     list.length = 0;
     packs.length = 0;
     for (let s = 0; s < MAX_SWARMS; s++) swarmSlots[s] = null;
@@ -1220,12 +1220,12 @@
   }
 
   GM.registerSystem({
-    name: 'Mutts',
+    name: 'Beasts',
     order: 55,
     init() {
       buildVisuals();
       GM.on('game:end', function () {
-        const list = GM.state.mutts;
+        const list = GM.state.beasts;
         for (let i = 0; i < list.length; i++) if (list[i].alive) beginLeave(list[i]);
       });
     },
@@ -1240,7 +1240,7 @@
       const st = GM.state;
       if (st.phase !== 'running' && st.phase !== 'ended') return;
       for (let i = 0; i < packs.length; i++) updatePack(packs[i], dt);
-      const list = st.mutts;
+      const list = st.beasts;
       for (let i = 0; i < list.length; i++) {
         const m = list[i];
         if (m.type === 'wolf') updateWolf(m, dt);
@@ -1249,7 +1249,7 @@
       for (let i = list.length - 1; i >= 0; i--) {
         const m = list[i];
         if (m._remove) {
-          removeMutt(m);
+          removeBeast(m);
           list.splice(i, 1);
         }
       }
@@ -1277,7 +1277,7 @@
     frame(realDt) {
       if (!built) return;
       visualTime += realDt;
-      const list = GM.state.mutts;
+      const list = GM.state.beasts;
       for (let i = 0; i < list.length; i++) {
         const m = list[i];
         if (m.type === 'wolf') drawWolf(m);
@@ -1288,22 +1288,22 @@
   });
 
   // ============================================================ PUBLIC API
-  Mutts.spawn = spawn;
-  Mutts.damage = damage;
-  Mutts.nearest = nearest;
-  Mutts.inRadius = inRadius;
-  Mutts.packs = packs;
-  /** Living mutts of a type ('wolf' | 'wasps' | undefined for all). */
-  Mutts.count = function (type) {
-    const list = GM.state.mutts;
+  Beasts.spawn = spawn;
+  Beasts.damage = damage;
+  Beasts.nearest = nearest;
+  Beasts.inRadius = inRadius;
+  Beasts.packs = packs;
+  /** Living beasts of a type ('wolf' | 'wasps' | undefined for all). */
+  Beasts.count = function (type) {
+    const list = GM.state.beasts;
     let n = 0;
     for (let i = 0; i < list.length; i++) if (list[i].alive && (!type || list[i].type === type)) n++;
     return n;
   };
-  /** Is tribute t currently hunted by any mutt? */
-  Mutts.isHunted = function (t) {
+  /** Is contestant t currently hunted by any beast? */
+  Beasts.isHunted = function (t) {
     if (!t) return false;
-    const list = GM.state.mutts;
+    const list = GM.state.beasts;
     for (let i = 0; i < list.length; i++) if (list[i].alive && list[i].targetId === t.id) return true;
     return false;
   };

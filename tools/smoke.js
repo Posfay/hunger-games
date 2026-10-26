@@ -2,19 +2,19 @@
 /* ==========================================================================
  * tools/smoke.js — headless end-to-end test harness (Chrome DevTools Protocol).
  *
- * Serves the project, launches headless Chrome/Edge, starts a Games, runs it
+ * Serves the project, launches headless Chrome/Edge, starts a Show, runs it
  * at high speed and reports errors, i18n gaps and gameplay statistics.
  *
  *   node tools/smoke.js [options]
  *     --seed N            arena seed (default 12345)
- *     --tributes N        tribute count (default 24)
+ *     --contestants N        contestant count (default 24)
  *     --mix NAME          balanced | bloodthirsty | peaceful | chaos
  *     --speed N           game speed (default 16)
  *     --timeout S         real seconds before giving up (default 240)
  *     --maxday N          stop after this in-game day (default 12)
  *     --norender          skip 3D rendering (much faster simulation)
- *     --powers            sandbox + use a random Game Master power every ~2 s
- *     --autogm            enable the assistant Game Master
+ *     --powers            sandbox + use a random Showrunner power every ~2 s
+ *     --autogm            enable the assistant Showrunner
  *     --shots DIR         save screenshots (setup, early game, mid game, HU, end)
  *     --lang hu           start in Hungarian
  *     --width W --height H  viewport (default 1600x900)
@@ -44,7 +44,7 @@ function arg(name, def) {
 }
 const opt = {
   seed: +arg('seed', 12345),
-  tributes: +arg('tributes', 24),
+  contestants: +arg('contestants', 24),
   mix: arg('mix', 'balanced'),
   speed: +arg('speed', 16),
   timeout: +arg('timeout', 240),
@@ -226,7 +226,7 @@ function cdp(wsUrl) {
     return finish(1);
   }
   const modules = await evaluate(`(() => {
-    const names = ['Terrain','World','FX','Env','Items','ItemDefs','Tributes','Combat','AI','Archetypes','Hazards','Mutts','Powers','Audience','AutoGM','Cameras','Audio','UI','Minimap'];
+    const names = ['Terrain','World','FX','Env','Items','ItemDefs','Contestants','Combat','AI','Archetypes','Hazards','Beasts','Powers','Audience','AutoGM','Cameras','Audio','UI','Minimap'];
     return names.map(n => n + (GM[n] ? '' : ':MISSING')).join(' ');
   })()`);
   console.log('modules: ' + modules);
@@ -237,7 +237,7 @@ function cdp(wsUrl) {
 
   // start
   await evaluate(`(() => {
-    GM.Game.newGame({ seed: ${opt.seed}, tributeCount: ${opt.tributes}, mix: '${opt.mix}',
+    GM.Game.newGame({ seed: ${opt.seed}, contestantCount: ${opt.contestants}, mix: '${opt.mix}',
       sandbox: ${opt.powers}, autoGM: ${opt.autogm}, quality: 'high', feeds: true, nameTags: true, startSpeed: 1 });
   })()`);
   await sleep(1500);
@@ -256,12 +256,12 @@ function cdp(wsUrl) {
       setInterval(() => {
         try {
           if (GM.state.phase !== 'running' || !GM.Powers || !GM.Powers.defs) return;
-          const alive = GM.state.tributes.filter(t => t.alive);
+          const alive = GM.state.contestants.filter(t => t.alive);
           if (!alive.length) return;
           const defs = GM.Powers.defs.filter(d => d.id !== 'smite' || alive.length > 6);
           const d = defs[Math.floor(Math.random() * defs.length)];
           const t = alive[Math.floor(Math.random() * alive.length)];
-          const target = d.target === 'point' ? { x: t.pos.x + 6, z: t.pos.z + 4 } : d.target === 'tribute' ? t : null;
+          const target = d.target === 'point' ? { x: t.pos.x + 6, z: t.pos.z + 4 } : d.target === 'contestant' ? t : null;
           const option = d.options && d.options.length ? d.options[Math.floor(Math.random() * d.options.length)].id : undefined;
           const ok = GM.Powers.use(d.id, target, option);
           window.__powerLog.push(d.id + (option ? ':' + option : '') + (ok ? '' : '(refused)'));
@@ -280,12 +280,12 @@ function cdp(wsUrl) {
     try {
       s = await evaluate(`(() => {
         const st = GM.state;
-        const alive = st.tributes.filter(t => t.alive);
+        const alive = st.contestants.filter(t => t.alive);
         const acts = {};
         for (const t of alive) acts[t.action] = (acts[t.action] || 0) + 1;
         return { phase: st.phase, time: st.time, day: st.day, tod: st.timeOfDay, alive: alive.length,
-          total: st.tributes.length, errors: GM.errors.length, acts,
-          weather: GM.Env && GM.Env.weather, mutts: st.mutts.filter(m => m.alive).length,
+          total: st.contestants.length, errors: GM.errors.length, acts,
+          weather: GM.Env && GM.Env.weather, beasts: st.beasts.filter(m => m.alive).length,
           excitement: GM.Audience ? Math.round(GM.Audience.excitement) : null };
       })()`);
     } catch (e) {
@@ -299,7 +299,7 @@ function cdp(wsUrl) {
     if (elapsed - lastPrint >= 5) {
       lastPrint = elapsed;
       const acts = Object.entries(s.acts).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k, v]) => k + ':' + v).join(' ');
-      console.log(`[${elapsed.toFixed(0)}s] ${s.phase} day ${s.day} ${(s.tod * 24).toFixed(1)}h t=${s.time.toFixed(0)} alive ${s.alive}/${s.total} weather=${s.weather} mutts=${s.mutts} exc=${s.excitement} errs=${s.errors} | ${acts}`);
+      console.log(`[${elapsed.toFixed(0)}s] ${s.phase} day ${s.day} ${(s.tod * 24).toFixed(1)}h t=${s.time.toFixed(0)} alive ${s.alive}/${s.total} weather=${s.weather} beasts=${s.beasts} exc=${s.excitement} errs=${s.errors} | ${acts}`);
     }
     if (!shotsTaken.has('early') && s.time > 25) { shotsTaken.add('early'); await shot('03-early'); }
     if (!shotsTaken.has('mid') && s.alive <= Math.ceil(s.total / 2)) {
@@ -325,23 +325,23 @@ function cdp(wsUrl) {
     const causes = {};
     for (const d of st.deaths) causes[d.cause] = (causes[d.cause] || 0) + 1;
     const byArch = {};
-    for (const t of st.tributes) {
+    for (const t of st.contestants) {
       const a = byArch[t.archetype] || (byArch[t.archetype] = { n: 0, alive: 0, kills: 0, placeSum: 0 });
       a.n++; if (t.alive) a.alive++; a.kills += t.kills || 0; a.placeSum += t.placement || 1;
     }
     const logTypes = {};
     for (const e of st.log) logTypes[e.type] = (logTypes[e.type] || 0) + 1;
-    const w = st.winner != null ? st.tributes[st.winner] : null;
+    const w = st.winner != null ? st.contestants[st.winner] : null;
     const en = st.log.slice(-25).map(e => GM.t(e.key, e.params));
     GM.i18n.setLang('hu');
     const hu = st.log.slice(-25).map(e => GM.t(e.key, e.params));
     GM.i18n.setLang('${opt.lang}');
     const unresolved = [];
     for (const e of st.log) { const s = GM.t(e.key, e.params); if (s === e.key || /\\{\\w+\\}/.test(s)) unresolved.push(e.key + ' -> ' + s); }
-    const bloodbath = st.deaths.filter(d => d.time < 60).length;
+    const kickoff = st.deaths.filter(d => d.time < 60).length;
     return {
       phase: st.phase, day: st.day, time: Math.round(st.time), winner: w ? w.name + ' (' + w.archetype + ', ' + w.kills + ' kills)' : null,
-      bloodbath, causes, byArch, logTypes, missing: GM.i18n.missing(), unresolved: [...new Set(unresolved)].slice(0, 30),
+      kickoff, causes, byArch, logTypes, missing: GM.i18n.missing(), unresolved: [...new Set(unresolved)].slice(0, 30),
       errors: GM.errors, en, hu,
       alliances: GM.AI && GM.AI.alliances ? GM.AI.alliances.length : null,
       powers: window.__powerLog ? window.__powerLog.slice(-60) : null,
@@ -350,7 +350,7 @@ function cdp(wsUrl) {
   })()`);
   console.log('\n=== RESULT ===');
   console.log(`phase ${rep.phase}, day ${rep.day}, sim time ${rep.time}s, winner: ${rep.winner}`);
-  console.log(`deaths in first 60 s (bloodbath): ${rep.bloodbath}`);
+  console.log(`deaths in first 60 s (kickoff): ${rep.kickoff}`);
   console.log('death causes: ' + JSON.stringify(rep.causes));
   console.log('log types: ' + JSON.stringify(rep.logTypes));
   console.log('alliances ever: ' + rep.alliances);

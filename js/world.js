@@ -1,6 +1,6 @@
 /* ==========================================================================
  * world.js — GM.World (renderer, scene, terrain mesh, water, props,
- * cornucopia, pedestals, force-field dome) and GM.FX (pooled effects).
+ * nexus, pedestals, force-field dome) and GM.FX (pooled effects).
  *
  *   World.renderer / scene / terrainMesh / water / sun / hemi
  *   World.rebuild()                 rebuild everything from GM.Terrain
@@ -17,7 +17,7 @@
  * Smooth terrain with procedural detail (plaza stonework, rock strata, wet
  * shores, caustics, puddles, snow), wind-blown trees with translucent
  * leaves, a GPU grass field around the camera, a depth-aware water shader
- * and a polished gold Cornucopia. Env (env.js) animates light, sky and fog.
+ * and a polished gold Nexus. Env (env.js) animates light, sky and fog.
  * Owner: WORLD.
  * ========================================================================== */
 (function () {
@@ -36,8 +36,8 @@
     sun: null,
     hemi: null,
     trees: [],
-    cornucopia: null,
-    cornucopiaHeading: 0,     // the horn mouth faces +Z
+    nexus: null,
+    nexusHeading: 0,     // the front of the Nexus faces +Z
     dome: null,
     sunDir: null,             // unit vector ground -> light (Env sets it)
     skyColor: null,           // colour reflected by the water (Env sets it)
@@ -68,7 +68,7 @@
   // ------------------------------------------------------------- constants
   const ARENA_R = CFG.ARENA_RADIUS;
   const PED_R = CFG.PEDESTAL_RADIUS;
-  const PED_MAX = CFG.MAX_TRIBUTES;
+  const PED_MAX = CFG.MAX_CONTESTANTS;
   const PED_H = 0.32;                 // pedestal top above the plaza
   const SHADOW_MIN = 42, SHADOW_MAX = 175;   // half size range of the shadow camera (m)
   const FLASH_LIGHTS = 4;
@@ -351,7 +351,7 @@
   const TERRAIN_FRAG_PRE = [
     'varying float vAO;',
     Gfx.WORLD_VARY,
-    // Cornucopia plaza stonework: rings of slabs, gold seal + inlay, steel pedestal ring
+    // Nexus plaza stonework: rings of slabs, gold seal + inlay, steel pedestal ring
     'void gmPlaza( vec2 p, float n3, float n4, inout vec3 alb, inout float rough, inout float metal, inout float bh ) {',
     '  float r = length( p );',
     '  float fa = atan( p.x, p.y ) * 0.15915494 + 0.5;',
@@ -988,46 +988,13 @@
     World.dome = dome;
   }
 
-  // ============================================================= cornucopia
-  const HORN_PTS = [
-    [0, 2.4, 3.0], [0.2, 1.9, -0.6], [0.5, 1.4, -4.2], [0.8, 1.05, -7.1], [1.05, 1.9, -9.4],
-    [1.15, 3.5, -10.5], [1.0, 4.8, -9.8], [0.75, 5.2, -8.4], [0.5, 4.7, -7.4],
-  ];
-  function hornRadius(u) { return 0.09 + 2.31 * Math.pow(1 - u, 1.35); }
-
-  function buildCornucopia() {
+  // ============================================================= nexus
+  // The central landmark: a hexagonal plinth, a twisted gold spire and a floating energy core.
+  // Footprint stays inside ~3.7 m so the loot ring (4.4 m and out) is never covered.
+  function buildNexus() {
     const group = new THREE.Group();
-    group.name = 'cornucopia';
-    const curve = new THREE.CatmullRomCurve3(HORN_PTS.map(function (p) { return new THREE.Vector3(p[0], p[1], p[2]); }), false, 'centripetal');
-    const segs = 160, radial = 48;
-    const frames = curve.computeFrenetFrames(segs, false);
-    const pos = [], idx = [], uvs = [];
-    for (let k = 0; k <= segs; k++) {
-      const u = k / segs;
-      const P = curve.getPointAt(u);
-      const N = frames.normals[k], B = frames.binormals[k];
-      const r0 = hornRadius(u);
-      for (let j = 0; j <= radial; j++) {
-        const v = (j / radial) * TAU;
-        const flute = 1 + 0.06 * Math.pow(Math.abs(Math.cos(v * 6 + u * 9)), 0.6) * (1 - u * 0.5);
-        const r = r0 * flute;
-        const cx = Math.cos(v), sx = Math.sin(v);
-        pos.push(P.x + (cx * N.x + sx * B.x) * r, P.y + (cx * N.y + sx * B.y) * r, P.z + (cx * N.z + sx * B.z) * r);
-        uvs.push(u, j / radial);
-      }
-    }
-    for (let k = 0; k < segs; k++) {
-      for (let j = 0; j < radial; j++) {
-        const a = k * (radial + 1) + j, b = a + radial + 1;
-        idx.push(a, b, a + 1, b, b + 1, a + 1);
-      }
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-    g.setIndex(idx);
-    g.computeVertexNormals();
-    // hammered gold: fine bump + roughness breakup, darker tarnish in the flutes
+    group.name = 'nexus';
+    // hammered gold: fine bump + roughness breakup, darker tarnish in the facets
     const goldPatch = {
       key: 'gold',
       vertexPre: Gfx.WORLD_VARY,
@@ -1040,48 +1007,79 @@
       },
     };
     const gold = Gfx.patch(new THREE.MeshStandardMaterial({ color: 0xe8b04a, metalness: 1, roughness: 0.3, side: THREE.DoubleSide }), goldPatch);
-    const horn = new THREE.Mesh(g, gold);
-    horn.castShadow = true;
-    horn.receiveShadow = true;
-    group.add(horn);
-
     const bright = Gfx.patch(new THREE.MeshStandardMaterial({ color: 0xffcf6a, metalness: 1, roughness: 0.18 }), goldPatch);
     const dark = Gfx.patch(new THREE.MeshStandardMaterial({ color: 0xc08a33, metalness: 1, roughness: 0.34 }), goldPatch);
-    const addRing = function (u, tube, mat, extra) {
-      const P = curve.getPointAt(u);
-      const tan = curve.getTangentAt(u);
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(hornRadius(u) * 1.04 + extra, tube, 14, 72), mat);
-      ring.position.copy(P);
-      ring.quaternion.setFromUnitVectors(ZAXIS, tan);
-      ring.castShadow = true;
-      group.add(ring);
+    const steel = new THREE.MeshStandardMaterial({ color: 0x2a2f37, metalness: 0.85, roughness: 0.4 });
+    const glowGold = new THREE.MeshBasicMaterial({ color: new THREE.Color(4.0, 2.6, 0.9), toneMapped: false });
+    const glowCyan = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.6, 1.8, 3.2), toneMapped: false });
+    const add = function (geo, mat, x, y, z, shadow) {
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(x, y, z);
+      if (shadow) { m.castShadow = true; m.receiveShadow = true; }
+      group.add(m);
+      return m;
     };
-    addRing(0, 0.2, bright, 0.08);
-    addRing(0.012, 0.07, dark, 0.2);
-    addRing(0.24, 0.11, dark, 0.02);
-    addRing(0.48, 0.09, dark, 0.02);
-    addRing(0.7, 0.06, bright, 0.01);
-    // dark interior so the mouth reads as deep
-    const du = 0.1;
-    const inner = new THREE.Mesh(new THREE.CircleGeometry(hornRadius(du) * 1.06, 40), new THREE.MeshStandardMaterial({ color: 0x0b0804, roughness: 1, metalness: 0 }));
-    inner.position.copy(curve.getPointAt(du));
-    inner.quaternion.setFromUnitVectors(ZAXIS, curve.getTangentAt(du).negate());
-    group.add(inner);
-    // golden finial at the tip
-    const tip = new THREE.Mesh(new THREE.SphereGeometry(0.2, 20, 14), bright);
-    tip.position.copy(curve.getPointAt(1));
-    group.add(tip);
+
+    // two-tier hexagonal plinth with a gold trim ring on the lower tier
+    add(new THREE.CylinderGeometry(3.3, 3.7, 0.5, 6), steel, 0, 0.25, 0, true);
+    add(new THREE.CylinderGeometry(2.4, 2.8, 0.45, 6), steel, 0, 0.725, 0, true);
+    const trimGeo = new THREE.TorusGeometry(3.3, 0.07, 8, 6);
+    trimGeo.rotateX(Math.PI / 2);
+    add(trimGeo, bright, 0, 0.5, 0, false).rotation.y = Math.PI / 6;
+
+    // twisted, faceted spire
+    const H = 9.5, y0 = 0.95;
+    const sg = new THREE.CylinderGeometry(0.5, 1.35, H, 6, 24, false);
+    const sp = sg.attributes.position;
+    for (let i = 0; i < sp.count; i++) {
+      const x = sp.getX(i), y = sp.getY(i), z = sp.getZ(i);
+      const a = ((y + H / 2) / H) * 1.1;
+      const c = Math.cos(a), s = Math.sin(a);
+      sp.setXYZ(i, x * c + z * s, y, -x * s + z * c);
+    }
+    const spireGeo = sg.toNonIndexed();
+    spireGeo.computeVertexNormals();
+    add(spireGeo, gold, 0, y0 + H / 2, 0, true);
+    // collars that follow the taper
+    [[0.12, 0.13, dark], [0.38, 0.1, dark], [0.64, 0.08, bright], [0.9, 0.06, bright]].forEach(function (d) {
+      const r = 1.35 + (0.5 - 1.35) * d[0];
+      const ring = new THREE.TorusGeometry(r * 1.04, d[1], 10, 36);
+      ring.rotateX(Math.PI / 2);
+      add(ring, d[2], 0, y0 + H * d[0], 0, true);
+    });
+
+    // floating energy core above the tip, tied to the spire by a thin beam
+    const coreY = y0 + H + 2.4;
+    const core = new THREE.OctahedronGeometry(0.95, 0);
+    core.scale(0.8, 1.5, 0.8);
+    add(core, glowGold, 0, coreY, 0, false);
+    add(new THREE.CylinderGeometry(0.06, 0.06, 2.4, 8), glowGold, 0, y0 + H + 1.2, 0, false);
+    const orbitA = new THREE.TorusGeometry(1.9, 0.05, 8, 64);
+    orbitA.rotateX(Math.PI / 2 + 0.5);
+    add(orbitA, glowCyan, 0, coreY, 0, false);
+    const orbitB = new THREE.TorusGeometry(2.4, 0.04, 8, 64);
+    orbitB.rotateX(Math.PI / 2);
+    orbitB.rotateZ(0.7);
+    add(orbitB, glowGold, 0, coreY, 0, false);
+
+    // six corner pylons with glowing caps
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * TAU;
+      const px = Math.sin(a) * 3.05, pz = Math.cos(a) * 3.05;
+      add(new THREE.CylinderGeometry(0.16, 0.22, 1.6, 6), gold, px, 1.3, pz, true);
+      add(new THREE.SphereGeometry(0.2, 16, 12), glowCyan, px, 2.25, pz, false);
+    }
 
     group.userData.mouthHeading = 0;
     group.userData.mouth = { x: 0, z: 3 };
     scene.add(group);
-    World.cornucopia = group;
-    World.cornucopiaHeading = 0;
+    World.nexus = group;
+    World.nexusHeading = 0;
   }
-  function placeCornucopia() {
-    if (!World.cornucopia) return;
-    World.cornucopia.position.set(0, groundY(0, 0) - 0.04, 0);
-    World.cornucopia.updateMatrixWorld(true);
+  function placeNexus() {
+    if (!World.nexus) return;
+    World.nexus.position.set(0, groundY(0, 0) - 0.04, 0);
+    World.nexus.updateMatrixWorld(true);
   }
 
   // ============================================================== pedestals
@@ -1134,7 +1132,7 @@
     const out = [];
     pedList.length = 0;
     for (let i = 0; i < n; i++) {
-      const a = (i / n) * TAU + Math.PI / n;       // no pedestal right in front of the horn mouth
+      const a = (i / n) * TAU + Math.PI / n;       // no pedestal right in front of the Nexus
       const x = Math.sin(a) * PED_R, z = Math.cos(a) * PED_R;
       const gy = groundY(x, z);
       const heading = Math.atan2(-x, -z);
@@ -1788,7 +1786,7 @@
   // Instanced blade patches tiled around each camera. Heights come from a
   // float height texture (same triangulation as Terrain.heightAt); density
   // and tint from a grass map built from the biomes. Wind gusts roll across
-  // the field; tributes push the blades aside.
+  // the field; contestants push the blades aside.
   const GRASS_TILE = 7;               // metres per patch
   const GRASS_GRID = 13;              // patches per side (main view)
   const GRASS_BLADES = 900;           // blades per patch
@@ -1867,7 +1865,7 @@
     '  float ws = gmEnv.w;',
     '  float sway = ( 0.18 + 0.9 * ws ) * ( gust * 1.2 + gust2 * 0.4 ) + 0.08 * sin( t * 3.1 + aBlade.z * 40.0 );',
     '  vec2 bend = wd * sway + face * ( 0.25 + 0.2 * r2 ) * ( 0.6 - 0.4 * ws );',
-    // tributes push blades aside
+    // contestants push blades aside
     '  for ( int k = 0; k < ' + GRASS_PUSH + '; k++ ) {',
     '    vec4 pp = uPush[k];',
     '    vec2 dv = wp - pp.xy;',
@@ -2032,8 +2030,8 @@
         const sl = T.slopeAt(x, z);
         d *= 1 - U.smoothstep(0.32, 0.5, sl);
         const r = Math.sqrt(x * x + z * z);
-        if (r < CFG.CORNUCOPIA_RADIUS + 0.5) d = 0;
-        else d *= U.smoothstep(CFG.CORNUCOPIA_RADIUS + 0.5, CFG.CORNUCOPIA_RADIUS + 3, r);
+        if (r < CFG.NEXUS_RADIUS + 0.5) d = 0;
+        else d *= U.smoothstep(CFG.NEXUS_RADIUS + 0.5, CFG.NEXUS_RADIUS + 3, r);
         if (r > ARENA_R + 6) d *= 0.5;
         if (H[i] < CFG.BASE_WATER_LEVEL + 0.2) d = 0;
         let cr = C ? C[i * 3] : 90, cg = C ? C[i * 3 + 1] : 140, cb = C ? C[i * 3 + 2] : 60;
@@ -2093,8 +2091,8 @@
     grassU.uGrassLod.value.set(nearR, 0, 0, 0);
     grassGeoF.instanceCount = tilesFor(radius);
     grassGeoN.instanceCount = tilesFor(nearR);
-    // nearest tributes push the grass
-    const ts = GM.state.tributes;
+    // nearest contestants push the grass
+    const ts = GM.state.contestants;
     let n = 0;
     if (ts && ts.length) {
       for (let i = 0; i < ts.length && n < GRASS_PUSH; i++) {
@@ -2204,7 +2202,7 @@
     refreshGrassRect(x0, z0, x1, z1, true);
     resnapProps(x0, z0, x1, z1);
     snapPedestals();
-    if (x0 < 14 && x1 > -14 && z0 < 14 && z1 > -14) placeCornucopia();
+    if (x0 < 14 && x1 > -14 && z0 < 14 && z1 > -14) placeNexus();
     if (shadowsOn()) renderer.shadowMap.needsUpdate = true;
   }
   /** Put trees and rocks inside a rectangle back on the ground. */
@@ -2237,7 +2235,7 @@
   }
 
   // ---------------------------------------------------------------- rebuild
-  /** Rebuild terrain mesh, backdrop, water, trees, rocks, grass; re-seat cornucopia + pedestals. */
+  /** Rebuild terrain mesh, backdrop, water, trees, rocks, grass; re-seat nexus + pedestals. */
   World.rebuild = function () {
     if (!scene) return;
     applyQuality();
@@ -2246,7 +2244,7 @@
     buildBackdrop(T ? (T.seed >>> 0) : 1);
     buildWater();
     buildProps(T);
-    placeCornucopia();
+    placeNexus();
     snapPedestals();
     up0 = Infinity; up1 = -1; upGeo = false;
     dfX0 = dfZ0 = Infinity;
@@ -2836,7 +2834,7 @@
       domeMat.uniforms.uStrength.value = (0.55 - 0.2 * night) * (1 - 0.6 * overcast) * SU.gmPost.value[1] * (1 + domePulse * 4);
     }
 
-    // pedestal rings: steady in setup, pulsing in the countdown, dim once the Games run
+    // pedestal rings: steady in setup, pulsing in the countdown, dim once the Show run
     if (pedGlow && pedCount > 0) {
       const ph = GM.state.phase;
       const col = pedGlow.material.color;
@@ -2858,7 +2856,7 @@
     createScene();
     makeWaterMaterial();
     buildDome();
-    buildCornucopia();
+    buildNexus();
     buildPedestalMeshes();
     buildPropGeometries();
     initFX();
@@ -2870,10 +2868,10 @@
     if (Tr()) World.rebuild();
   }
 
-  function tributeCount(settings) {
+  function contestantCount(settings) {
     const s = settings || GM.state.settings;
     if (s && Array.isArray(s.roster) && s.roster.length) return s.roster.length;
-    if (s && s.tributeCount > 0) return s.tributeCount | 0;
+    if (s && s.contestantCount > 0) return s.contestantCount | 0;
     return 24;
   }
 
@@ -2895,12 +2893,12 @@
     clear() {
       FX.clear();
       domePulse = 0;
-      World.pedestals(tributeCount());      // pedestals for the setup showcase
+      World.pedestals(contestantCount());      // pedestals for the setup showcase
     },
     reset(settings) {
       applyQuality();
       FX.clear();
-      World.pedestals(tributeCount(settings));
+      World.pedestals(contestantCount(settings));
     },
     update(dt) { FX.update(dt); },
     frame,
