@@ -149,6 +149,13 @@
    */
   Career.modsFor = function (settings) {
     const m = Object.assign({}, BASE_MODS);
+    // daily challenge: the day's twist replaces the base numbers; studio upgrades never apply
+    if (settings && settings.daily && !settings.career) {
+      const tw = settings.daily.mods || {};
+      for (const k in BASE_MODS) if (typeof tw[k] === 'number' && isFinite(tw[k])) m[k] = tw[k];
+      m.startEnergy = Math.min(m.startEnergy, m.maxEnergy);
+      return m;
+    }
     if (!settings || !settings.career) return m;
     m.maxEnergy += 10 * upgradeLevel('power');
     m.startEnergy += 10 * upgradeLevel('sponsors');
@@ -365,9 +372,9 @@
     GM.emit('career:changed', { began: true });
   };
 
-  /** Wipe the whole career and all lifetime stats (back to the first-run state). */
+  /** Wipe the career and its lifetime stats (back to the first-run state). Daily scores and records stay. */
   Career.reset = function () {
-    if (GM.Save) GM.Save.reset();
+    if (GM.Save) GM.Save.resetSection('career');
     GM.emit('career:changed', { reset: true });
   };
 

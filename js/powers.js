@@ -379,6 +379,8 @@
   const NEUTRAL_MODS = Object.freeze({ maxEnergy: MAX_ENERGY, startEnergy: START_ENERGY, regen: 1, cooldown: 1, hype: 1 });
   let careerMods = NEUTRAL_MODS;
   function isCareerShow() { const s = GM.state.settings; return !!(s && s.career); }
+  /** Daily challenge Shows grade on the career scale and may carry the day's twist (see daily.js). */
+  function isStrictShow() { const s = GM.state.settings; return !!(s && (s.career || s.daily)); }
 
   // ---------------------------------------------------------------- helpers
   function settings() { return GM.state.settings || null; }
@@ -1613,8 +1615,8 @@
   /** Audience grade for the whole Show so far: 'S' | 'A' | 'B' | 'C' | 'D'. */
   Audience.grade = function () {
     const s = Audience.score();
-    // career Shows grade on a stricter scale (GM.Career.GRADE_CUTS); free play keeps the original one
-    const cuts = isCareerShow() && GM.Career ? GM.Career.GRADE_CUTS : FREE_GRADE_CUTS;
+    // career and daily Shows grade on a stricter scale (GM.Career.GRADE_CUTS); free play keeps the original one
+    const cuts = isStrictShow() && GM.Career ? GM.Career.GRADE_CUTS : FREE_GRADE_CUTS;
     return s >= cuts[0] ? 'S' : s >= cuts[1] ? 'A' : s >= cuts[2] ? 'B' : s >= cuts[3] ? 'C' : 'D';
   };
   /** 'audience.mood.*' key for the current excitement. */
@@ -2095,7 +2097,7 @@
       clearAudience();
       AutoGM.enabled = !!(s && s.autoGM);
       clearAuto();
-      if (s && s.career && GM.Career) careerMods = GM.Career.modsFor(s);
+      if (s && (s.career || s.daily) && GM.Career) careerMods = GM.Career.modsFor(s);
       Powers.maxEnergy = careerMods.maxEnergy;
       Powers.energy = s && s.sandbox ? Powers.maxEnergy : careerMods.startEnergy;
       initPopularity();

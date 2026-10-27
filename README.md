@@ -10,11 +10,13 @@ English and Hungarian — switch any time with the EN/HU button (or `L`).
 ## Run it
 
 - **Easiest:** open `dist/arena.html` (one self-contained file) in Chrome, Edge or Firefox.
+  `dist/arena-demo.html` is the same game without the Expedition Pack (its arenas show as locked).
 - **From source:** open `index.html`, or serve the folder:
   `python -m http.server 8765` → http://127.0.0.1:8765
 - Needs an internet connection for three.js (cdnjs) and the fonts.
 
-Rebuild the single-file version after changing the source: `node tools/build.js`.
+Rebuild the single-file versions after changing the source: `node tools/build.js` (full edition, demo edition,
+artifact page).
 
 ## How to play
 
@@ -75,6 +77,35 @@ emotions (fear, rage, confidence, sanity). Every contestant shows what it is thi
 | `M` | Mute |
 | `H` or `?` | Help |
 
+## Daily challenge
+
+Every UTC day has one Show that is the same for everybody: same arena, same cast, same personality mix, plus a
+**twist** (a leaner battery, faster cooldowns, bigger ratings swings, a packed arena, or none). Open it with the
+**Daily** button (setup screen and career header).
+
+- No studio upgrades and no sandbox, every power open; retry as often as you like, your best score of the day counts.
+- A **streak** counts the days in a row you finished the daily Show.
+- The result card shows your score, new records and, when an online leaderboard is connected, a **Submit** button.
+  Nothing is sent unless you press it. The **Leaderboard** tab shows today's top scores and the all-time best per
+  player; the **Records** tab holds your personal bests and totals (sandbox Shows never count).
+- The online leaderboard is optional: see [server/README.md](server/README.md) (free Cloudflare plan). Without it the
+  daily challenge, streak and records all work offline.
+
+## Arena types and the Expedition Pack
+
+The arena code still decides the layout; the **arena type** (free-play setup screen) decides the land, sky and weather.
+
+| Type | Character |
+|---|---|
+| Verdant Basin | The classic arena (always available; career and daily Shows use it) |
+| Dune Sea | Golden sand, red mesas, one small oasis. Heat waves are common and water is rare, so every drink counts |
+| Frostfall | A valley under permanent snow with dark pine groves and frozen lakes. Cold nights wear contestants down; a sleeping bag helps |
+| Drowned Mire | Black water, swamp, thick forest and fog. Cover is everywhere |
+
+The last three are the **Expedition Pack** (`js/packs/expedition.js`). A build without that file (the demo edition)
+shows them as locked cards. Adding another pack means adding a file that calls `GM.Arenas.register`; see
+`GM.Arenas.DEFAULTS` in `js/arenas.js` for every knob and `node tools/arena-stats.js` to measure the result.
+
 ## Project layout
 
 | Path | What |
@@ -82,6 +113,11 @@ emotions (fear, rage, confidence, sanity). Every contestant shows what it is thi
 | `SPEC.md` | Architecture and module contract |
 | `js/core.js`, `js/i18n.js`, `js/main.js` | Runtime, localisation, game loop |
 | `js/save.js` | Versioned save in `localStorage` (sections, backup code, memory fallback) |
+| `js/config.js` | Deployment settings: leaderboard URL, pack store URL |
+| `js/daily.js`, `js/dailyui.js`, `css/daily.css` | Daily challenge, streak, personal records / the Daily screen and result card |
+| `js/leaderboard.js`, `server/` | Online leaderboard client / the free Cloudflare Worker + database behind it |
+| `js/arenas.js`, `js/arenaui.js`, `css/arenas.css` | Arena themes (parameter set, registry, picker) |
+| `js/packs/expedition.js` | The Expedition Pack: Dune Sea, Frostfall, Drowned Mire |
 | `js/career.js`, `js/careerui.js`, `css/career.css` | Career mode: rules, briefs, rewards, upgrades / hub, objective HUD, results |
 | `js/gfx.js`, `js/post.js` | Rendering foundation (linear colour, height fog, shared shader uniforms) and the HDR post-processing pipeline (bloom, SSAO, sun shafts, depth of field, ACES tone mapping, colour grade) |
 | `js/terrain.js`, `js/world.js`, `js/env.js` | Terrain + pathfinding, 3D world + effects, sky/day/night/weather/lighting |
@@ -97,7 +133,13 @@ emotions (fear, rage, confidence, sanity). Every contestant shows what it is thi
 Tests:
 
 - `node tools/career-test.js`: unit tests for the save and career logic (no browser needed).
+- `node tools/daily-test.js`: daily challenge, streak, records, leaderboard client, and the leaderboard worker on a real
+  SQLite database (Node 22.5+).
+- `node tools/arena-test.js`: the classic arena is byte-identical to its fixture; every pack arena is valid, deterministic,
+  reachable and true to its theme. `node tools/arena-stats.js` prints a theme's composition.
 - `node tools/smoke.js --norender`: a whole free-play Show in headless Chrome
   (add `--powers`, `--lang hu`, `--shots <dir>`).
 - `node tools/smoke.js --norender --career 6 --bot random --buy`: plays a career season
   with a bot and prints grade, goals and rewards per episode (use it to tune difficulty).
+- `node tools/smoke.js --norender --daily` plays today's daily Show; `--arena dunes|frost|mire` plays a free-play Show on a pack arena.
+- `node server/dev-server.js` runs the leaderboard locally (no account needed).

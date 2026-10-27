@@ -174,6 +174,14 @@
   let ready = false;
   let ctx = { lakes: [], hills: [], stream: [], caves: [] };
   let rocks = [];
+  // Arena theme numbers (js/arenas.js); refreshed at the start of every generate().
+  let P = null;                             // theme.terrain
+  let PAL = null;                           // theme.pal
+  function loadTheme() {
+    const all = GM.Arenas.params();
+    P = all.terrain;
+    PAL = all.pal;
+  }
 
   // shoreline cache for nearestWater (rebuilt lazily when water or terrain changes)
   const SB = 16;                            // buckets per side
@@ -280,11 +288,11 @@
   /** Choose lakes, hills and a stream for a seed. */
   function planLayout(rnd) {
     const lakes = [];
-    const lakeCount = rnd() < 0.2 ? 1 : rnd() < 0.55 ? 2 : 3;
+    const lakeCount = P.lakes ? P.lakes[0] + Math.floor(rnd() * (P.lakes[1] - P.lakes[0] + 1)) : rnd() < 0.2 ? 1 : rnd() < 0.55 ? 2 : 3;
     const baseAngle = rnd() * Math.PI * 2;
     for (let i = 0; i < lakeCount; i++) {
       for (let tries = 0; tries < 30; tries++) {
-        const r = 11 + rnd() * 10;
+        const r = (11 + rnd() * 10) * P.lakeR;
         const a = baseAngle + (i / lakeCount) * Math.PI * 2 + (rnd() - 0.5) * 1.1;
         const d = 45 + r * 0.6 + rnd() * Math.max(1, 120 - r * 0.4 - (45 + r * 0.6));
         const x = Math.sin(a) * d, z = Math.cos(a) * d;
@@ -297,23 +305,23 @@
     }
 
     const hills = [];
-    const hillCount = 2 + Math.floor(rnd() * 3);
+    const hillCount = P.hills ? P.hills[0] + Math.floor(rnd() * (P.hills[1] - P.hills[0] + 1)) : 2 + Math.floor(rnd() * 3);
     for (let i = 0; i < hillCount; i++) {
       for (let tries = 0; tries < 40; tries++) {
-        const r = 13 + rnd() * 11;
+        const r = (13 + rnd() * 11) * P.hillR;
         const a = rnd() * Math.PI * 2;
         const d = 55 + rnd() * 68;
         const x = Math.sin(a) * d, z = Math.cos(a) * d;
         let ok = true;
         for (const L of lakes) if (U.dist2(x, z, L.x, L.z) < L.r + r + 12) { ok = false; break; }
         if (ok) for (const H of hills) if (U.dist2(x, z, H.x, H.z) < H.r + r + 16) { ok = false; break; }
-        if (ok) { hills.push({ x, z, r, h: 10 + rnd() * 14 }); break; }
+        if (ok) { hills.push({ x, z, r, h: (10 + rnd() * 14) * P.hillH }); break; }
       }
     }
 
     // A stream: from the first lake out to the rim mountains (meandering).
     let stream = [];
-    if (lakes.length && rnd() < 0.7) {
+    if (lakes.length && rnd() < P.stream) {
       const L = lakes[0];
       const la = Math.atan2(L.x, L.z) + (rnd() - 0.5) * 0.9;
       let x = L.x, z = L.z;
@@ -338,8 +346,8 @@
   /** Raw height function (before plaza/lakes are carved). */
   function rawHeight(x, z) {
     const r = Math.sqrt(x * x + z * z);
-    let h = 3.0 + 3.6 * smooth(26, 130, r) +
-      noise.fbm(x / 75 + 3.1, z / 75 - 1.7, 4) * 3.4 +
+    let h = P.base + P.rise * smooth(26, 130, r) +
+      noise.fbm(x / 75 + 3.1, z / 75 - 1.7, 4) * P.noise +
       noise.noise2(x / 19 + 9.2, z / 19 + 4.4) * 0.7;
     // rocky hills
     for (let i = 0; i < ctx.hills.length; i++) {
@@ -354,7 +362,7 @@
     // rim mountains: rise steeply from ~130 m
     if (r > 118) {
       const t = smooth(124, 166, r);
-      h += t * t * (40 + noise.ridged(x / 45 + 17, z / 45 - 5, 4) * 34) + t * 7;
+      h += (t * t * (40 + noise.ridged(x / 45 + 17, z / 45 - 5, 4) * 34) + t * 7) * P.rim;
     }
     return h;
   }
@@ -424,11 +432,12 @@
     const sl = slopeV[i];
     if (h < CFG.BASE_WATER_LEVEL) return B_WATER;
     if (r < PLAZA_R + 0.5) return B_PLAZA;
-    if (h > 44 + v * 7 && sl < 0.62) return B_SNOW;
-    const rocky = smooth(0.3, 0.48, sl) + smooth(24, 34, h) + (v > 0.62 && h > 13 ? 0.35 : 0);
+    if (h > P.snowLine + v * 7 && sl < 0.62) return B_SNOW;
+    const rocky = smooth(P.rockSlope[0], P.rockSlope[1], sl) + smooth(P.rockH[0], P.rockH[1], h) + (v > 0.62 && h > 13 ? 0.35 : 0);
     if (rocky > 0.5) return B_ROCK;
-    if (h < CFG.BASE_WATER_LEVEL + 0.9 + v * 0.5 && moist[i] > 0.25) return B_SAND;
-    if (h < 2.6 && moist[i] > 0.58 && r > PLAZA_R + 10) return B_SWAMP;
+    if (h < CFG.BASE_WATER_LEVEL + 0.9 + v * 0.5 && moist[i] > P.sandMoist) return B_SAND;
+    if (P.dryland > 0 && moist[i] < P.dryland && r > PLAZA_R + 6) return B_SAND;      // desert: dry land is sand
+    if (h < P.swamp[0] && moist[i] > P.swamp[1] && r > PLAZA_R + 10) return B_SWAMP;
     return B_GRASS;
   }
 
@@ -443,7 +452,8 @@
     let f = smooth(0.5, 0.78, belt * 0.55 + blob * 0.62 - 0.08);
     f *= smooth(30, 44, r);                 // clearing around the plaza
     f *= 1 - smooth(0.36, 0.55, slopeV[i]); // no trees on cliffs
-    f *= 1 - smooth(30, 42, h);             // tree line
+    f *= 1 - smooth(P.treeLine[0], P.treeLine[1], h);   // tree line
+    f *= P.forest;                          // theme density
     f *= smooth(0.6, 1.6, h - CFG.BASE_WATER_LEVEL);
     if (code === B_ROCK) f *= 0.35;
     if (code === B_SWAMP) f *= 0.7;
@@ -478,11 +488,11 @@
     switch (code) {
       case B_WATER: { // lake bed: sand to dark mud with depth
         const d = clamp(-h / 3.6, 0, 1);
-        r = lerp(166, 76, d); g = lerp(150, 86, d); b = lerp(104, 66, d);
+        r = lerp(PAL.bed[0], PAL.bedDeep[0], d); g = lerp(PAL.bed[1], PAL.bedDeep[1], d); b = lerp(PAL.bed[2], PAL.bedDeep[2], d);
         break;
       }
       case B_SAND:
-        r = 214 + v * 16; g = 196 + v * 14; b = 142 + v * 10;
+        r = PAL.sand[0] + v * PAL.sand[3]; g = PAL.sand[1] + v * PAL.sand[4]; b = PAL.sand[2] + v * PAL.sand[5];
         break;
       case B_PLAZA:
         plazaColor(x, z, v, _plz);
@@ -490,27 +500,28 @@
         break;
       case B_ROCK: {
         const hi = smooth(20, 55, h);
-        r = lerp(112, 138, hi) + v * 22; g = lerp(106, 134, hi) + v * 20; b = lerp(98, 132, hi) + v * 18;
+        r = lerp(PAL.rockLo[0], PAL.rockHi[0], hi) + v * PAL.rockVar[0];
+        g = lerp(PAL.rockLo[1], PAL.rockHi[1], hi) + v * PAL.rockVar[1];
+        b = lerp(PAL.rockLo[2], PAL.rockHi[2], hi) + v * PAL.rockVar[2];
         if (v < 0.32) { r -= 12; g -= 10; b -= 8; }
         break;
       }
       case B_SNOW:
-        r = 232 + v * 12; g = 236 + v * 12; b = 242 + v * 10;
+        r = PAL.snow[0] + v * PAL.snow[3]; g = PAL.snow[1] + v * PAL.snow[4]; b = PAL.snow[2] + v * PAL.snow[5];
         break;
       case B_SWAMP:
-        r = 78 + v * 16; g = 92 + v * 14; b = 50 + v * 8;
+        r = PAL.swamp[0] + v * PAL.swamp[3]; g = PAL.swamp[1] + v * PAL.swamp[4]; b = PAL.swamp[2] + v * PAL.swamp[5];
         break;
       default: { // meadow: three greens, drier higher up, alpine near the rim
         const k = v;
-        if (k < 0.33) { r = 88; g = 138; b = 54; }
-        else if (k < 0.66) { r = 106; g = 152; b = 60; }
-        else { r = 124; g = 162; b = 66; }
+        const gr = PAL.grass[k < 0.33 ? 0 : k < 0.66 ? 1 : 2];
+        r = gr[0]; g = gr[1]; b = gr[2];
         const jitter = (hash3(i, 7, 3) - 0.5) * 10;
         r += jitter; g += jitter; b += jitter * 0.5;
         const dry = smooth(8, 22, h) * 0.55 + (1 - m) * 0.18;
-        r = lerp(r, 150, dry * 0.5); g = lerp(g, 150, dry * 0.35); b = lerp(b, 78, dry * 0.4);
+        r = lerp(r, PAL.dry[0], dry * 0.5); g = lerp(g, PAL.dry[1], dry * 0.35); b = lerp(b, PAL.dry[2], dry * 0.4);
         const alpine = smooth(26, 40, h);
-        r = lerp(r, 118, alpine); g = lerp(g, 122, alpine); b = lerp(b, 96, alpine);
+        r = lerp(r, PAL.alpine[0], alpine); g = lerp(g, PAL.alpine[1], alpine); b = lerp(b, PAL.alpine[2], alpine);
         break;
       }
     }
@@ -518,7 +529,8 @@
       const f = forest[i];
       if (f > 0.02) {
         const k = f * 0.8;
-        r = lerp(r, 50 + v * 14, k); g = lerp(g, 80 + v * 12, k); b = lerp(b, 38 + v * 6, k);
+        const ff = PAL.forestFloor;
+        r = lerp(r, ff[0] + v * ff[3], k); g = lerp(g, ff[1] + v * ff[4], k); b = lerp(b, ff[2] + v * ff[5], k);
       }
     }
     if (burnt[i]) {
@@ -641,7 +653,7 @@
 
     // hill boulders
     for (const H of ctx.hills) {
-      const n = 4 + Math.floor(rnd() * 5);
+      const n = Math.round((4 + Math.floor(rnd() * 5)) * P.boulders);
       for (let k = 0; k < n; k++) {
         const a = rnd() * TAU;
         const d = H.r * (0.15 + rnd() * 1.15);
@@ -652,7 +664,7 @@
       }
     }
     // lonely meadow boulders
-    const meadow = 14 + Math.floor(rnd() * 9);
+    const meadow = Math.round((14 + Math.floor(rnd() * 9)) * P.boulders);
     for (let k = 0; k < meadow; k++) {
       const a = rnd() * TAU;
       const d = 36 + rnd() * 104;
@@ -822,6 +834,7 @@
   /** Build the whole arena for a seed (deterministic). */
   function generate(seed) {
     seed = seed >>> 0;
+    loadTheme();
     noise = GM.Noise.create(seed);
     const rnd = GM.makeRng((seed ^ 0x9e3779b9) >>> 0);
     ctx = planLayout(rnd);
@@ -836,7 +849,7 @@
         const i = iz * RES + ix;
         heights[i] = carvedHeight(x, z, tmp);
         vary[i] = clamp(noise.noise2(x / 14 + 5.5, z / 14 - 2.2) * 0.42 + noise.noise2(x / 4.3 - 1.1, z / 4.3 + 7.7) * 0.18 + 0.5, 0, 1);
-        moist[i] = clamp(tmp.wet * 1.05 + (noise.fbm(x / 70 - 8, z / 70 + 3, 3) * 0.5 + 0.5) * 0.45 - 0.08, 0, 1);
+        moist[i] = clamp(tmp.wet * 1.05 + (noise.fbm(x / 70 - 8, z / 70 + 3, 3) * 0.5 + 0.5) * P.moistNoise - 0.08 + P.moistBias, 0, 1);
       }
     }
     for (let iz = 0; iz < RES; iz++) for (let ix = 0; ix < RES; ix++) slopeV[iz * RES + ix] = computeSlopeAt(ix, iz);
@@ -864,6 +877,7 @@
     T.landmarks = landmarks;
     T.hideSpots = hideSpots;
     T.rocks = rocks;
+    T.arena = GM.Arenas.active();
   }
 
   // ================================================================ queries

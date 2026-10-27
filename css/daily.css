@@ -1,0 +1,119 @@
+/* ==========================================================================
+   Daily challenge: the daily screen (reuses the career hub layout), the
+   leaderboard table, records, and the result block of the victory card.
+   ========================================================================== */
+
+.dl-hub { z-index: 12; }
+.setup-kicker .dl-sw { margin-left: 6px; }
+.cr-head-top .dl-open { height: 32px; color: var(--gold); border-color: rgb(var(--gold-rgb) / 0.5); }
+.cr-head-top .dl-open:hover { color: var(--gold-hi); border-color: var(--gold); background: var(--gold-a); }
+
+/* ------------------------------------------------------------------- today */
+.dl-today { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 14px; align-items: start; }
+.dl-side { display: flex; flex-direction: column; gap: 14px; }
+.dl-twist {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  background: linear-gradient(90deg, rgb(var(--gold-rgb) / 0.12), rgb(var(--ink-rgb) / 0.5));
+  border: 1px solid rgb(var(--gold-rgb) / 0.45);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--r-2);
+}
+.dl-twist-kick { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
+.dl-twist-name { font: 900 20px/1.1 var(--font-brand); letter-spacing: 0.03em; color: var(--text); }
+.dl-twist-desc { font-size: var(--fs-m); color: var(--text-2); line-height: 1.4; }
+
+.dl-best-row { display: flex; align-items: baseline; gap: 12px; }
+.dl-best-row .cr-grade { align-self: center; min-width: 34px; height: 34px; font-size: 20px; }
+.dl-best-score { font-size: 34px; font-weight: 800; color: var(--gold); line-height: 1; }
+.dl-best-pts { font-size: var(--fs-s); color: var(--text-3); }
+.dl-streak-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.dl-flame { font-size: 26px; filter: grayscale(1); opacity: 0.45; }
+.dl-flame.on { filter: none; opacity: 1; text-shadow: 0 0 14px rgb(var(--amber-rgb) / 0.6); }
+.dl-streak-n { font-size: var(--fs-xl, 22px); font-weight: 800; color: var(--text); }
+.dl-streak-max { margin-left: auto; font-size: var(--fs-xs); color: var(--text-3); }
+
+/* ------------------------------------------------------------- leaderboard */
+.dl-name { display: flex; flex-direction: column; gap: 5px; }
+.dl-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dl-name-in { flex: 1 1 200px; max-width: 320px; min-width: 0; }
+.dl-board .card-title-row { align-items: center; gap: 10px; flex-wrap: wrap; }
+.dl-empty { padding: 14px 4px; }
+.dl-rows { display: flex; flex-direction: column; gap: 4px; list-style: none; margin: 8px 0 0; padding: 0; }
+.dl-row {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 34px 70px 76px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgb(var(--ink-rgb) / 0.45);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-2);
+  border-radius: var(--r-1);
+}
+.dl-row.dl-head { background: none; border-color: transparent; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); padding-top: 2px; padding-bottom: 2px; }
+.dl-c-rank { text-align: center; color: var(--text-3); font-weight: 700; }
+.dl-c-name { display: flex; align-items: baseline; gap: 8px; min-width: 0; flex-wrap: wrap; }
+.dl-nm { font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.dl-sub { font-size: var(--fs-xs); color: var(--text-3); }
+.dl-you { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--on-gold); background: var(--gold); padding: 1px 6px; border-radius: 999px; }
+.dl-c-score { text-align: right; font-weight: 800; color: var(--gold); }
+.dl-c-view { text-align: right; font-size: var(--fs-s); color: var(--text-2); }
+.dl-row.mine { border-left-color: var(--gold); background: linear-gradient(90deg, rgb(var(--gold-rgb) / 0.14), rgb(var(--ink-rgb) / 0.5)); }
+.dl-row.top-1 { border-left-color: #f2c14e; }
+.dl-row.top-2 { border-left-color: #c5ccd6; }
+.dl-row.top-3 { border-left-color: #c58b5b; }
+.dl-row.top-1 .dl-c-rank { color: #f2c14e; }
+.dl-row.top-2 .dl-c-rank { color: #c5ccd6; }
+.dl-row.top-3 .dl-c-rank { color: #c58b5b; }
+
+/* ----------------------------------------------------------------- records */
+.dl-recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.dl-rec {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  background: rgb(var(--ink-rgb) / 0.4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  opacity: 0.6;
+}
+.dl-rec.got { opacity: 1; border-color: rgb(var(--gold-rgb) / 0.45); background: linear-gradient(90deg, rgb(var(--gold-rgb) / 0.08), rgb(var(--ink-rgb) / 0.45)); }
+.dl-rec-ico { font-size: 26px; text-align: center; }
+.dl-rec-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dl-rec-name { font-size: var(--fs-m); font-weight: 700; color: var(--text); }
+.dl-rec-sub { font-size: var(--fs-xs); color: var(--text-3); }
+.dl-rec-val { font-size: var(--fs-l); font-weight: 800; color: var(--gold); white-space: nowrap; }
+
+/* ------------------------------------------------------ victory result block */
+.dl-res { display: flex; flex-direction: column; gap: 8px; }
+.dl-res-main { display: flex; align-items: center; gap: 12px; }
+.dl-res-main .cr-grade { min-width: 34px; height: 34px; font-size: 20px; }
+.dl-res-score { font-size: 32px; font-weight: 800; color: var(--gold); line-height: 1; }
+.dl-res-notes { display: flex; flex-wrap: wrap; gap: 6px; }
+.dl-res-notes .cr-note { margin-top: 0; }
+.dl-submit { display: flex; flex-direction: column; gap: 6px; }
+.dl-priv { font-size: var(--fs-xs); color: var(--text-3); }
+.dl-res .btn.ready { color: var(--on-gold); background: linear-gradient(180deg, var(--gold-hi), var(--gold) 45%, var(--gold-2)); border-color: var(--gold-hi); font-weight: 700; }
+.dl-res .btn.ready:hover { filter: brightness(1.08); color: var(--on-gold); }
+.dl-res .btn:disabled { opacity: 0.6; cursor: default; }
+
+/* -------------------------------------------------------------- responsive */
+@media (min-width: 900px) {
+  /* score on the left, submit on the right: keeps the victory card short */
+  .dl-res { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); column-gap: 18px; row-gap: 8px; align-items: start; }
+  .dl-res .cr-res-head { grid-column: 1 / -1; margin-bottom: 0; }
+  .dl-res .dl-res-main, .dl-res .dl-res-notes { grid-column: 1; }
+  .dl-res .dl-submit, .dl-res > .hint { grid-column: 2; grid-row: 2 / span 2; align-self: center; }
+}
+@media (max-width: 1100px) {
+  .dl-today { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .dl-row { grid-template-columns: 30px minmax(0, 1fr) 30px 56px; }
+  .dl-row .dl-c-view { display: none; }
+}

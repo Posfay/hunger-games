@@ -1,0 +1,74 @@
+{
+ "1": {
+  "heights": "401cc19d559183f1",
+  "colors": "9e6e3ba8d8ca4886",
+  "forest": "ee109bcc7da84446",
+  "nav": "770e190bf64f46655621c36135a97d2d8995c6b28b95ffc6",
+  "rocks": "ef69703b8c29f124",
+  "landmarks": "c4712f9dbba8efea",
+  "hide": "d3cdc897b8bd91f9"
+ },
+ "12345": {
+  "heights": "40f2d470396392be",
+  "colors": "9980fe76ccdf4345",
+  "forest": "d3965a8a785850c9",
+  "nav": "360211ec8b96841fa50f0a75d7e31c17fc122fb741300b12",
+  "rocks": "a188d1d75d2749a0",
+  "landmarks": "7f8d81cea9f3ccbd",
+  "hide": "4d5d4a888e1f22c6"
+ },
+ "31337": {
+  "heights": "1c0076a6c573435f",
+  "colors": "8593a55d29360d2e",
+  "forest": "fdffadbd7811f4d1",
+  "nav": "07e6e002d35fbbdb4a7d1dac96969ceb55851c5d486e2a97",
+  "rocks": "6471ea0fd9242718",
+  "landmarks": "953377ca173f91bf",
+  "hide": "5456c29a8941c244"
+ },
+ "100000": {
+  "heights": "505395c2debee1f1",
+  "colors": "e8404f319af6a31e",
+  "forest": "c000e3ea7d5c5eb9",
+  "nav": "3678872a5c1d305b0cf9de1387d3d83ce9ae05d794d1a39d",
+  "rocks": "637e10acaa144e8b",
+  "landmarks": "1ff6cd290650a93e",
+  "hide": "af4e02e75725df4b"
+ },
+ "424242": {
+  "heights": "d1c4ec9a5e75da1b",
+  "colors": "97a8674958c89579",
+  "forest": "f3afa685b1acabd6",
+  "nav": "83107dbd8503da6e7ca957da5d470a94872263382a69b335",
+  "rocks": "6b6a335f03f7b378",
+  "landmarks": "8d4a7df6da009dbf",
+  "hide": "28f468ff2d102afd"
+ },
+ "552704": {
+  "heights": "2f02d80d60214086",
+  "colors": "bf60a60359392d50",
+  "forest": "0c7624bd1898c566",
+  "nav": "0ce8ea2b6c844adaa44d8cad5777e74ce322b8a061b44fb9",
+  "rocks": "76d6f80cbef34ade",
+  "landmarks": "f11e6e3677078fec",
+  "hide": "0d87f6c1e48bd510"
+ },
+ "777777": {
+  "heights": "888c6861df00f15c",
+  "colors": "bcb4047e2fc967f5",
+  "forest": "170e0b2f7dd45838",
+  "nav": "3cb76c1da63c5341951233f863d85debe917583fa3f5fcb5",
+  "rocks": "dfe53fd4b10d03e9",
+  "landmarks": "2fe89e39a92b6520",
+  "hide": "14b7ef14f290f5d9"
+ },
+ "999999": {
+  "heights": "11fc5249f6a3d3f9",
+  "colors": "c6f1788832d3e8fe",
+  "forest": "75e3a3617061c3be",
+  "nav": "1a6900f58a98e571e67f6dd8ecea696ea0a610396068d4d0",
+  "rocks": "906e07a92faaf3b2",
+  "landmarks": "186352ea7e23540c",
+  "hide": "ff5f1f298c17f2bd"
+ }
+}

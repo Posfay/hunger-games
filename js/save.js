@@ -8,6 +8,7 @@
  *   GM.Save.persistent()             false when the browser refuses to store data
  *   GM.Save.exportCode() / importCode(text)   copy / paste backup code
  *   GM.Save.reset()                  back to defaults (every section, in place)
+ *   GM.Save.resetSection(name)       back to defaults for one section only
  *
  * Section objects are mutated IN PLACE by import / reset / other-tab changes, so
  * modules can keep their reference. Events: 'save:imported', 'save:reset',
@@ -128,6 +129,17 @@
     doc.created = Date.now();
     Save.commit();
     GM.emit('save:reset', {});
+  };
+
+  /** Back to defaults for ONE section (in place); the others are untouched. */
+  Save.resetSection = function (name) {
+    const s = sections[name];
+    if (!s) return false;
+    replaceInPlace(s.data, clone(s.defaults));
+    doc.sections[name] = s.data;
+    Save.commit();
+    GM.emit('save:reset', { section: name });
+    return true;
   };
 
   // ------------------------------------------------------- backup code (text)

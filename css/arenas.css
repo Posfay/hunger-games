@@ -1,0 +1,31 @@
+/* ==========================================================================
+   Arena type picker (free-play setup screen).
+   ========================================================================== */
+
+.ar-pick { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.ar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin-top: 2px; }
+.ar-card {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  text-align: left;
+  background: rgb(var(--ink-rgb) / 0.5);
+  border: 1px solid var(--line-2);
+  border-left: 3px solid var(--line-2);
+  border-radius: var(--r-2);
+  transition: border-color var(--t-fast), background var(--t-fast), transform var(--t-fast);
+}
+.ar-card:hover { border-color: var(--line-hi); background: rgb(var(--cyan-rgb) / 0.07); }
+.ar-card:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+.ar-card.on { border-color: var(--gold); border-left-color: var(--gold); background: linear-gradient(90deg, rgb(var(--gold-rgb) / 0.14), rgb(var(--ink-rgb) / 0.5)); box-shadow: var(--gold-glow); }
+.ar-card.locked { opacity: 0.62; }
+.ar-card.locked:hover { opacity: 0.9; }
+.ar-ico { font-size: 24px; text-align: center; }
+.ar-card.locked .ar-ico { filter: grayscale(1); }
+.ar-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ar-name { font-size: var(--fs-m); font-weight: 700; color: var(--text); }
+.ar-card.on .ar-name { color: var(--gold-hi); }
+.ar-desc { font-size: var(--fs-xs); color: var(--text-3); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.ar-note { margin-top: 2px; padding: 7px 10px; font-size: var(--fs-s); font-weight: 600; color: var(--text-2); background: rgb(var(--ink-rgb) / 0.5); border: 1px solid rgb(var(--gold-rgb) / 0.4); border-radius: var(--r-1); }

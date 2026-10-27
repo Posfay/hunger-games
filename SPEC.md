@@ -130,6 +130,14 @@ Creative pillars:
 | `js/save.js` | core | `GM.Save` |
 | `js/career.js` | core | `GM.Career` |
 | `js/careerui.js`, `css/career.css` | **UI** | – (a system, `CareerUI`) |
+| `js/config.js` | core | `window.ARENA_CONFIG` (leaderboard URL, pack store URL) |
+| `js/daily.js` | core | `GM.Daily`, `GM.Records` |
+| `js/leaderboard.js` | core | `GM.Leaderboard` |
+| `js/dailyui.js`, `css/daily.css` | **UI** | – (a system, `DailyUI`) |
+| `js/arenas.js` | core | `GM.Arenas` |
+| `js/packs/*.js` | content | – (register themes with `GM.Arenas.register`) |
+| `js/arenaui.js`, `css/arenas.css` | **UI** | – (a system, `ArenaUI`) |
+| `server/` | – | the leaderboard service (Cloudflare Worker + D1), not part of the game bundle |
 
 Only edit files you own. If you need something from another module that the
 spec does not give you, feature-detect it and list it in your report.
@@ -168,6 +176,9 @@ System order (ascending):
 | 105 | Minimap | minimap.js |
 | 110 | Career | career.js |
 | 111 | CareerUI | careerui.js |
+| 112 | Daily | daily.js |
+| 113 | DailyUI | dailyui.js |
+| 114 | ArenaUI | arenaui.js |
 
 Flow (main.js):
 1. Boot: `i18n.init()`, all `init()`, `previewArena(randomSeed)` →
@@ -264,6 +275,10 @@ Speed/pause: `GM.Game.setSpeed(x)`, `GM.Game.stepSpeed(±1)`,
   feeds: true,             // live camera feeds on/off
   nameTags: true,          // name tags above contestants
   startSpeed: 1,
+  arena: 'verdant',        // arena type (GM.Arenas id); unknown / not installed -> 'verdant'
+  // set by the career / daily modes only:
+  career: { season, episode, id },
+  daily: { date, twist, mods },
 }
 ```
 `GM.Game.normalizeSettings()` fills defaults and generates a roster via
@@ -937,6 +952,10 @@ when ≤ 6 alive (betrayal chance by loyalty/cunning); final 2 always fight.
 | `career:levelup` / `career:trophy` | `{level}` / `{id}` | Career |
 | `save:imported` / `save:reset` / `save:external` | `{}` | Save |
 | `ui:victory` | `{root}` | UI (after the victory card is rendered; others may extend it) |
+| `daily:result` | `{result, improved}` | Daily (a daily Show was settled) |
+| `records:broken` | `{ids, info}` | Daily (a personal record was beaten) |
+| `arenas:changed` | `{id? selected?}` | Arenas |
+| `arena:generated` | `{seed, arena}` | Game (the terrain of a preview or a new Show was generated) |
 
 ---------------------------------------------------------------------------
 
@@ -976,6 +995,43 @@ the results block is injected into the victory card on `ui:victory`. All career 
 Tuning knobs are the constants at the top of `career.js` (`LEVEL_XP`, `CAST_CAP`, `POWERS`,
 `GRADE_*`, `PRIMARY_RANK`, `UPGRADES`). Check balance with
 `node tools/smoke.js --norender --career 6 --bot random --buy`; logic with `node tools/career-test.js`.
+
+---------------------------------------------------------------------------
+
+## 10c. Daily challenge, records, leaderboard, arena themes
+
+**`GM.Daily`** (`daily.js`, order 112): every UTC day has one Show, a pure function of the date
+(`challengeFor(date)`: seed, cast 14..28 (+8 on the "crowd" twist), personality mix, a twist). Everybody plays
+the same arena with the same cast; no studio upgrades, no sandbox, every power open. A daily Show is a normal Show
+started with `settings.daily = {date, twist, mods}`. The twist's `mods` replace the neutral power numbers
+(`GM.Career.modsFor` handles `settings.daily`; `GM.Powers` reads them in `reset()`), and the grade scale is the
+career one. At `game:end` the best score of the day, the streak and the records are saved (section `daily`) and
+`daily:result` is emitted. Retries are free; the best try counts.
+**Do not change** the generator (hash salt, RNG call order, twist table, cast formula) without a migration plan:
+players compare scores for a date, and `server/worker.js` keeps its own copy that `tools/daily-test.js` compares.
+
+**`GM.Records`** (same file): personal bests over every non-sandbox Show of any kind (score, viewers, longest,
+quickest win, most kills, most betrayals, biggest cast) plus grade and winner-type counts (section `records`).
+
+**`GM.Leaderboard`** (`leaderboard.js`): client of `server/worker.js`. Disabled (no request is ever made) while
+`ARENA_CONFIG.leaderboardUrl` is empty. A submission carries a random player id (never shown), the chosen name and
+the Show stats, and only happens when the player presses *Submit*. Scores are **reported, not proven** (the game is
+client-side); the worker checks ranges, grade vs score, cast and twist vs the day's challenge and the date window.
+
+**`GM.Arenas`** (`arenas.js`): arena themes. `DEFAULTS` lists every parameter (terrain shape and biome
+thresholds, ground palette, tree mix and colours, grass, water colour, far mountains, sky palette, weather odds,
+snow / wet floors). The classic arena ("verdant") is the defaults and must stay bit-identical:
+`tools/fixtures/classic-arenas.json` + `node tools/arena-test.js` guard it (arena codes and daily challenges promise
+the same arena forever). A theme is a partial override registered with `GM.Arenas.register({id, pack, icon, params})`.
+`Terrain.generate`, `World` (trees, grass, water, far mountains) and `Env` (`applyArena` on `arena:generated`)
+read `GM.Arenas.params()` of the arena activated by `Game.previewArena(seed, arena?)` / `Game.newGame(settings)`.
+Career and daily Shows always use the classic arena. A pack is a file in `js/packs/` that registers themes; the
+base game only knows the *names* of the pack arenas (`Arenas.PACKS`, strings in `arenas.js`), so a build without
+the file shows them as locked cards. `node tools/build.js` writes the full edition and a demo edition without packs.
+
+Tools: `node tools/daily-test.js` (daily, records, leaderboard client, worker on real SQLite),
+`node tools/arena-test.js` (themes), `node tools/arena-stats.js [arena]` (composition of a theme),
+`node tools/smoke.js --daily` / `--arena dunes|frost|mire` (whole Shows), `node server/dev-server.js` (local leaderboard).
 
 ---------------------------------------------------------------------------
 

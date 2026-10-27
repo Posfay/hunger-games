@@ -62,8 +62,10 @@
 
   // ------------------------------------------------------------ game flow
   /** Generate terrain for a seed and let World/Minimap rebuild (setup preview). */
-  Game.previewArena = function (seed) {
+  Game.previewArena = function (seed, arena) {
     seed = seed >>> 0;
+    // no arena given: the free-play pick; career and daily screens pass the classic arena explicitly
+    const arenaId = GM.Arenas.use(arena === undefined ? GM.Arenas.selected() : arena);
     GM.state.seed = seed;
     GM.R.seed(seed);
     if (GM.Terrain && GM.Terrain.generate) {
@@ -73,7 +75,7 @@
         GM.reportError('Terrain.generate', e);
       }
     }
-    GM.emit('arena:generated', { seed });
+    GM.emit('arena:generated', { seed, arena: arenaId });
   };
 
   /** Return to the setup screen (clears all game entities). */
@@ -104,9 +106,11 @@
         feeds: true,
         nameTags: true,
         startSpeed: 1,
+        arena: GM.Arenas.DEFAULT_ID,
       },
       s || {}
     );
+    s.arena = GM.Arenas.has(s.arena) ? s.arena : GM.Arenas.DEFAULT_ID;     // a missing pack falls back to the classic arena
     s.seed = s.seed >>> 0;
     s.contestantCount = GM.U.clamp(s.contestantCount | 0, CFG.MIN_CONTESTANTS, CFG.MAX_CONTESTANTS);
     if (!Array.isArray(s.roster) || s.roster.length < CFG.MIN_CONTESTANTS) {
@@ -123,6 +127,7 @@
     const s = Game.normalizeSettings(settings);
     callAll('clear');
     GM.resetState(s);
+    GM.Arenas.use(s.arena);
     GM.R.seed(s.seed);
     if (GM.Terrain && GM.Terrain.generate) {
       try {
@@ -131,7 +136,7 @@
         GM.reportError('Terrain.generate', e);
       }
     }
-    GM.emit('arena:generated', { seed: s.seed });
+    GM.emit('arena:generated', { seed: s.seed, arena: s.arena });
     GM.R.seed((s.seed ^ 0x5bd1e995) >>> 0); // separate stream for gameplay
     callAll('reset', s);
     GM.state.phase = 'countdown';

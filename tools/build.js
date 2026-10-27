@@ -5,11 +5,14 @@
  *   node tools/build.js
  *
  * Outputs:
- *   dist/arena.html          complete standalone page (double-click to play)
- *   dist/artifact.html       same content without <!doctype>/<html>/<head>/<body>
- *                            wrappers, for hosts that add their own skeleton
+ *   dist/arena.html          FULL edition: complete standalone page (double-click to play),
+ *                            includes the packs (js/packs/*.js)
+ *   dist/arena-demo.html     DEMO edition: the same game without the packs. The pack arenas
+ *                            show as locked cards; nothing of their content is in the file.
+ *   dist/artifact.html       full edition without <!doctype>/<html>/<head>/<body> wrappers,
+ *                            for hosts that add their own skeleton
  *
- * Local scripts and the stylesheet are inlined; CDN scripts (three.js) and
+ * Local scripts and the stylesheets are inlined; CDN scripts (three.js) and
  * Google Fonts links stay external.
  * ========================================================================== */
 'use strict';
@@ -29,50 +32,59 @@ const css = cssFiles.map((f) => `/* ${f} */\n${read(f)}`).join('\n');
 
 const scriptTags = [...html.matchAll(/<script\s+src="([^"]+)"\s*><\/script>/g)].map((m) => m[1]);
 if (!scriptTags.length) throw new Error('no <script src> tags found in index.html');
+const isPack = (src) => /^js\/packs\//.test(src);
 
 const escScript = (s) => s.replace(/<\/script/gi, '<\\/script').replace(/<!--/g, '<\\!--');
 const escStyle = (s) => s.replace(/<\/style/gi, '<\\/style');
 
-const scripts = scriptTags
-  .map((src) => {
-    if (/^https?:\/\//.test(src)) return `<script src="${src}"></script>`;
-    const code = read(src);
-    return `<script>/* ${src} */\n${escScript(code)}\n</script>`;
-  })
-  .join('\n');
+/** The <script> block of an edition. */
+function scriptsFor(edition) {
+  return scriptTags
+    .filter((src) => edition === 'full' || !isPack(src))
+    .map((src) => {
+      if (/^https?:\/\//.test(src)) return `<script src="${src}"></script>`;
+      const code = read(src);
+      return `<script>/* ${src} */\n${escScript(code)}\n</script>`;
+    })
+    .join('\n');
+}
 
 const bodyMarkup = '<canvas id="gl"></canvas>\n<div id="ui-root"></div>';
 
-const inner = [
-  `<title>${title}</title>`,
-  fonts,
-  `<style>\n${escStyle(css)}\n</style>`,
-  bodyMarkup,
-  scripts,
-].filter(Boolean).join('\n');
+function inner(scripts) {
+  return [`<title>${title}</title>`, fonts, `<style>\n${escStyle(css)}\n</style>`, bodyMarkup, scripts].filter(Boolean).join('\n');
+}
+function full(scripts) {
+  return [
+    '<!doctype html>',
+    '<html lang="en">',
+    '<head>',
+    '<meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">',
+    `<title>${title}</title>`,
+    fonts,
+    `<style>\n${escStyle(css)}\n</style>`,
+    '</head>',
+    '<body>',
+    bodyMarkup,
+    scripts,
+    '</body>',
+    '</html>',
+  ].filter(Boolean).join('\n');
+}
 
-const full = [
-  '<!doctype html>',
-  '<html lang="en">',
-  '<head>',
-  '<meta charset="utf-8">',
-  '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">',
-  `<title>${title}</title>`,
-  fonts,
-  `<style>\n${escStyle(css)}\n</style>`,
-  '</head>',
-  '<body>',
-  bodyMarkup,
-  scripts,
-  '</body>',
-  '</html>',
-].filter(Boolean).join('\n');
+const fullScripts = scriptsFor('full');
+const demoScripts = scriptsFor('demo');
+const outputs = {
+  'dist/arena.html': full(fullScripts),
+  'dist/arena-demo.html': full(demoScripts),
+  'dist/artifact.html': inner(fullScripts),
+};
 
 fs.mkdirSync(path.join(root, 'dist'), { recursive: true });
-fs.writeFileSync(path.join(root, 'dist/arena.html'), full);
-fs.writeFileSync(path.join(root, 'dist/artifact.html'), inner);
-
 const kb = (s) => (Buffer.byteLength(s) / 1024).toFixed(0) + ' KB';
-console.log(`dist/arena.html     ${kb(full)}`);
-console.log(`dist/artifact.html  ${kb(inner)}`);
-console.log(`${scriptTags.length} scripts bundled`);
+for (const f in outputs) {
+  fs.writeFileSync(path.join(root, f), outputs[f]);
+  console.log(f.padEnd(24) + kb(outputs[f]));
+}
+console.log(`${scriptTags.length} scripts bundled (${scriptTags.filter(isPack).length} pack file(s), left out of the demo)`);

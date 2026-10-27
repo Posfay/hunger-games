@@ -26,6 +26,8 @@
  *     --bot NAME          none | random | assistant: who uses powers in career runs (default random)
  *     --career-level L    start the career at level L (default 1)
  *     --buy               spend credits on upgrades between episodes
+ *     --daily             play today's daily challenge (GM.Daily.start) instead of a custom Show
+ *     --arena ID          arena type of a free-play Show: verdant (default) | dunes | frost | mire
  *
  * Career runs print one row per episode: grade / score / viewers / day / goals / rewards.
  *
@@ -69,6 +71,8 @@ const opt = {
   bot: String(arg('bot', 'random')),
   careerLevel: +arg('career-level', 1),
   buy: !!arg('buy', false),
+  daily: !!arg('daily', false),
+  arena: String(arg('arena', 'verdant')),
 };
 
 // --------------------------------------------------------- static server
@@ -247,10 +251,15 @@ function cdp(wsUrl) {
   if (opt.career > 0) return careerRun();
 
   // start
-  await evaluate(`(() => {
-    GM.Game.newGame({ seed: ${opt.seed}, contestantCount: ${opt.contestants}, mix: '${opt.mix}',
-      sandbox: ${opt.powers}, autoGM: ${opt.autogm}, quality: 'high', feeds: true, nameTags: true, startSpeed: 1 });
-  })()`);
+  if (opt.daily) {
+    if (!(await evaluate('GM.Daily.start()'))) { console.log('daily: could not start'); return finish(1); }
+    console.log('daily challenge: ' + JSON.stringify(await evaluate('GM.Daily.today()')));
+  } else {
+    await evaluate(`(() => {
+      GM.Game.newGame({ seed: ${opt.seed}, contestantCount: ${opt.contestants}, mix: '${opt.mix}',
+        sandbox: ${opt.powers}, autoGM: ${opt.autogm}, quality: 'high', feeds: true, nameTags: true, startSpeed: 1, arena: '${opt.arena}' });
+    })()`);
+  }
   await sleep(1500);
   await shot('02-countdown');
   await evaluate(`(() => {
@@ -370,6 +379,11 @@ function cdp(wsUrl) {
   console.log('by archetype (n / alive / kills / avg placement):');
   for (const [k, a] of Object.entries(rep.byArch)) console.log(`  ${k.padEnd(12)} ${a.n} / ${a.alive} / ${a.kills} / ${(a.placeSum / a.n).toFixed(1)}`);
   if (rep.powers) console.log('powers used: ' + rep.powers.join(', '));
+  if (opt.daily) {
+    console.log('daily result: ' + JSON.stringify(await evaluate('GM.Daily.result()')));
+    console.log('records: ' + JSON.stringify(await evaluate('GM.Records.list().map(r => r.id + "=" + r.value)')));
+    console.log('saved daily: ' + JSON.stringify(await evaluate('JSON.parse(localStorage.getItem(GM.Save.KEY)).sections.daily')));
+  }
   console.log('i18n missing in hu: ' + rep.missing.hu.length + (rep.missing.hu.length ? ' ' + rep.missing.hu.slice(0, 40).join(', ') : ''));
   console.log('i18n missing in en: ' + rep.missing.en.length + (rep.missing.en.length ? ' ' + rep.missing.en.slice(0, 40).join(', ') : ''));
   if (rep.unresolved.length) console.log('unresolved log strings:\n  ' + rep.unresolved.join('\n  '));

@@ -3205,10 +3205,181 @@ button.chip-i:active { transform: translateY(1px); }
   .cr-lv-bar i, .cr-toast { transition: none; }
 }
 
+/* css/daily.css */
+/* ==========================================================================
+   Daily challenge: the daily screen (reuses the career hub layout), the
+   leaderboard table, records, and the result block of the victory card.
+   ========================================================================== */
+
+.dl-hub { z-index: 12; }
+.setup-kicker .dl-sw { margin-left: 6px; }
+.cr-head-top .dl-open { height: 32px; color: var(--gold); border-color: rgb(var(--gold-rgb) / 0.5); }
+.cr-head-top .dl-open:hover { color: var(--gold-hi); border-color: var(--gold); background: var(--gold-a); }
+
+/* ------------------------------------------------------------------- today */
+.dl-today { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 14px; align-items: start; }
+.dl-side { display: flex; flex-direction: column; gap: 14px; }
+.dl-twist {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  background: linear-gradient(90deg, rgb(var(--gold-rgb) / 0.12), rgb(var(--ink-rgb) / 0.5));
+  border: 1px solid rgb(var(--gold-rgb) / 0.45);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--r-2);
+}
+.dl-twist-kick { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
+.dl-twist-name { font: 900 20px/1.1 var(--font-brand); letter-spacing: 0.03em; color: var(--text); }
+.dl-twist-desc { font-size: var(--fs-m); color: var(--text-2); line-height: 1.4; }
+
+.dl-best-row { display: flex; align-items: baseline; gap: 12px; }
+.dl-best-row .cr-grade { align-self: center; min-width: 34px; height: 34px; font-size: 20px; }
+.dl-best-score { font-size: 34px; font-weight: 800; color: var(--gold); line-height: 1; }
+.dl-best-pts { font-size: var(--fs-s); color: var(--text-3); }
+.dl-streak-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.dl-flame { font-size: 26px; filter: grayscale(1); opacity: 0.45; }
+.dl-flame.on { filter: none; opacity: 1; text-shadow: 0 0 14px rgb(var(--amber-rgb) / 0.6); }
+.dl-streak-n { font-size: var(--fs-xl, 22px); font-weight: 800; color: var(--text); }
+.dl-streak-max { margin-left: auto; font-size: var(--fs-xs); color: var(--text-3); }
+
+/* ------------------------------------------------------------- leaderboard */
+.dl-name { display: flex; flex-direction: column; gap: 5px; }
+.dl-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dl-name-in { flex: 1 1 200px; max-width: 320px; min-width: 0; }
+.dl-board .card-title-row { align-items: center; gap: 10px; flex-wrap: wrap; }
+.dl-empty { padding: 14px 4px; }
+.dl-rows { display: flex; flex-direction: column; gap: 4px; list-style: none; margin: 8px 0 0; padding: 0; }
+.dl-row {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 34px 70px 76px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgb(var(--ink-rgb) / 0.45);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-2);
+  border-radius: var(--r-1);
+}
+.dl-row.dl-head { background: none; border-color: transparent; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3); padding-top: 2px; padding-bottom: 2px; }
+.dl-c-rank { text-align: center; color: var(--text-3); font-weight: 700; }
+.dl-c-name { display: flex; align-items: baseline; gap: 8px; min-width: 0; flex-wrap: wrap; }
+.dl-nm { font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.dl-sub { font-size: var(--fs-xs); color: var(--text-3); }
+.dl-you { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--on-gold); background: var(--gold); padding: 1px 6px; border-radius: 999px; }
+.dl-c-score { text-align: right; font-weight: 800; color: var(--gold); }
+.dl-c-view { text-align: right; font-size: var(--fs-s); color: var(--text-2); }
+.dl-row.mine { border-left-color: var(--gold); background: linear-gradient(90deg, rgb(var(--gold-rgb) / 0.14), rgb(var(--ink-rgb) / 0.5)); }
+.dl-row.top-1 { border-left-color: #f2c14e; }
+.dl-row.top-2 { border-left-color: #c5ccd6; }
+.dl-row.top-3 { border-left-color: #c58b5b; }
+.dl-row.top-1 .dl-c-rank { color: #f2c14e; }
+.dl-row.top-2 .dl-c-rank { color: #c5ccd6; }
+.dl-row.top-3 .dl-c-rank { color: #c58b5b; }
+
+/* ----------------------------------------------------------------- records */
+.dl-recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.dl-rec {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  background: rgb(var(--ink-rgb) / 0.4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2);
+  opacity: 0.6;
+}
+.dl-rec.got { opacity: 1; border-color: rgb(var(--gold-rgb) / 0.45); background: linear-gradient(90deg, rgb(var(--gold-rgb) / 0.08), rgb(var(--ink-rgb) / 0.45)); }
+.dl-rec-ico { font-size: 26px; text-align: center; }
+.dl-rec-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dl-rec-name { font-size: var(--fs-m); font-weight: 700; color: var(--text); }
+.dl-rec-sub { font-size: var(--fs-xs); color: var(--text-3); }
+.dl-rec-val { font-size: var(--fs-l); font-weight: 800; color: var(--gold); white-space: nowrap; }
+
+/* ------------------------------------------------------ victory result block */
+.dl-res { display: flex; flex-direction: column; gap: 8px; }
+.dl-res-main { display: flex; align-items: center; gap: 12px; }
+.dl-res-main .cr-grade { min-width: 34px; height: 34px; font-size: 20px; }
+.dl-res-score { font-size: 32px; font-weight: 800; color: var(--gold); line-height: 1; }
+.dl-res-notes { display: flex; flex-wrap: wrap; gap: 6px; }
+.dl-res-notes .cr-note { margin-top: 0; }
+.dl-submit { display: flex; flex-direction: column; gap: 6px; }
+.dl-priv { font-size: var(--fs-xs); color: var(--text-3); }
+.dl-res .btn.ready { color: var(--on-gold); background: linear-gradient(180deg, var(--gold-hi), var(--gold) 45%, var(--gold-2)); border-color: var(--gold-hi); font-weight: 700; }
+.dl-res .btn.ready:hover { filter: brightness(1.08); color: var(--on-gold); }
+.dl-res .btn:disabled { opacity: 0.6; cursor: default; }
+
+/* -------------------------------------------------------------- responsive */
+@media (min-width: 900px) {
+  /* score on the left, submit on the right: keeps the victory card short */
+  .dl-res { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); column-gap: 18px; row-gap: 8px; align-items: start; }
+  .dl-res .cr-res-head { grid-column: 1 / -1; margin-bottom: 0; }
+  .dl-res .dl-res-main, .dl-res .dl-res-notes { grid-column: 1; }
+  .dl-res .dl-submit, .dl-res > .hint { grid-column: 2; grid-row: 2 / span 2; align-self: center; }
+}
+@media (max-width: 1100px) {
+  .dl-today { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .dl-row { grid-template-columns: 30px minmax(0, 1fr) 30px 56px; }
+  .dl-row .dl-c-view { display: none; }
+}
+
+/* css/arenas.css */
+/* ==========================================================================
+   Arena type picker (free-play setup screen).
+   ========================================================================== */
+
+.ar-pick { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.ar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin-top: 2px; }
+.ar-card {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  text-align: left;
+  background: rgb(var(--ink-rgb) / 0.5);
+  border: 1px solid var(--line-2);
+  border-left: 3px solid var(--line-2);
+  border-radius: var(--r-2);
+  transition: border-color var(--t-fast), background var(--t-fast), transform var(--t-fast);
+}
+.ar-card:hover { border-color: var(--line-hi); background: rgb(var(--cyan-rgb) / 0.07); }
+.ar-card:focus-visible { outline: 2px solid var(--cyan); outline-offset: 1px; }
+.ar-card.on { border-color: var(--gold); border-left-color: var(--gold); background: linear-gradient(90deg, rgb(var(--gold-rgb) / 0.14), rgb(var(--ink-rgb) / 0.5)); box-shadow: var(--gold-glow); }
+.ar-card.locked { opacity: 0.62; }
+.ar-card.locked:hover { opacity: 0.9; }
+.ar-ico { font-size: 24px; text-align: center; }
+.ar-card.locked .ar-ico { filter: grayscale(1); }
+.ar-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ar-name { font-size: var(--fs-m); font-weight: 700; color: var(--text); }
+.ar-card.on .ar-name { color: var(--gold-hi); }
+.ar-desc { font-size: var(--fs-xs); color: var(--text-3); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.ar-note { margin-top: 2px; padding: 7px 10px; font-size: var(--fs-s); font-weight: 600; color: var(--text-2); background: rgb(var(--ink-rgb) / 0.5); border: 1px solid rgb(var(--gold-rgb) / 0.4); border-radius: var(--r-1); }
+
 </style>
 <canvas id="gl"></canvas>
 <div id="ui-root"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.149.0/three.min.js"></script>
+<script>/* js/config.js */
+/* ==========================================================================
+ * config.js — deployment settings. Loaded first; safe to edit, nothing here is secret.
+ *
+ *   leaderboardUrl   Base URL of the leaderboard service (server/worker.js deployed on
+ *                    Cloudflare Workers), e.g. 'https://arena-leaderboard.you.workers.dev'.
+ *                    Leave empty to run offline: the Daily screen then only shows the
+ *                    player's own scores and records, and nothing is ever sent anywhere.
+ *   packUrl          Store page where players can get the Expedition Pack (itch.io / Steam).
+ *                    Locked arena cards link to it; empty = they just describe the pack.
+ * ========================================================================== */
+window.ARENA_CONFIG = window.ARENA_CONFIG || {
+  leaderboardUrl: '',
+  packUrl: '',
+};
+
+</script>
 <script>/* js/core.js */
 /* ==========================================================================
  * core.js — shared foundation for "Arena Showrunner".
@@ -3987,6 +4158,7 @@ button.chip-i:active { transform: translateY(1px); }
  *   GM.Save.persistent()             false when the browser refuses to store data
  *   GM.Save.exportCode() / importCode(text)   copy / paste backup code
  *   GM.Save.reset()                  back to defaults (every section, in place)
+ *   GM.Save.resetSection(name)       back to defaults for one section only
  *
  * Section objects are mutated IN PLACE by import / reset / other-tab changes, so
  * modules can keep their reference. Events: 'save:imported', 'save:reset',
@@ -4107,6 +4279,17 @@ button.chip-i:active { transform: translateY(1px); }
     doc.created = Date.now();
     Save.commit();
     GM.emit('save:reset', {});
+  };
+
+  /** Back to defaults for ONE section (in place); the others are untouched. */
+  Save.resetSection = function (name) {
+    const s = sections[name];
+    if (!s) return false;
+    replaceInPlace(s.data, clone(s.defaults));
+    doc.sections[name] = s.data;
+    Save.commit();
+    GM.emit('save:reset', { section: name });
+    return true;
   };
 
   // ------------------------------------------------------- backup code (text)
@@ -4338,6 +4521,13 @@ button.chip-i:active { transform: translateY(1px); }
    */
   Career.modsFor = function (settings) {
     const m = Object.assign({}, BASE_MODS);
+    // daily challenge: the day's twist replaces the base numbers; studio upgrades never apply
+    if (settings && settings.daily && !settings.career) {
+      const tw = settings.daily.mods || {};
+      for (const k in BASE_MODS) if (typeof tw[k] === 'number' && isFinite(tw[k])) m[k] = tw[k];
+      m.startEnergy = Math.min(m.startEnergy, m.maxEnergy);
+      return m;
+    }
     if (!settings || !settings.career) return m;
     m.maxEnergy += 10 * upgradeLevel('power');
     m.startEnergy += 10 * upgradeLevel('sponsors');
@@ -4554,9 +4744,9 @@ button.chip-i:active { transform: translateY(1px); }
     GM.emit('career:changed', { began: true });
   };
 
-  /** Wipe the whole career and all lifetime stats (back to the first-run state). */
+  /** Wipe the career and its lifetime stats (back to the first-run state). Daily scores and records stay. */
   Career.reset = function () {
-    if (GM.Save) GM.Save.reset();
+    if (GM.Save) GM.Save.resetSection('career');
     GM.emit('career:changed', { reset: true });
   };
 
@@ -4838,6 +5028,748 @@ button.chip-i:active { transform: translateY(1px); }
         // leaving a career Show early: nothing is earned, the brief stays for another try
         live.running = false;
       });
+    },
+  });
+})();
+
+</script>
+<script>/* js/daily.js */
+/* ==========================================================================
+ * daily.js — the daily challenge and the player's records.
+ *
+ * Every UTC day has one fixed Show: the same arena, cast and personality mix for
+ * everybody, plus a "twist" (a different energy / cooldown / hype setup). Players
+ * compete on the Show score; the best try of the day counts. Daily Shows are
+ * neutral: no studio upgrades, no sandbox, every power unlocked.
+ *
+ *   GM.Daily.today()               { date, seed, count, mix, twist, mods } for the current UTC day
+ *   GM.Daily.challengeFor(date)    the same for any 'YYYY-MM-DD' (deterministic)
+ *   GM.Daily.start()               launch today's Show (setup screen only)
+ *   GM.Daily.active()              a daily Show is on (countdown, running, or just ended)
+ *   GM.Daily.result()              the last finished daily Show (null after a reload)
+ *   GM.Daily.best(date) / streak() / history(n) / msToReset()
+ *   GM.Daily.name() / setName(s) / pid()   leaderboard identity (anonymous id + chosen name)
+ *   GM.Daily.payload(result)       what the leaderboard receives
+ *
+ *   GM.Records.list()              personal records [{ id, icon, value, ts, mode, seed }]
+ *   GM.Records.data                saved totals (shows, wins by type, grade counts)
+ *
+ * Events: 'daily:result' {result, improved}, 'records:broken' {ids, info}.
+ * Records and the Show tracker cover every kind of Show (free play, career, daily);
+ * sandbox Shows never set records. Owner: core.
+ * ========================================================================== */
+(function () {
+  'use strict';
+  const GM = window.GM;
+  const U = GM.U;
+  const CFG = GM.CFG;
+
+  const SALT = 'arena-showrunner-daily-v1';
+  const KEEP_DAYS = 60;
+  const DAY_MS = 86400000;
+  const NAME_MAX = 16;
+
+  const MIXES = ['balanced', 'balanced', 'bloodthirsty', 'chaos', 'peaceful'];
+  /**
+   * The day's twist. `mods` replace the neutral power numbers (maxEnergy 100, startEnergy 60,
+   * regen / cooldown / hype 1); `cast` adds contestants. Weights decide how often it comes up.
+   */
+  const TWISTS = [
+    { id: 'classic', w: 3, mods: {}, cast: 0 },
+    { id: 'lean', w: 2, mods: { maxEnergy: 75, startEnergy: 45, regen: 1.2 }, cast: 0 },
+    { id: 'quickdraw', w: 2, mods: { cooldown: 0.65, regen: 0.8 }, cast: 0 },
+    { id: 'showtime', w: 2, mods: { maxEnergy: 85, startEnergy: 50, hype: 1.25 }, cast: 0 },
+    { id: 'crowd', w: 2, mods: {}, cast: 8 },
+  ];
+  const TWIST_BY_ID = Object.create(null);
+  TWISTS.forEach(function (t) { TWIST_BY_ID[t.id] = t; });
+
+  // ================================================================ save data
+  const data = GM.Save.section('daily', {
+    pid: '',                  // anonymous player id (random, never shown)
+    name: '',                 // leaderboard name
+    played: 0,                // daily Shows finished
+    best: {},                 // 'YYYY-MM-DD' -> { score, grade, viewers, day, winner, cast, ts, sent }
+    streak: { cur: 0, max: 0, last: '' },
+  });
+  const recData = GM.Save.section('records', {
+    shows: 0,                 // finished non-sandbox Shows of any kind
+    grades: { S: 0, A: 0, B: 0, C: 0, D: 0 },
+    wins: {},                 // winner type -> count
+    best: {},                 // record id -> { v, ts, mode, seed }
+  });
+  function commit() { GM.Save.commit(); }
+
+  // ================================================================== helpers
+  function round1(v) { return Math.round((+v || 0) * 10) / 10; }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+  const Daily = (GM.Daily = {
+    TWISTS: TWISTS, NAME_MAX: NAME_MAX, data: data,
+    /** Replaceable clock (tests). */
+    now() { return Date.now(); },
+  });
+  let lastResult = null;
+
+  /** 'YYYY-MM-DD' of a timestamp in UTC. */
+  Daily.dateKey = function (ms) {
+    const d = new Date(ms == null ? Daily.now() : ms);
+    return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth() + 1) + '-' + pad2(d.getUTCDate());
+  };
+  /** Timestamp (UTC midnight) of a 'YYYY-MM-DD' key, NaN when malformed. */
+  Daily.dateMs = function (key) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(key));
+    return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) : NaN;
+  };
+  Daily.shiftDate = function (key, days) { return Daily.dateKey(Daily.dateMs(key) + days * DAY_MS); };
+  /** Milliseconds until the next UTC midnight (the next challenge). */
+  Daily.msToReset = function () {
+    const n = Daily.now();
+    return Math.max(0, Math.floor(n / DAY_MS) * DAY_MS + DAY_MS - n);
+  };
+
+  // =============================================================== the challenge
+  function weighted(rng, list) {
+    let total = 0;
+    for (let i = 0; i < list.length; i++) total += list[i].w;
+    let r = rng() * total;
+    for (let i = 0; i < list.length; i++) {
+      r -= list[i].w;
+      if (r <= 0) return list[i];
+    }
+    return list[list.length - 1];
+  }
+
+  /** The Show everybody plays on `date` ('YYYY-MM-DD'). Pure function of the date. */
+  Daily.challengeFor = function (date) {
+    const rng = GM.makeRng(GM.hashString(SALT + ':' + date));
+    const seed = 100000 + Math.floor(rng() * 900000);
+    const twist = weighted(rng, TWISTS);
+    const mix = MIXES[Math.floor(rng() * MIXES.length)];
+    let count = 14 + 2 * Math.floor(rng() * 8);                       // 14 .. 28
+    count = Math.min(CFG.MAX_CONTESTANTS, count + twist.cast);
+    return { date: date, seed: seed, count: count, mix: mix, twist: twist.id, mods: Object.assign({}, twist.mods) };
+  };
+  Daily.today = function () { return Daily.challengeFor(Daily.dateKey()); };
+
+  /** True while a daily Show is on (countdown, running, or just ended). */
+  Daily.active = function () {
+    const st = GM.state;
+    const s = st && st.settings;
+    return !!(s && s.daily) && st.phase !== 'setup' && st.phase !== 'boot';
+  };
+
+  /** Launch today's Show. Only from the setup screen. */
+  Daily.start = function () {
+    if (!GM.Game || GM.state.phase !== 'setup') return false;
+    const c = Daily.today();
+    const opts = (GM.UI && typeof GM.UI.getOptions === 'function' && GM.UI.getOptions()) || {};
+    const s = {
+      seed: c.seed, contestantCount: c.count, mix: c.mix, roster: null,
+      sandbox: false, autoGM: false,
+      quality: opts.quality === 'low' ? 'low' : 'high',
+      feeds: opts.feeds !== false, nameTags: opts.nameTags !== false, startSpeed: 1,
+      daily: { date: c.date, twist: c.twist, mods: c.mods },
+    };
+    if (GM.Audio && typeof GM.Audio.unlock === 'function') { try { GM.Audio.unlock(); } catch (e) { /* optional */ } }
+    GM.Game.newGame(s);
+    if (GM.AutoGM && typeof GM.AutoGM.setEnabled === 'function') { try { GM.AutoGM.setEnabled(false); } catch (e) { /* optional */ } }
+    return true;
+  };
+
+  // ============================================================ player identity
+  function randomId() {
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let out = '';
+    let bytes = null;
+    try {
+      if (window.crypto && window.crypto.getRandomValues) bytes = window.crypto.getRandomValues(new Uint8Array(20));
+    } catch (e) { bytes = null; }
+    for (let i = 0; i < 20; i++) out += alphabet[(bytes ? bytes[i] : Math.floor(Math.random() * 256)) % alphabet.length];
+    return out;
+  }
+  Daily.pid = function () {
+    if (!data.pid) { data.pid = randomId(); commit(); }
+    return data.pid;
+  };
+  /** Trim, collapse whitespace, drop control characters and angle brackets, cap the length. */
+  Daily.cleanName = function (s) {
+    return String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, NAME_MAX).trim();
+  };
+  Daily.name = function () { return data.name || ''; };
+  Daily.setName = function (s) {
+    data.name = Daily.cleanName(s);
+    commit();
+    return data.name;
+  };
+
+  // ================================================================ saved bests
+  Daily.best = function (date) { return data.best[date || Daily.dateKey()] || null; };
+  /** Current and longest streak of days with a finished daily Show. cur is 0 once a day was missed. */
+  Daily.streak = function () {
+    const today = Daily.dateKey();
+    const last = data.streak.last;
+    const alive = last === today || last === Daily.shiftDate(today, -1);
+    return { cur: alive ? data.streak.cur : 0, max: data.streak.max, last: last, playedToday: last === today };
+  };
+  /** The last n days (newest first) with a finished daily Show: [{ date, ...best }]. */
+  Daily.history = function (n) {
+    return Object.keys(data.best).sort().reverse().slice(0, n || 14).map(function (d) { return Object.assign({ date: d }, data.best[d]); });
+  };
+  Daily.result = function () { return lastResult; };
+
+  /** The record a leaderboard receives for one finished Show. */
+  Daily.payload = function (res) {
+    return {
+      pid: Daily.pid(), name: data.name, score: res.score, grade: res.grade, viewers: res.viewers,
+      day: res.day, cast: res.cast, winner: res.winner || '', twist: res.twist,
+    };
+  };
+  Daily.markSent = function (date) {
+    if (data.best[date]) { data.best[date].sent = true; commit(); }
+  };
+
+  function pruneOld() {
+    const keys = Object.keys(data.best).sort();
+    while (keys.length > KEEP_DAYS) delete data.best[keys.shift()];
+  }
+
+  // ======================================================= Show tracker (all Shows)
+  const live = { betrayals: 0, powers: 0, done: false };
+  function resetLive() { live.betrayals = 0; live.powers = 0; live.done = false; }
+
+  // ===================================================================== records
+  /** Personal records. dir: 1 = higher is better, -1 = lower is better. */
+  const RECORDS = [
+    { id: 'score', icon: '🎯', dir: 1, get(i) { return i.score; } },
+    { id: 'viewers', icon: '👥', dir: 1, get(i) { return i.viewers; } },
+    { id: 'longest', icon: '🌙', dir: 1, get(i) { return i.day; } },
+    { id: 'quickest', icon: '⚡', dir: -1, get(i) { return i.winner && i.cast >= 12 ? i.time : 0; } },
+    { id: 'topKills', icon: '☠️', dir: 1, get(i) { return i.topKills; } },
+    { id: 'betrayals', icon: '🗡️', dir: 1, get(i) { return i.betrayals; } },
+    { id: 'cast', icon: '🎭', dir: 1, get(i) { return i.cast; } },
+  ];
+  const Records = (GM.Records = { DEFS: RECORDS, data: recData });
+
+  /** All record slots, in display order. value is null until set. */
+  Records.list = function () {
+    return RECORDS.map(function (d) {
+      const b = recData.best[d.id];
+      return { id: d.id, icon: d.icon, dir: d.dir, value: b ? b.v : null, ts: b ? b.ts : 0, mode: b ? b.mode : '', seed: b ? b.seed : 0 };
+    });
+  };
+
+  /** Fold one finished Show into the records. -> ids of the records it broke. */
+  function updateRecords(info) {
+    const broken = [];
+    recData.shows++;
+    recData.grades[info.grade] = (recData.grades[info.grade] || 0) + 1;
+    if (info.winner) recData.wins[info.winner] = (recData.wins[info.winner] || 0) + 1;
+    for (let i = 0; i < RECORDS.length; i++) {
+      const d = RECORDS[i];
+      const v = d.get(info);
+      if (!(v > 0)) continue;
+      const cur = recData.best[d.id];
+      if (cur && (d.dir > 0 ? v <= cur.v : v >= cur.v)) continue;
+      recData.best[d.id] = { v: v, ts: info.ts, mode: info.mode, seed: info.seed };
+      if (cur) broken.push(d.id);            // the first value is not a "new record"
+    }
+    return broken;
+  }
+
+  // ============================================================== a Show ends
+  function finish() {
+    if (live.done) return;
+    live.done = true;
+    const st = GM.state;
+    const s = st.settings || {};
+    if (!GM.Career || typeof GM.Career.snapshot !== 'function') return;
+    const snap = GM.Career.snapshot();
+    const info = {
+      mode: s.daily ? 'daily' : s.career ? 'career' : 'free',
+      seed: s.seed >>> 0,
+      score: round1(snap.score), grade: snap.grade, viewers: Math.round(snap.viewers),
+      day: snap.day, time: Math.round(snap.time), cast: st.contestants.length,
+      winner: snap.winner ? snap.winner.archetype : '',
+      topKills: snap.topKills, betrayals: live.betrayals, powers: live.powers,
+      ts: Date.now(),
+    };
+    let broken = [];
+    if (!s.sandbox) broken = updateRecords(info);
+
+    if (s.daily && s.daily.date) {
+      const date = s.daily.date;
+      const prev = data.best[date] || null;
+      const improved = !prev || info.score > prev.score;
+      data.played++;
+      if (improved) {
+        data.best[date] = { score: info.score, grade: info.grade, viewers: info.viewers, day: info.day, winner: info.winner, cast: info.cast, ts: info.ts, sent: false };
+        pruneOld();
+      }
+      const sk = data.streak;
+      if (sk.last !== date) {
+        sk.cur = sk.last === Daily.shiftDate(date, -1) ? sk.cur + 1 : 1;
+        sk.last = date;
+        sk.max = Math.max(sk.max, sk.cur);
+      }
+      lastResult = Object.assign({}, info, { date: date, twist: s.daily.twist, improved: improved, previous: prev ? prev.score : null, broken: broken, streak: sk.cur });
+      commit();
+      GM.emit('daily:result', { result: lastResult, improved: improved });
+    } else {
+      commit();
+    }
+    if (broken.length) GM.emit('records:broken', { ids: broken, info: info });
+  }
+
+  GM.registerSystem({
+    name: 'Daily',
+    order: 112,       // after Powers (80), which adds the winner bonus the score must include, and Career (110)
+    init() {
+      GM.on('game:new', resetLive);
+      GM.on('log', function (e) { if (e && e.type === 'betrayal' && GM.state.phase === 'running') live.betrayals++; });
+      GM.on('power:used', function () { live.powers++; });
+      GM.on('game:end', finish);
+    },
+  });
+})();
+
+</script>
+<script>/* js/leaderboard.js */
+/* ==========================================================================
+ * leaderboard.js — client of the online daily leaderboard (server/worker.js).
+ *
+ *   GM.Leaderboard.enabled()               a service URL is configured (js/config.js)
+ *   GM.Leaderboard.daily(date, limit)      -> Promise<{ ok, entries, total }>
+ *   GM.Leaderboard.allTime(limit)          -> Promise<{ ok, entries, stats }>
+ *   GM.Leaderboard.submit(date, payload)   -> Promise<{ ok, rank, total, improved }>
+ *
+ * Every promise resolves (never rejects) with { ok: false, error } on trouble:
+ * 'disabled' | 'offline' | 'timeout' | 'http' | 'bad'. Entries: { rank, name, score, grade,
+ * viewers, day, cast, winner, twist, date?, mine }. Nothing is sent unless the player
+ * presses "Submit" on the results card. Owner: core.
+ * ========================================================================== */
+(function () {
+  'use strict';
+  const GM = window.GM;
+
+  const TIMEOUT_MS = 8000;
+  const CACHE_MS = 30000;
+  const cache = new Map();            // url -> { at, value }
+
+  const LB = (GM.Leaderboard = {});
+
+  function base() {
+    const c = window.ARENA_CONFIG;
+    const u = c && typeof c.leaderboardUrl === 'string' ? c.leaderboardUrl.trim() : '';
+    return /^https?:\/\//i.test(u) ? u.replace(/\/+$/, '') : '';
+  }
+  LB.enabled = function () { return !!base(); };
+
+  function num(v, d) { v = +v; return isFinite(v) ? v : d || 0; }
+  function str(v, max) { return String(v == null ? '' : v).slice(0, max || 40); }
+
+  /** Public tag of this player's id (what the server puts in rows instead of the id). */
+  function myTag() {
+    return GM.Daily ? GM.hashString(GM.Daily.pid()).toString(16).padStart(8, '0') : '';
+  }
+
+  function cleanEntry(e) {
+    if (!e || typeof e !== 'object') return null;
+    const out = {
+      rank: num(e.rank), name: str(e.name, 24), score: num(e.score), grade: str(e.grade, 1),
+      viewers: num(e.viewers), day: num(e.day), cast: num(e.cast), winner: str(e.winner, 20), twist: str(e.twist, 20),
+      mine: !!e.pidh && e.pidh === myTag(),
+    };
+    if (e.date) out.date = str(e.date, 10);
+    return out;
+  }
+  function cleanList(list) {
+    const out = [];
+    if (!Array.isArray(list)) return out;
+    for (let i = 0; i < list.length && i < 200; i++) { const e = cleanEntry(list[i]); if (e) out.push(e); }
+    return out;
+  }
+
+  /** fetch + timeout + JSON; resolves { ok, status, json } or { ok: false, error }. */
+  function request(path, opts) {
+    const root = base();
+    if (!root) return Promise.resolve({ ok: false, error: 'disabled' });
+    if (typeof fetch !== 'function') return Promise.resolve({ ok: false, error: 'offline' });
+    const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+    const timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
+    const init = Object.assign({ mode: 'cors', credentials: 'omit', cache: 'no-store' }, opts || {});
+    if (ctl) init.signal = ctl.signal;
+    return fetch(root + path, init).then(function (r) {
+      clearTimeout(timer);
+      return r.json().then(function (json) {
+        return r.ok ? { ok: true, status: r.status, json: json } : { ok: false, error: 'http', status: r.status, message: str(json && json.error, 80) };
+      }, function () { return { ok: false, error: r.ok ? 'bad' : 'http', status: r.status }; });
+    }).catch(function (e) {
+      clearTimeout(timer);
+      return { ok: false, error: e && e.name === 'AbortError' ? 'timeout' : 'offline' };
+    });
+  }
+
+  function cached(key, loader) {
+    const hit = cache.get(key);
+    if (hit && Date.now() - hit.at < CACHE_MS) return Promise.resolve(hit.value);
+    return loader().then(function (value) {
+      if (value.ok) cache.set(key, { at: Date.now(), value: value });
+      return value;
+    });
+  }
+
+  LB.daily = function (date, limit) {
+    limit = Math.max(1, Math.min(100, limit | 0 || 50));
+    const path = '/v1/daily/' + encodeURIComponent(date) + '?limit=' + limit;
+    return cached(path, function () {
+      return request(path).then(function (r) {
+        if (!r.ok) return r;
+        const j = r.json;
+        if (!j || !Array.isArray(j.entries)) return { ok: false, error: 'bad' };
+        return { ok: true, date: str(j.date, 10), total: num(j.total), entries: cleanList(j.entries) };
+      });
+    });
+  };
+
+  LB.allTime = function (limit) {
+    limit = Math.max(1, Math.min(100, limit | 0 || 50));
+    const path = '/v1/alltime?limit=' + limit;
+    return cached(path, function () {
+      return request(path).then(function (r) {
+        if (!r.ok) return r;
+        const j = r.json;
+        if (!j || !Array.isArray(j.entries)) return { ok: false, error: 'bad' };
+        const s = j.stats || {};
+        return { ok: true, entries: cleanList(j.entries), stats: { players: num(s.players), runs: num(s.runs) } };
+      });
+    });
+  };
+
+  LB.submit = function (date, payload) {
+    return request('/v1/daily/' + encodeURIComponent(date), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload || {}),
+    }).then(function (r) {
+      if (!r.ok) return r;
+      cache.clear();
+      const j = r.json || {};
+      return { ok: true, rank: num(j.rank), total: num(j.total), improved: !!j.improved };
+    });
+  };
+})();
+
+</script>
+<script>/* js/arenas.js */
+/* ==========================================================================
+ * arenas.js — arena themes: the registry, the parameter set, the player's choice.
+ *
+ * An arena theme is a set of numbers and colours that Terrain (shape, biomes, ground
+ * colours), World (trees, grass, water, far mountains) and Env (sky, fog, weather,
+ * snow and wet ground) read while they build an arena. The classic arena ("verdant") is
+ * the defaults below; they reproduce the original hard-coded values exactly, so every
+ * arena code keeps making the same arena (tools/arena-test.js checks this).
+ *
+ *   GM.Arenas.register({ id, pack, icon, params })   add a theme (js/packs/*.js do this)
+ *   GM.Arenas.use(id)                                make a theme the active one (unknown -> verdant)
+ *   GM.Arenas.active() / params()                    active id / its complete parameter set
+ *   GM.Arenas.has(id) / owned(id)                    a theme is installed
+ *   GM.Arenas.list()                                 [{ id, icon, pack, owned }] in display order
+ *   GM.Arenas.selected() / select(id)                the player's pick on the setup screen (saved)
+ *   GM.Arenas.PACKS                                  packs the base game knows by name (id -> { icon, arenas })
+ *
+ * The base game knows the NAMES of the pack arenas (so locked cards can be shown) but not
+ * their parameters: those arrive with the pack file. Events: 'arenas:changed'. Owner: core.
+ * ========================================================================== */
+(function () {
+  'use strict';
+  const GM = window.GM;
+
+  // ================================================================== defaults
+  /**
+   * Every key a theme may override. Colours are 0..255 triples (+ per-channel variation where
+   * noted), hex numbers where THREE.Color takes them.
+   */
+  const DEFAULTS = {
+    terrain: {
+      lakes: null,                // [min, max] lakes, or null = the classic 1..3 distribution
+      lakeR: 1,                   // lake radius multiplier
+      hills: null,                // [min, max] rocky hills, or null = classic 2..4
+      hillH: 1,                   // hill height multiplier
+      hillR: 1,                   // hill radius multiplier
+      stream: 0.7,                // chance of a stream
+      base: 3.0,                  // base ground height (m)
+      rise: 3.6,                  // gentle rise towards the rim (m)
+      noise: 3.4,                 // large-scale roughness (m)
+      rim: 1,                     // rim mountain height multiplier
+      snowLine: 44,               // ground above this height (+ variation) is snow
+      rockSlope: [0.3, 0.48],     // slope range (0..1) where ground turns to rock
+      rockH: [24, 34],            // height range where ground turns to rock
+      sandMoist: 0.25,            // near-water sand needs more moisture than this
+      dryland: 0,                 // > 0: land drier than this becomes sand (deserts)
+      swamp: [2.6, 0.58],         // swamp: below this height, above this moisture
+      forest: 1,                  // tree cover multiplier
+      treeLine: [30, 42],         // tree cover fades out between these heights
+      boulders: 1,                // boulder count multiplier
+      moistNoise: 0.45,           // weight of the large-scale moisture noise
+      moistBias: 0,               // added to the moisture map (wetter > 0 > drier)
+    },
+    pal: {
+      bed: [166, 150, 104], bedDeep: [76, 86, 66],                    // lake bed: shallow -> deep
+      sand: [214, 196, 142, 16, 14, 10],                              // base rgb + variation rgb
+      rockLo: [112, 106, 98], rockHi: [138, 134, 132], rockVar: [22, 20, 18],
+      snow: [232, 236, 242, 12, 12, 10],
+      swamp: [78, 92, 50, 16, 14, 8],
+      grass: [[88, 138, 54], [106, 152, 60], [124, 162, 66]],        // three meadow greens
+      dry: [150, 150, 78],                                            // dry-ground tint (higher up, low moisture)
+      alpine: [118, 122, 96],                                         // near the rim
+      forestFloor: [50, 80, 38, 14, 12, 6],                           // ground under trees
+    },
+    trees: {
+      density: 1, lone: 0.01, scale: 1,
+      pine: 0,                                                        // added to the conifer score (+ = more conifers)
+      onSand: false, onSnow: false,                                   // may lone trees stand on sand / snow
+      pineCol: [0.37, 0.42, 0.2],                                     // hue, saturation, lightness
+      broadCol: [0.24, 0.5, 0.28],
+      autumn: 0.05, autumnCol: [0.07, 0.66, 0.42],                    // a few off-colour broadleaves
+      trunkCol: [0.07, 0.3, 0.2],
+    },
+    grass: {
+      byBiome: { grass: 1, swamp: 0.85, forest: 0.55, rock: 0.12, sand: 0, snow: 0 },
+      tint: [1.02, 1.12, 0.9],
+    },
+    water: { shallow: 0x3fa5a8, deep: 0x0e3f52 },
+    backdrop: {
+      snowH: 88, rockH: 34,
+      lo: [62, 84, 52, 14, 14, 8], rock: [118, 114, 108, 16, 14, 12], snow: [228, 232, 238, 0, 0, 0],
+    },
+    env: {
+      sky: {},                                                        // palette overrides, e.g. { dayZen: 0x3f7fd6 } (see env.js)
+      weather: { rain: 1, fog: 1, storm: 1, snow: 1, heat: 1 },      // multipliers of the natural weather odds
+      snowFloor: 0,                                                   // ground / trees never have less snow cover than this
+      wetFloor: 0,                                                    // ... or less wetness than this
+    },
+  };
+
+  function isObj(v) { return !!v && typeof v === 'object' && !Array.isArray(v); }
+  function clone(v) { return JSON.parse(JSON.stringify(v)); }
+  /** Deep merge: objects merge, arrays and scalars replace. Never touches the inputs. */
+  function merge(base, over) {
+    const out = clone(base);
+    (function walk(dst, src) {
+      for (const k in src) {
+        if (isObj(src[k]) && isObj(dst[k])) walk(dst[k], src[k]);
+        else dst[k] = clone(src[k]);
+      }
+    })(out, over || {});
+    return out;
+  }
+
+  // ================================================================== registry
+  const DEFAULT_ID = 'verdant';
+  const reg = Object.create(null);   // id -> { id, pack, icon, params }
+  const order = [];
+  let activeId = DEFAULT_ID;
+
+  const Arenas = (GM.Arenas = {
+    DEFAULT_ID: DEFAULT_ID,
+    DEFAULTS: DEFAULTS,
+    /** Packs the base game knows by name. Their arenas come with the pack file. */
+    PACKS: {
+      expedition: { id: 'expedition', icon: '🧭', arenas: ['dunes', 'frost', 'mire'] },
+    },
+  });
+
+  /** Names and one-line pitches live here so locked cards can show them; keep in step with the pack. */
+  GM.i18n.add({
+    en: {
+      'arena.verdant': 'Verdant Basin', 'arena.verdant.desc': 'The classic arena: meadows, forests, lakes and rocky hills.',
+      'arena.dunes': 'Dune Sea', 'arena.dunes.desc': 'Burning sand and red mesas. Water is rare and heat waves are common, so every drink counts.',
+      'arena.frost': 'Frostfall', 'arena.frost.desc': 'A valley under permanent snow. Cold nights wear contestants down, and a sleeping bag is worth fighting for.',
+      'arena.mire': 'Drowned Mire', 'arena.mire.desc': 'Black water, thick forest and fog. Cover is everywhere, so every ambush is a surprise.',
+      'pack.expedition': 'Expedition Pack',
+      'pack.expedition.desc': 'Three new arenas: Dune Sea, Frostfall and Drowned Mire.',
+    },
+    hu: {
+      'arena.verdant': 'Zöld medence', 'arena.verdant.desc': 'A klasszikus aréna: rétek, erdők, tavak és sziklás dombok.',
+      'arena.dunes': 'Dűnetenger', 'arena.dunes.desc': 'Perzselő homok és vörös fennsíkok. A víz ritka, a hőség gyakori, ezért minden korty számít.',
+      'arena.frost': 'Fagyvölgy', 'arena.frost.desc': 'Egy völgy örök hóban. A hideg éjszakák felőrlik a versenyzőket, és egy hálózsákért érdemes harcolni.',
+      'arena.mire': 'Elsüllyedt láp', 'arena.mire.desc': 'Fekete víz, sűrű erdő és köd. Mindenhol van fedezék, ezért minden lesből támadás meglepetés.',
+      'pack.expedition': 'Expedíció csomag',
+      'pack.expedition.desc': 'Három új aréna: Dűnetenger, Fagyvölgy és Elsüllyedt láp.',
+    },
+  });
+
+  Arenas.register = function (def) {
+    if (!def || !def.id) throw new Error('Arenas.register: an arena needs an id');
+    const first = !reg[def.id];
+    reg[def.id] = { id: def.id, pack: def.pack || null, icon: def.icon || '🗺️', params: merge(DEFAULTS, def.params) };
+    if (first) order.push(def.id);
+    GM.emit('arenas:changed', { id: def.id });
+    return reg[def.id];
+  };
+  Arenas.has = function (id) { return !!reg[id]; };
+  Arenas.owned = Arenas.has;
+  Arenas.active = function () { return activeId; };
+  Arenas.params = function () { return (reg[activeId] || reg[DEFAULT_ID]).params; };
+  /** Make `id` the active arena (unknown ids fall back to the classic one). -> the id in use */
+  Arenas.use = function (id) {
+    activeId = reg[id] ? id : DEFAULT_ID;
+    return activeId;
+  };
+  Arenas.icon = function (id) { return reg[id] ? reg[id].icon : '🗺️'; };
+
+  /** Display order: classic first, then every pack arena the base game knows (owned or not). */
+  Arenas.list = function () {
+    const out = [{ id: DEFAULT_ID, icon: reg[DEFAULT_ID].icon, pack: null, owned: true }];
+    for (const pid in Arenas.PACKS) {
+      const p = Arenas.PACKS[pid];
+      p.arenas.forEach(function (id) { out.push({ id: id, icon: reg[id] ? reg[id].icon : '🔒', pack: pid, owned: !!reg[id] }); });
+    }
+    for (const id of order) if (!out.some(function (o) { return o.id === id; })) out.push({ id: id, icon: reg[id].icon, pack: reg[id].pack, owned: true });
+    return out;
+  };
+  /** Pack ids with at least one missing arena. */
+  Arenas.lockedPacks = function () {
+    return Object.keys(Arenas.PACKS).filter(function (pid) { return Arenas.PACKS[pid].arenas.some(function (id) { return !reg[id]; }); });
+  };
+
+  // ============================================================ the player's pick
+  const data = GM.Save ? GM.Save.section('arenas', { selected: DEFAULT_ID }) : { selected: DEFAULT_ID };
+  /** The arena chosen on the setup screen (falls back to the classic one when its pack is gone). */
+  Arenas.selected = function () { return reg[data.selected] ? data.selected : DEFAULT_ID; };
+  Arenas.select = function (id) {
+    if (!reg[id] || data.selected === id) return false;
+    data.selected = id;
+    if (GM.Save) GM.Save.commit();
+    GM.emit('arenas:changed', { selected: id });
+    return true;
+  };
+
+  // The classic arena: nothing overridden.
+  Arenas.register({ id: DEFAULT_ID, pack: null, icon: '🌲', params: {} });
+})();
+
+</script>
+<script>/* js/packs/expedition.js */
+/* ==========================================================================
+ * packs/expedition.js — the Expedition Pack: three more arenas.
+ *
+ *   dunes   Dune Sea       sand, red mesas, one oasis; frequent heat waves
+ *   frost   Frostfall      permanent snow, dark pines; cold nights hurt without a sleeping bag
+ *   mire    Drowned Mire   black water, thick forest, fog; cover everywhere
+ *
+ * This file is the paid content: leave it out of a build and the base game shows these
+ * arenas as locked cards (their names live in arenas.js). Each theme only overrides what
+ * differs from the classic arena; see GM.Arenas.DEFAULTS for every key and its meaning.
+ * Colours: pal / backdrop / trees use 0..255 triples (HSL 0..1 for trees); env.sky and water use hex.
+ * ========================================================================== */
+(function () {
+  'use strict';
+  const GM = window.GM;
+  if (!GM || !GM.Arenas) return;
+
+  // ------------------------------------------------------------------- Dune Sea
+  GM.Arenas.register({
+    id: 'dunes', pack: 'expedition', icon: '🏜️',
+    params: {
+      terrain: {
+        lakes: [1, 2], lakeR: 0.55, stream: 0,
+        hills: [3, 5], hillH: 1.3, hillR: 1.1,
+        base: 2.4, rise: 3.0, noise: 3.8, rim: 0.85,
+        snowLine: 999, rockSlope: [0.26, 0.42], rockH: [20, 30],
+        dryland: 0.5, swamp: [-9, 2],
+        forest: 0.18, boulders: 1.4, moistNoise: 0.9, moistBias: -0.04,
+      },
+      pal: {
+        bed: [196, 176, 124], bedDeep: [112, 100, 70],
+        sand: [226, 192, 122, 18, 16, 12],
+        rockLo: [150, 98, 70], rockHi: [182, 124, 88], rockVar: [26, 20, 14],
+        grass: [[172, 150, 88], [186, 160, 92], [198, 172, 100]],
+        dry: [204, 168, 100], alpine: [168, 112, 80],
+        forestFloor: [132, 112, 66, 10, 10, 6],
+      },
+      trees: {
+        density: 1, lone: 0.03, scale: 0.8, pine: -0.9, onSand: true,
+        pineCol: [0.3, 0.3, 0.2], broadCol: [0.16, 0.42, 0.34], autumn: 0.1, autumnCol: [0.1, 0.5, 0.42], trunkCol: [0.09, 0.35, 0.3],
+      },
+      grass: { byBiome: { grass: 0.55, swamp: 0.5, forest: 0.3, rock: 0.04, sand: 0.1, snow: 0 }, tint: [1.12, 1.0, 0.8] },
+      water: { shallow: 0x58b7b0, deep: 0x15525f },
+      backdrop: { snowH: 9999, rockH: 30, lo: [182, 132, 88, 16, 12, 8], rock: [152, 98, 70, 20, 14, 10] },
+      env: {
+        sky: { dayZen: 0x3a78c8, dayHor: 0xe6d2ae, fogDay: 0xd8c39e, gndDay: 0x6e5a3a, overDay: 0xb09a7c, sunNoon: 0xfff0d0 },
+        weather: { rain: 0.08, fog: 0.15, storm: 0.3, snow: 0, heat: 4.5 },
+      },
+    },
+  });
+
+  // ------------------------------------------------------------------- Frostfall
+  GM.Arenas.register({
+    id: 'frost', pack: 'expedition', icon: '❄️',
+    params: {
+      terrain: {
+        lakes: [2, 3], lakeR: 1.1, stream: 0.5,
+        hills: [3, 5], hillH: 1.1,
+        base: 3.4, rise: 4.0, noise: 3.6, rim: 1.15,
+        snowLine: 1.0, swamp: [-9, 2],
+        forest: 1.9, treeLine: [38, 50], boulders: 1.1,
+      },
+      pal: {
+        bed: [120, 150, 170], bedDeep: [40, 62, 84],
+        sand: [200, 214, 226, 10, 10, 8],
+        snow: [238, 243, 250, 10, 10, 8],
+        rockLo: [96, 102, 112], rockHi: [150, 158, 170], rockVar: [20, 20, 20],
+        grass: [[124, 138, 118], [138, 150, 128], [150, 160, 138]],
+        dry: [150, 156, 150], alpine: [180, 188, 196],
+        forestFloor: [60, 84, 74, 10, 10, 8],
+      },
+      trees: {
+        density: 1, lone: 0.03, scale: 1.05, pine: 0.7, onSnow: true,
+        pineCol: [0.43, 0.38, 0.17], broadCol: [0.14, 0.15, 0.55], autumn: 0, trunkCol: [0.08, 0.15, 0.3],
+      },
+      grass: { byBiome: { grass: 0.5, swamp: 0.5, forest: 0.3, rock: 0.08, sand: 0, snow: 0 }, tint: [0.95, 1.0, 1.0] },
+      water: { shallow: 0xa7d8e8, deep: 0x1d4a6b },
+      backdrop: { snowH: 50, rockH: 28, lo: [150, 160, 172, 10, 10, 8], rock: [120, 128, 140, 14, 14, 14], snow: [236, 240, 248, 0, 0, 0] },
+      env: {
+        sky: { dayZen: 0x5a8ccc, dayHor: 0xc6d8ea, fogDay: 0xc2ccd6, gndDay: 0x7d8794, overDay: 0xaab4c0, sunNoon: 0xeef4ff },
+        weather: { rain: 0.2, fog: 1.3, storm: 0.5, snow: 7, heat: 0 },
+        snowFloor: 0.85,
+      },
+    },
+  });
+
+  // --------------------------------------------------------------- Drowned Mire
+  GM.Arenas.register({
+    id: 'mire', pack: 'expedition', icon: '🐊',
+    params: {
+      terrain: {
+        lakes: [4, 6], lakeR: 1.25, stream: 0.9,
+        hills: [1, 2], hillH: 0.5, hillR: 1.2,
+        base: 1.1, rise: 1.8, noise: 2.0, rim: 0.9,
+        snowLine: 999, swamp: [4.5, 0.4],
+        forest: 1.6, treeLine: [36, 48], boulders: 0.6, moistNoise: 0.55, moistBias: 0.22,
+      },
+      pal: {
+        bed: [90, 84, 60], bedDeep: [40, 46, 34],
+        sand: [140, 124, 86, 12, 10, 8],
+        swamp: [64, 78, 44, 14, 12, 8],
+        grass: [[70, 110, 50], [82, 122, 54], [96, 132, 58]],
+        dry: [110, 120, 66], alpine: [100, 112, 88],
+        forestFloor: [38, 62, 34, 10, 10, 6],
+      },
+      trees: {
+        density: 1.2, lone: 0.02, scale: 1.1, pine: -0.4,
+        pineCol: [0.35, 0.4, 0.16], broadCol: [0.27, 0.45, 0.24], autumn: 0.02, trunkCol: [0.1, 0.25, 0.16],
+      },
+      grass: { byBiome: { grass: 1, swamp: 1, forest: 0.6, rock: 0.1, sand: 0.1, snow: 0 }, tint: [0.9, 1.05, 0.85] },
+      water: { shallow: 0x5f8a62, deep: 0x14261c },
+      backdrop: { snowH: 9999, rockH: 40, lo: [48, 66, 48, 10, 10, 6], rock: [96, 100, 92, 12, 12, 10] },
+      env: {
+        sky: { dayZen: 0x5d86a8, dayHor: 0xb4c4b8, fogDay: 0x9fb0a6, gndDay: 0x2f3a28, overDay: 0x8f9c98 },
+        weather: { rain: 2.2, fog: 3.2, storm: 1.0, snow: 0, heat: 0.2 },
+        wetFloor: 0.35,
+      },
     },
   });
 })();
@@ -6097,6 +7029,14 @@ button.chip-i:active { transform: translateY(1px); }
   let ready = false;
   let ctx = { lakes: [], hills: [], stream: [], caves: [] };
   let rocks = [];
+  // Arena theme numbers (js/arenas.js); refreshed at the start of every generate().
+  let P = null;                             // theme.terrain
+  let PAL = null;                           // theme.pal
+  function loadTheme() {
+    const all = GM.Arenas.params();
+    P = all.terrain;
+    PAL = all.pal;
+  }
 
   // shoreline cache for nearestWater (rebuilt lazily when water or terrain changes)
   const SB = 16;                            // buckets per side
@@ -6203,11 +7143,11 @@ button.chip-i:active { transform: translateY(1px); }
   /** Choose lakes, hills and a stream for a seed. */
   function planLayout(rnd) {
     const lakes = [];
-    const lakeCount = rnd() < 0.2 ? 1 : rnd() < 0.55 ? 2 : 3;
+    const lakeCount = P.lakes ? P.lakes[0] + Math.floor(rnd() * (P.lakes[1] - P.lakes[0] + 1)) : rnd() < 0.2 ? 1 : rnd() < 0.55 ? 2 : 3;
     const baseAngle = rnd() * Math.PI * 2;
     for (let i = 0; i < lakeCount; i++) {
       for (let tries = 0; tries < 30; tries++) {
-        const r = 11 + rnd() * 10;
+        const r = (11 + rnd() * 10) * P.lakeR;
         const a = baseAngle + (i / lakeCount) * Math.PI * 2 + (rnd() - 0.5) * 1.1;
         const d = 45 + r * 0.6 + rnd() * Math.max(1, 120 - r * 0.4 - (45 + r * 0.6));
         const x = Math.sin(a) * d, z = Math.cos(a) * d;
@@ -6220,23 +7160,23 @@ button.chip-i:active { transform: translateY(1px); }
     }
 
     const hills = [];
-    const hillCount = 2 + Math.floor(rnd() * 3);
+    const hillCount = P.hills ? P.hills[0] + Math.floor(rnd() * (P.hills[1] - P.hills[0] + 1)) : 2 + Math.floor(rnd() * 3);
     for (let i = 0; i < hillCount; i++) {
       for (let tries = 0; tries < 40; tries++) {
-        const r = 13 + rnd() * 11;
+        const r = (13 + rnd() * 11) * P.hillR;
         const a = rnd() * Math.PI * 2;
         const d = 55 + rnd() * 68;
         const x = Math.sin(a) * d, z = Math.cos(a) * d;
         let ok = true;
         for (const L of lakes) if (U.dist2(x, z, L.x, L.z) < L.r + r + 12) { ok = false; break; }
         if (ok) for (const H of hills) if (U.dist2(x, z, H.x, H.z) < H.r + r + 16) { ok = false; break; }
-        if (ok) { hills.push({ x, z, r, h: 10 + rnd() * 14 }); break; }
+        if (ok) { hills.push({ x, z, r, h: (10 + rnd() * 14) * P.hillH }); break; }
       }
     }
 
     // A stream: from the first lake out to the rim mountains (meandering).
     let stream = [];
-    if (lakes.length && rnd() < 0.7) {
+    if (lakes.length && rnd() < P.stream) {
       const L = lakes[0];
       const la = Math.atan2(L.x, L.z) + (rnd() - 0.5) * 0.9;
       let x = L.x, z = L.z;
@@ -6261,8 +7201,8 @@ button.chip-i:active { transform: translateY(1px); }
   /** Raw height function (before plaza/lakes are carved). */
   function rawHeight(x, z) {
     const r = Math.sqrt(x * x + z * z);
-    let h = 3.0 + 3.6 * smooth(26, 130, r) +
-      noise.fbm(x / 75 + 3.1, z / 75 - 1.7, 4) * 3.4 +
+    let h = P.base + P.rise * smooth(26, 130, r) +
+      noise.fbm(x / 75 + 3.1, z / 75 - 1.7, 4) * P.noise +
       noise.noise2(x / 19 + 9.2, z / 19 + 4.4) * 0.7;
     // rocky hills
     for (let i = 0; i < ctx.hills.length; i++) {
@@ -6277,7 +7217,7 @@ button.chip-i:active { transform: translateY(1px); }
     // rim mountains: rise steeply from ~130 m
     if (r > 118) {
       const t = smooth(124, 166, r);
-      h += t * t * (40 + noise.ridged(x / 45 + 17, z / 45 - 5, 4) * 34) + t * 7;
+      h += (t * t * (40 + noise.ridged(x / 45 + 17, z / 45 - 5, 4) * 34) + t * 7) * P.rim;
     }
     return h;
   }
@@ -6347,11 +7287,12 @@ button.chip-i:active { transform: translateY(1px); }
     const sl = slopeV[i];
     if (h < CFG.BASE_WATER_LEVEL) return B_WATER;
     if (r < PLAZA_R + 0.5) return B_PLAZA;
-    if (h > 44 + v * 7 && sl < 0.62) return B_SNOW;
-    const rocky = smooth(0.3, 0.48, sl) + smooth(24, 34, h) + (v > 0.62 && h > 13 ? 0.35 : 0);
+    if (h > P.snowLine + v * 7 && sl < 0.62) return B_SNOW;
+    const rocky = smooth(P.rockSlope[0], P.rockSlope[1], sl) + smooth(P.rockH[0], P.rockH[1], h) + (v > 0.62 && h > 13 ? 0.35 : 0);
     if (rocky > 0.5) return B_ROCK;
-    if (h < CFG.BASE_WATER_LEVEL + 0.9 + v * 0.5 && moist[i] > 0.25) return B_SAND;
-    if (h < 2.6 && moist[i] > 0.58 && r > PLAZA_R + 10) return B_SWAMP;
+    if (h < CFG.BASE_WATER_LEVEL + 0.9 + v * 0.5 && moist[i] > P.sandMoist) return B_SAND;
+    if (P.dryland > 0 && moist[i] < P.dryland && r > PLAZA_R + 6) return B_SAND;      // desert: dry land is sand
+    if (h < P.swamp[0] && moist[i] > P.swamp[1] && r > PLAZA_R + 10) return B_SWAMP;
     return B_GRASS;
   }
 
@@ -6366,7 +7307,8 @@ button.chip-i:active { transform: translateY(1px); }
     let f = smooth(0.5, 0.78, belt * 0.55 + blob * 0.62 - 0.08);
     f *= smooth(30, 44, r);                 // clearing around the plaza
     f *= 1 - smooth(0.36, 0.55, slopeV[i]); // no trees on cliffs
-    f *= 1 - smooth(30, 42, h);             // tree line
+    f *= 1 - smooth(P.treeLine[0], P.treeLine[1], h);   // tree line
+    f *= P.forest;                          // theme density
     f *= smooth(0.6, 1.6, h - CFG.BASE_WATER_LEVEL);
     if (code === B_ROCK) f *= 0.35;
     if (code === B_SWAMP) f *= 0.7;
@@ -6401,11 +7343,11 @@ button.chip-i:active { transform: translateY(1px); }
     switch (code) {
       case B_WATER: { // lake bed: sand to dark mud with depth
         const d = clamp(-h / 3.6, 0, 1);
-        r = lerp(166, 76, d); g = lerp(150, 86, d); b = lerp(104, 66, d);
+        r = lerp(PAL.bed[0], PAL.bedDeep[0], d); g = lerp(PAL.bed[1], PAL.bedDeep[1], d); b = lerp(PAL.bed[2], PAL.bedDeep[2], d);
         break;
       }
       case B_SAND:
-        r = 214 + v * 16; g = 196 + v * 14; b = 142 + v * 10;
+        r = PAL.sand[0] + v * PAL.sand[3]; g = PAL.sand[1] + v * PAL.sand[4]; b = PAL.sand[2] + v * PAL.sand[5];
         break;
       case B_PLAZA:
         plazaColor(x, z, v, _plz);
@@ -6413,27 +7355,28 @@ button.chip-i:active { transform: translateY(1px); }
         break;
       case B_ROCK: {
         const hi = smooth(20, 55, h);
-        r = lerp(112, 138, hi) + v * 22; g = lerp(106, 134, hi) + v * 20; b = lerp(98, 132, hi) + v * 18;
+        r = lerp(PAL.rockLo[0], PAL.rockHi[0], hi) + v * PAL.rockVar[0];
+        g = lerp(PAL.rockLo[1], PAL.rockHi[1], hi) + v * PAL.rockVar[1];
+        b = lerp(PAL.rockLo[2], PAL.rockHi[2], hi) + v * PAL.rockVar[2];
         if (v < 0.32) { r -= 12; g -= 10; b -= 8; }
         break;
       }
       case B_SNOW:
-        r = 232 + v * 12; g = 236 + v * 12; b = 242 + v * 10;
+        r = PAL.snow[0] + v * PAL.snow[3]; g = PAL.snow[1] + v * PAL.snow[4]; b = PAL.snow[2] + v * PAL.snow[5];
         break;
       case B_SWAMP:
-        r = 78 + v * 16; g = 92 + v * 14; b = 50 + v * 8;
+        r = PAL.swamp[0] + v * PAL.swamp[3]; g = PAL.swamp[1] + v * PAL.swamp[4]; b = PAL.swamp[2] + v * PAL.swamp[5];
         break;
       default: { // meadow: three greens, drier higher up, alpine near the rim
         const k = v;
-        if (k < 0.33) { r = 88; g = 138; b = 54; }
-        else if (k < 0.66) { r = 106; g = 152; b = 60; }
-        else { r = 124; g = 162; b = 66; }
+        const gr = PAL.grass[k < 0.33 ? 0 : k < 0.66 ? 1 : 2];
+        r = gr[0]; g = gr[1]; b = gr[2];
         const jitter = (hash3(i, 7, 3) - 0.5) * 10;
         r += jitter; g += jitter; b += jitter * 0.5;
         const dry = smooth(8, 22, h) * 0.55 + (1 - m) * 0.18;
-        r = lerp(r, 150, dry * 0.5); g = lerp(g, 150, dry * 0.35); b = lerp(b, 78, dry * 0.4);
+        r = lerp(r, PAL.dry[0], dry * 0.5); g = lerp(g, PAL.dry[1], dry * 0.35); b = lerp(b, PAL.dry[2], dry * 0.4);
         const alpine = smooth(26, 40, h);
-        r = lerp(r, 118, alpine); g = lerp(g, 122, alpine); b = lerp(b, 96, alpine);
+        r = lerp(r, PAL.alpine[0], alpine); g = lerp(g, PAL.alpine[1], alpine); b = lerp(b, PAL.alpine[2], alpine);
         break;
       }
     }
@@ -6441,7 +7384,8 @@ button.chip-i:active { transform: translateY(1px); }
       const f = forest[i];
       if (f > 0.02) {
         const k = f * 0.8;
-        r = lerp(r, 50 + v * 14, k); g = lerp(g, 80 + v * 12, k); b = lerp(b, 38 + v * 6, k);
+        const ff = PAL.forestFloor;
+        r = lerp(r, ff[0] + v * ff[3], k); g = lerp(g, ff[1] + v * ff[4], k); b = lerp(b, ff[2] + v * ff[5], k);
       }
     }
     if (burnt[i]) {
@@ -6564,7 +7508,7 @@ button.chip-i:active { transform: translateY(1px); }
 
     // hill boulders
     for (const H of ctx.hills) {
-      const n = 4 + Math.floor(rnd() * 5);
+      const n = Math.round((4 + Math.floor(rnd() * 5)) * P.boulders);
       for (let k = 0; k < n; k++) {
         const a = rnd() * TAU;
         const d = H.r * (0.15 + rnd() * 1.15);
@@ -6575,7 +7519,7 @@ button.chip-i:active { transform: translateY(1px); }
       }
     }
     // lonely meadow boulders
-    const meadow = 14 + Math.floor(rnd() * 9);
+    const meadow = Math.round((14 + Math.floor(rnd() * 9)) * P.boulders);
     for (let k = 0; k < meadow; k++) {
       const a = rnd() * TAU;
       const d = 36 + rnd() * 104;
@@ -6745,6 +7689,7 @@ button.chip-i:active { transform: translateY(1px); }
   /** Build the whole arena for a seed (deterministic). */
   function generate(seed) {
     seed = seed >>> 0;
+    loadTheme();
     noise = GM.Noise.create(seed);
     const rnd = GM.makeRng((seed ^ 0x9e3779b9) >>> 0);
     ctx = planLayout(rnd);
@@ -6759,7 +7704,7 @@ button.chip-i:active { transform: translateY(1px); }
         const i = iz * RES + ix;
         heights[i] = carvedHeight(x, z, tmp);
         vary[i] = clamp(noise.noise2(x / 14 + 5.5, z / 14 - 2.2) * 0.42 + noise.noise2(x / 4.3 - 1.1, z / 4.3 + 7.7) * 0.18 + 0.5, 0, 1);
-        moist[i] = clamp(tmp.wet * 1.05 + (noise.fbm(x / 70 - 8, z / 70 + 3, 3) * 0.5 + 0.5) * 0.45 - 0.08, 0, 1);
+        moist[i] = clamp(tmp.wet * 1.05 + (noise.fbm(x / 70 - 8, z / 70 + 3, 3) * 0.5 + 0.5) * P.moistNoise - 0.08 + P.moistBias, 0, 1);
       }
     }
     for (let iz = 0; iz < RES; iz++) for (let ix = 0; ix < RES; ix++) slopeV[iz * RES + ix] = computeSlopeAt(ix, iz);
@@ -6787,6 +7732,7 @@ button.chip-i:active { transform: translateY(1px); }
     T.landmarks = landmarks;
     T.hideSpots = hideSpots;
     T.rocks = rocks;
+    T.arena = GM.Arenas.active();
   }
 
   // ================================================================ queries
@@ -8164,6 +9110,7 @@ button.chip-i:active { transform: translateY(1px); }
   function buildBackdrop(seed) {
     backdrop = removeMesh(backdrop, true);
     const noise = GM.Noise.create((seed ^ 0x51ed27) >>> 0);
+    const BD = GM.Arenas.params().backdrop;      // arena theme: far mountain colours
     const A = 160;
     const RADII = [150, 172, 200, 236, 282, 340, 412, 500, 610, 740];
     const PROF = [-12, 10, 36, 70, 104, 124, 110, 80, 44, 8];
@@ -8181,9 +9128,9 @@ button.chip-i:active { transform: translateY(1px); }
         pos[o] = x; pos[o + 1] = h; pos[o + 2] = z;
         const k = hash(ai, ri, 7);
         let cr, cg, cb;
-        if (h > 88 + k * 16) { cr = 228; cg = 232; cb = 238; }
-        else if (h > 34 + k * 10) { cr = 118 + k * 16; cg = 114 + k * 14; cb = 108 + k * 12; }
-        else { cr = 62 + k * 14; cg = 84 + k * 14; cb = 52 + k * 8; }
+        if (h > BD.snowH + k * 16) { cr = BD.snow[0] + k * BD.snow[3]; cg = BD.snow[1] + k * BD.snow[4]; cb = BD.snow[2] + k * BD.snow[5]; }
+        else if (h > BD.rockH + k * 10) { cr = BD.rock[0] + k * BD.rock[3]; cg = BD.rock[1] + k * BD.rock[4]; cb = BD.rock[2] + k * BD.rock[5]; }
+        else { cr = BD.lo[0] + k * BD.lo[3]; cg = BD.lo[1] + k * BD.lo[4]; cb = BD.lo[2] + k * BD.lo[5]; }
         col[o] = Gfx.lin255(cr); col[o + 1] = Gfx.lin255(cg); col[o + 2] = Gfx.lin255(cb);
       }
     }
@@ -9051,6 +9998,7 @@ button.chip-i:active { transform: translateY(1px); }
     const half = T.half - 3;
     const n = Math.floor((2 * half) / TREE_STEP);
     const wl = CFG.BASE_WATER_LEVEL;
+    const TP = GM.Arenas.params().trees;         // arena theme: density, species mix, colours
     for (let gz = 0; gz < n; gz++) {
       for (let gx = 0; gx < n; gx++) {
         const x = -half + (gx + 0.15 + 0.7 * hash(gx, gz + sd, 102)) * TREE_STEP;
@@ -9058,21 +10006,21 @@ button.chip-i:active { transform: translateY(1px); }
         const cover = T.forestAt(x, z);
         const r = Math.sqrt(x * x + z * z);
         const lone = cover <= 0.04;
-        const p = lone ? (r > 40 && r < ARENA_R - 4 ? 0.01 : 0) : U.smoothstep(0.04, 0.6, cover) * 0.9;
+        const p = lone ? (r > 40 && r < ARENA_R - 4 ? TP.lone : 0) : U.smoothstep(0.04, 0.6, cover) * 0.9 * TP.density;
         if (hash(gx + sd, gz, 101) >= p * keep) continue;
         const biome = T.biomeAt(x, z);
-        if (biome === 'water' || biome === 'plaza' || biome === 'sand' || biome === 'snow') continue;
-        if (lone && biome !== 'grass') continue;
+        if (biome === 'water' || biome === 'plaza' || (biome === 'sand' && !TP.onSand) || (biome === 'snow' && !TP.onSnow)) continue;
+        if (lone && biome !== 'grass' && !(biome === 'sand' && TP.onSand) && !(biome === 'snow' && TP.onSnow)) continue;
         const y = groundY(x, z);
         if (y < wl + 0.35) continue;
         const slope = T.slopeAt(x, z);
         if (slope > 0.55) continue;
         const patch = hash((gx >> 3) + sd, gz >> 3, 104);
-        const pine = patch * 0.7 + U.clamp01((y - 5) / 18) * 0.8 + (biome === 'rock' ? 0.4 : 0) - (biome === 'swamp' ? 0.5 : 0) > 0.55;
+        const pine = patch * 0.7 + U.clamp01((y - 5) / 18) * 0.8 + (biome === 'rock' ? 0.4 : 0) - (biome === 'swamp' ? 0.5 : 0) + TP.pine > 0.55;
         const h1 = hash(gx, gz, 105 + sd), h2 = hash(gx, gz, 106), h3 = hash(gx, gz, 107), h4 = hash(gx, gz, 109);
         const tr = {
           x, z, y: 0,
-          scale: (0.72 + h1 * 0.5) * (0.85 + 0.3 * cover) * (r > ARENA_R ? 1.15 : 1),
+          scale: (0.72 + h1 * 0.5) * (0.85 + 0.3 * cover) * (r > ARENA_R ? 1.15 : 1) * TP.scale,
           type: pine ? 'pine' : 'broad',
           burnt: false,
           hidden: false,
@@ -9087,11 +10035,11 @@ button.chip-i:active { transform: translateY(1px); }
           tcol: 0,
         };
         tr.y = y - tr.sink;
-        if (pine) _c.setHSL(0.37 + (h4 - 0.5) * 0.06, 0.42 + h2 * 0.16, 0.2 + h3 * 0.07);
-        else if (h4 < 0.05) _c.setHSL(0.07 + h1 * 0.05, 0.66, 0.42);            // a few autumn trees
-        else _c.setHSL(0.24 + (h4 - 0.5) * 0.09, 0.5 + h2 * 0.16, 0.28 + h3 * 0.08);
+        if (pine) _c.setHSL(TP.pineCol[0] + (h4 - 0.5) * 0.06, TP.pineCol[1] + h2 * 0.16, TP.pineCol[2] + h3 * 0.07);
+        else if (h4 < TP.autumn) _c.setHSL(TP.autumnCol[0] + h1 * 0.05, TP.autumnCol[1], TP.autumnCol[2]);   // a few off-colour trees
+        else _c.setHSL(TP.broadCol[0] + (h4 - 0.5) * 0.09, TP.broadCol[1] + h2 * 0.16, TP.broadCol[2] + h3 * 0.08);
         tr.col = pack(_c);
-        _c.setHSL(0.07 + h1 * 0.03, 0.3, 0.2 + h2 * 0.07);
+        _c.setHSL(TP.trunkCol[0] + h1 * 0.03, TP.trunkCol[1], TP.trunkCol[2] + h2 * 0.07);
         tr.tcol = pack(_c);
         trees.push(tr);
       }
@@ -9522,16 +10470,13 @@ button.chip-i:active { transform: translateY(1px); }
   /** Grass density + tint per terrain vertex. */
   function writeGrassMap(T, ix0, iz0, ix1, iz1) {
     const R = T.res, C = T.colors, F = T.forestData, B = T.burntData, H = T.heights;
+    const GP = GM.Arenas.params().grass;          // arena theme: density per biome, tint
     for (let iz = iz0; iz <= iz1; iz++) {
       for (let ix = ix0; ix <= ix1; ix++) {
         const i = iz * R + ix;
         const x = -T.half + ix * T.cellSize, z = -T.half + iz * T.cellSize;
         const biome = T.biomeAt(x, z);
-        let d = 0;
-        if (biome === 'grass') d = 1;
-        else if (biome === 'swamp') d = 0.85;
-        else if (biome === 'forest') d = 0.55;
-        else if (biome === 'rock') d = 0.12;
+        let d = GP.byBiome[biome] || 0;
         const f = F ? F[i] : 0;
         d *= 1 - f * 0.55;
         const sl = T.slopeAt(x, z);
@@ -9543,7 +10488,7 @@ button.chip-i:active { transform: translateY(1px); }
         if (H[i] < CFG.BASE_WATER_LEVEL + 0.2) d = 0;
         let cr = C ? C[i * 3] : 90, cg = C ? C[i * 3 + 1] : 140, cb = C ? C[i * 3 + 2] : 60;
         if (B && B[i]) { d *= 0.25; }
-        else { cr *= 1.02; cg *= 1.12; cb *= 0.9; }
+        else { cr *= GP.tint[0]; cg *= GP.tint[1]; cb *= GP.tint[2]; }
         const o = i * 4;
         grassData[o] = U.clamp(cr, 0, 255); grassData[o + 1] = U.clamp(cg, 0, 255); grassData[o + 2] = U.clamp(cb, 0, 255);
         grassData[o + 3] = U.clamp(d * 255, 0, 255);
@@ -9749,6 +10694,11 @@ button.chip-i:active { transform: translateY(1px); }
     const T = Tr();
     buildTerrain();
     buildBackdrop(T ? (T.seed >>> 0) : 1);
+    if (waterMat) {                       // arena theme: water colour
+      const WP = GM.Arenas.params().water;
+      waterMat.uniforms.uShallow.value.setHex(WP.shallow);
+      waterMat.uniforms.uDeep.value.setHex(WP.deep);
+    }
     buildWater();
     buildProps(T);
     placeNexus();
@@ -10482,6 +11432,9 @@ button.chip-i:active { transform: translateY(1px); }
   });
 
   // ------------------------------------------------------------ state
+  // arena theme (js/arenas.js): natural weather odds, minimum snow cover / wetness (set by applyArena)
+  let themeWeather = { rain: 1, fog: 1, storm: 1, snow: 1, heat: 1 };
+  let snowFloor = 0, wetFloor = 0;
   let weatherLeft = 0;          // sim s until the current non-clear weather ends
   let weatherNatural = false;   // current weather came from the natural cycle
   let nextNatural = 200;        // sim s of clear sky before the next natural change
@@ -10610,12 +11563,13 @@ button.chip-i:active { transform: translateY(1px); }
   function pickNatural() {
     const night = Env.isNight();
     const R = rng();
+    const tw = themeWeather;
     const w = {
-      rain: 4,
-      fog: night || Math.abs(GM.state.timeOfDay - CFG.DAWN) < 0.06 ? 3 : 1.4,
-      storm: 1.1,
-      snow: night ? 0.7 : 0.25,
-      heat: night ? 0 : 0.6,
+      rain: 4 * tw.rain,
+      fog: (night || Math.abs(GM.state.timeOfDay - CFG.DAWN) < 0.06 ? 3 : 1.4) * tw.fog,
+      storm: 1.1 * tw.storm,
+      snow: (night ? 0.7 : 0.25) * tw.snow,
+      heat: (night ? 0 : 0.6) * tw.heat,
     };
     if (R && typeof R.weighted === 'function') {
       try { const k = R.weighted(w); if (NATURAL_DUR[k]) return k; } catch (e) { /* fall through */ }
@@ -10773,6 +11727,8 @@ button.chip-i:active { transform: translateY(1px); }
       shadeD: C(0x7d8aa0), shadeN: C(0x0c1222), shadeTwi: C(0x5a4a6a),
       rainD: C(0xb4c4d6), rainN: C(0x56657e), snowD: C(0xf4f7ff), snowN: C(0x9aa8c6),
     };
+    V.baseCol = {};                                  // the classic palette, restored whenever an arena theme leaves
+    for (const k in V.col) V.baseCol[k] = V.col[k].clone();
     V.zen = C(0); V.hor = C(0); V.over = C(0); V.tmp = C(0); V.fog = C(0); V.cloud = C(0); V.shade = C(0); V.disc = C(0);
     V.gnd = C(0); V.sunC = C(0);
     V.sunDir = new THREE.Vector3(); V.moonDir = new THREE.Vector3(); V.lightDir = new THREE.Vector3();
@@ -11195,6 +12151,8 @@ button.chip-i:active { transform: translateY(1px); }
     else wetness = Math.max(0, wetness - simDt / (wh > 0.5 ? 40 : 110));
     if (wn > 0.3) snowCover = Math.min(1, snowCover + simDt / 55 * wn);
     else snowCover = Math.max(0, snowCover - simDt / (wh > 0.5 ? 30 : 140));
+    if (snowCover < snowFloor) snowCover = snowFloor;           // frozen arenas stay white
+    if (wetness < wetFloor) wetness = wetFloor;                 // marshes stay wet
 
     // flashes
     if (flash2At > 0) { flash2At -= realDt; if (flash2At <= 0) { flash = Math.max(flash, flash2S); flash2At = -1; } }
@@ -11434,8 +12392,8 @@ button.chip-i:active { transform: translateY(1px); }
     stormNext = 5;
     flash = 0; flash2At = -1; flickerT = 6;
     precipT = 0;
-    wetness = 0;
-    snowCover = 0;
+    wetness = wetFloor;
+    snowCover = snowFloor;
     if (emit && prev !== 'clear') GM.emit('weather:changed', { type: 'clear', prev: prev });
     wActive = false;
     Env.waterLevel = CFG.BASE_WATER_LEVEL;
@@ -11446,11 +12404,29 @@ button.chip-i:active { transform: translateY(1px); }
     snapWeights();
   }
 
+  /** Take the sky palette, weather odds and surface floors from the active arena theme. */
+  function applyArena() {
+    const E = GM.Arenas && GM.Arenas.params().env;
+    if (!E) return;
+    if (V.col && V.baseCol) {
+      for (const k in V.baseCol) V.col[k].copy(V.baseCol[k]);
+      for (const k in E.sky) if (V.col[k]) V.col[k].setHex(E.sky[k]);
+    }
+    themeWeather = Object.assign({ rain: 1, fog: 1, storm: 1, snow: 1, heat: 1 }, E.weather);
+    snowFloor = U.clamp01(E.snowFloor || 0);
+    wetFloor = U.clamp01(E.wetFloor || 0);
+    // a new arena starts from its own surface state (arena:generated only fires for a preview or a new Show)
+    snowCover = snowFloor;
+    wetness = wetFloor;
+    envForce = true;
+  }
+
   GM.registerSystem({
     name: 'Env',
     order: 25,
     init: function () {
       buildVisuals();
+      GM.on('arena:generated', applyArena);
       GM.on('hazard:lightning', function (ev) { skyFlash(ev && ev.natural ? 1.1 : 0.9); });
       GM.on('weather:changed', function () { envForce = true; });
       snapWeights();
@@ -25780,6 +26756,8 @@ button.chip-i:active { transform: translateY(1px); }
   const NEUTRAL_MODS = Object.freeze({ maxEnergy: MAX_ENERGY, startEnergy: START_ENERGY, regen: 1, cooldown: 1, hype: 1 });
   let careerMods = NEUTRAL_MODS;
   function isCareerShow() { const s = GM.state.settings; return !!(s && s.career); }
+  /** Daily challenge Shows grade on the career scale and may carry the day's twist (see daily.js). */
+  function isStrictShow() { const s = GM.state.settings; return !!(s && (s.career || s.daily)); }
 
   // ---------------------------------------------------------------- helpers
   function settings() { return GM.state.settings || null; }
@@ -27014,8 +27992,8 @@ button.chip-i:active { transform: translateY(1px); }
   /** Audience grade for the whole Show so far: 'S' | 'A' | 'B' | 'C' | 'D'. */
   Audience.grade = function () {
     const s = Audience.score();
-    // career Shows grade on a stricter scale (GM.Career.GRADE_CUTS); free play keeps the original one
-    const cuts = isCareerShow() && GM.Career ? GM.Career.GRADE_CUTS : FREE_GRADE_CUTS;
+    // career and daily Shows grade on a stricter scale (GM.Career.GRADE_CUTS); free play keeps the original one
+    const cuts = isStrictShow() && GM.Career ? GM.Career.GRADE_CUTS : FREE_GRADE_CUTS;
     return s >= cuts[0] ? 'S' : s >= cuts[1] ? 'A' : s >= cuts[2] ? 'B' : s >= cuts[3] ? 'C' : 'D';
   };
   /** 'audience.mood.*' key for the current excitement. */
@@ -27496,7 +28474,7 @@ button.chip-i:active { transform: translateY(1px); }
       clearAudience();
       AutoGM.enabled = !!(s && s.autoGM);
       clearAuto();
-      if (s && s.career && GM.Career) careerMods = GM.Career.modsFor(s);
+      if (s && (s.career || s.daily) && GM.Career) careerMods = GM.Career.modsFor(s);
       Powers.maxEnergy = careerMods.maxEnergy;
       Powers.energy = s && s.sandbox ? Powers.maxEnergy : careerMods.startEnergy;
       initPopularity();
@@ -35033,6 +36011,7 @@ button.chip-i:active { transform: translateY(1px); }
       feeds: !!o.feeds,
       nameTags: !!o.nameTags,
       startSpeed: 1,
+      arena: GM.Arenas ? GM.Arenas.selected() : 'verdant',
     };
     savePrefs();
     const A = GM.Audio;
@@ -37791,7 +38770,7 @@ button.chip-i:active { transform: translateY(1px); }
       if (GM.state.phase !== 'setup' || C.mode() !== 'career') return;
       ui.previewSeed = seed;
       if ((GM.state.seed >>> 0) !== seed && GM.Game && GM.Game.previewArena) {
-        try { GM.Game.previewArena(seed); } catch (e) { GM.reportError('CareerUI.preview', e); }
+        try { GM.Game.previewArena(seed, 'verdant'); } catch (e) { GM.reportError('CareerUI.preview', e); }
       }
     }, 60);
   }
@@ -38175,6 +39154,1007 @@ button.chip-i:active { transform: translateY(1px); }
 })();
 
 </script>
+<script>/* js/dailyui.js */
+/* ==========================================================================
+ * dailyui.js — the interface of the daily challenge.
+ *
+ *   daily screen   full-screen overlay opened from the "Daily" buttons of the setup
+ *                  screen and the career hub: Today / Leaderboard / Records
+ *   result card    daily block inside the victory card (score, records, submit)
+ *
+ * Logic lives in daily.js, the online board in leaderboard.js. Strings live here
+ * (EN + HU). Reuses the career hub's layout classes (css/career.css). Owner: UI.
+ * ========================================================================== */
+(function () {
+  'use strict';
+  const GM = window.GM;
+  const U = GM.U;
+  const D = GM.Daily;
+  const LB = GM.Leaderboard;
+  const REC = GM.Records;
+
+  // ================================================================ strings
+  GM.i18n.add({
+    en: {
+      'daily.open': 'Daily',
+      'daily.title': 'Daily challenge',
+      'daily.back': 'Back',
+      'daily.tab.today': 'Today',
+      'daily.tab.board': 'Leaderboard',
+      'daily.tab.records': 'Records',
+
+      'daily.kicker': 'Daily challenge · {date}',
+      'daily.arena': 'Arena #{n}',
+      'daily.cast': '{n} contestants',
+      'daily.resets': 'New challenge in {t}',
+      'daily.rules': 'Everybody plays the same arena with the same cast. No studio upgrades and no sandbox: every power is open. Retry as often as you like; your best score of the day counts.',
+      'daily.twist': 'Today\'s twist',
+      'daily.twist.classic': 'Classic',
+      'daily.twist.classic.desc': 'No twist. The standard control room.',
+      'daily.twist.lean': 'Lean budget',
+      'daily.twist.lean.desc': 'A smaller battery (75) that refills 20% faster. Spend wisely.',
+      'daily.twist.quickdraw': 'Quick draw',
+      'daily.twist.quickdraw.desc': 'Powers cool down 35% faster, but energy refills 20% slower.',
+      'daily.twist.showtime': 'Showtime',
+      'daily.twist.showtime.desc': 'Exciting moments lift the ratings 25% more, but the battery is smaller (85).',
+      'daily.twist.crowd': 'Packed arena',
+      'daily.twist.crowd.desc': 'Eight extra contestants. More chaos, more betrayals.',
+
+      'daily.best': 'Your best today',
+      'daily.noBest': 'Not played yet',
+      'daily.points': 'points',
+      'daily.play': 'Play today\'s Show',
+      'daily.playAgain': 'Try again',
+      'daily.playSub': 'Arena #{n} · {twist}',
+      'daily.streak': 'Streak',
+      'daily.streak.days': '{n} days',
+      'daily.streak.days_one': '1 day',
+      'daily.streak.longest': 'Longest: {n}',
+      'daily.streak.hint': 'Play every day to keep it going.',
+      'daily.recent': 'Recent days',
+      'daily.recentEmpty': 'Play your first daily Show to start a streak.',
+
+      'daily.board.today': 'Today',
+      'daily.board.alltime': 'All time',
+      'daily.board.name': 'Your leaderboard name',
+      'daily.board.namePh': 'Pick a name (max 16)',
+      'daily.board.save': 'Save name',
+      'daily.board.saved': 'Name saved.',
+      'daily.board.nameNeeded': 'Pick a name first.',
+      'daily.board.loading': 'Loading scores…',
+      'daily.board.refresh': 'Refresh',
+      'daily.board.empty': 'Nobody has posted a score yet. Be the first!',
+      'daily.board.total': '{n} players',
+      'daily.board.total_one': '1 player',
+      'daily.board.stats': '{players} players · {runs} scores',
+      'daily.board.rank': '#',
+      'daily.board.player': 'Player',
+      'daily.board.score': 'Score',
+      'daily.board.viewers': 'Viewers',
+      'daily.board.you': 'you',
+      'daily.board.off.title': 'The online leaderboard is not connected',
+      'daily.board.off.text': 'This build keeps scores on this device only. Your own results are listed below, and nothing is sent anywhere.',
+      'daily.board.local': 'Scores on this device',
+      'daily.err.offline': 'Could not reach the leaderboard. Check your connection.',
+      'daily.err.timeout': 'The leaderboard took too long to answer.',
+      'daily.err.bad': 'The leaderboard sent something unexpected.',
+      'daily.err.http': 'The leaderboard refused the request.',
+      'daily.err.date_out_of_range': 'This challenge is no longer open for scores.',
+      'daily.err.cast_mismatch': 'That result does not belong to this challenge.',
+      'daily.err.twist_mismatch': 'That result does not belong to this challenge.',
+      'daily.err.grade_mismatch': 'That result looks inconsistent and was refused.',
+
+      'daily.rec.title': 'Records',
+      'daily.rec.hint': 'Your personal bests across every Show. Sandbox Shows never count.',
+      'daily.rec.score': 'Best Show score',
+      'daily.rec.viewers': 'Most viewers',
+      'daily.rec.longest': 'Longest Show',
+      'daily.rec.quickest': 'Fastest finish',
+      'daily.rec.topKills': 'Most kills by one contestant',
+      'daily.rec.betrayals': 'Most betrayals in a Show',
+      'daily.rec.cast': 'Biggest cast finished',
+      'daily.rec.none': 'No record yet',
+      'daily.mode.daily': 'Daily',
+      'daily.mode.career': 'Career',
+      'daily.mode.free': 'Free play',
+      'daily.totals': 'Totals',
+      'daily.totals.shows': 'Shows finished',
+      'daily.totals.daily': 'Daily Shows',
+      'daily.totals.streak': 'Longest streak',
+      'daily.totals.grades': 'Ratings',
+      'daily.totals.wins': 'Winners by type',
+      'daily.totals.winsNone': 'No winners yet.',
+
+      'daily.res.kicker': 'Daily challenge · {date}',
+      'daily.res.score': 'Show score',
+      'daily.res.newBest': 'New best of the day!',
+      'daily.res.bestToday': 'Best today: {n}',
+      'daily.res.record': 'New record: {name}',
+      'daily.res.streak': 'Streak: {n} days',
+      'daily.res.streak_one': 'Streak: 1 day',
+      'daily.res.submit': 'Submit best of the day',
+      'daily.res.sending': 'Sending…',
+      'daily.res.sent': 'Submitted! You are #{rank} of {total} today.',
+      'daily.res.again': 'Submit again',
+      'daily.res.off': 'The online leaderboard is not connected in this build. Your score is saved on this device.',
+      'daily.res.privacy': 'Sends your name, score and show stats. Nothing else.',
+      'daily.res.back': 'Back to the daily challenge',
+    },
+    hu: {
+      'daily.open': 'Napi',
+      'daily.title': 'Napi kihívás',
+      'daily.back': 'Vissza',
+      'daily.tab.today': 'Ma',
+      'daily.tab.board': 'Ranglista',
+      'daily.tab.records': 'Rekordok',
+
+      'daily.kicker': 'Napi kihívás · {date}',
+      'daily.arena': 'Aréna #{n}',
+      'daily.cast': '{n} versenyző',
+      'daily.resets': 'Új kihívás: {t} múlva',
+      'daily.rules': 'Mindenki ugyanabban az arénában, ugyanazzal a szereplőgárdával játszik. Nincsenek stúdió fejlesztések és nincs homokozó: minden képesség nyitva áll. Annyiszor próbálkozhatsz, ahányszor akarsz; a nap legjobb pontszáma számít.',
+      'daily.twist': 'A mai csavar',
+      'daily.twist.classic': 'Klasszikus',
+      'daily.twist.classic.desc': 'Nincs csavar. A megszokott irányítóterem.',
+      'daily.twist.lean': 'Szűkös keret',
+      'daily.twist.lean.desc': 'Kisebb akkumulátor (75), de 20%-kal gyorsabban töltődik. Gazdálkodj okosan.',
+      'daily.twist.quickdraw': 'Gyorskezű',
+      'daily.twist.quickdraw.desc': 'A képességek 35%-kal gyorsabban töltődnek újra, de az energia 20%-kal lassabban.',
+      'daily.twist.showtime': 'Showtime',
+      'daily.twist.showtime.desc': 'Az izgalmas pillanatok 25%-kal jobban emelik a nézettséget, de kisebb az akkumulátor (85).',
+      'daily.twist.crowd': 'Tömött aréna',
+      'daily.twist.crowd.desc': 'Nyolc extra versenyző. Több káosz, több árulás.',
+
+      'daily.best': 'A mai legjobbad',
+      'daily.noBest': 'Még nem játszottál',
+      'daily.points': 'pont',
+      'daily.play': 'A mai Műsor indítása',
+      'daily.playAgain': 'Új próbálkozás',
+      'daily.playSub': 'Aréna #{n} · {twist}',
+      'daily.streak': 'Sorozat',
+      'daily.streak.days': '{n} nap',
+      'daily.streak.days_one': '{n} nap',
+      'daily.streak.longest': 'Leghosszabb: {n}',
+      'daily.streak.hint': 'Játssz minden nap, hogy ne szakadjon meg.',
+      'daily.recent': 'Utóbbi napok',
+      'daily.recentEmpty': 'Játszd le az első napi Műsorodat, és indul a sorozatod.',
+
+      'daily.board.today': 'Ma',
+      'daily.board.alltime': 'Mindenkori',
+      'daily.board.name': 'Neved a ranglistán',
+      'daily.board.namePh': 'Válassz nevet (legfeljebb 16)',
+      'daily.board.save': 'Név mentése',
+      'daily.board.saved': 'Név elmentve.',
+      'daily.board.nameNeeded': 'Előbb válassz nevet.',
+      'daily.board.loading': 'Pontszámok betöltése…',
+      'daily.board.refresh': 'Frissítés',
+      'daily.board.empty': 'Még senki nem küldött pontszámot. Légy te az első!',
+      'daily.board.total': '{n} játékos',
+      'daily.board.total_one': '{n} játékos',
+      'daily.board.stats': '{players} játékos · {runs} pontszám',
+      'daily.board.rank': '#',
+      'daily.board.player': 'Játékos',
+      'daily.board.score': 'Pontszám',
+      'daily.board.viewers': 'Nézők',
+      'daily.board.you': 'te',
+      'daily.board.off.title': 'Az online ranglista nincs bekötve',
+      'daily.board.off.text': 'Ez a verzió csak ezen az eszközön tárolja a pontszámokat. Lent a saját eredményeid láthatók, és semmi nem megy ki sehová.',
+      'daily.board.local': 'Pontszámok ezen az eszközön',
+      'daily.err.offline': 'A ranglista nem érhető el. Ellenőrizd az internetkapcsolatot.',
+      'daily.err.timeout': 'A ranglista túl lassan válaszolt.',
+      'daily.err.bad': 'A ranglista váratlan választ küldött.',
+      'daily.err.http': 'A ranglista elutasította a kérést.',
+      'daily.err.date_out_of_range': 'Ehhez a kihíváshoz már nem lehet pontszámot küldeni.',
+      'daily.err.cast_mismatch': 'Ez az eredmény nem ehhez a kihíváshoz tartozik.',
+      'daily.err.twist_mismatch': 'Ez az eredmény nem ehhez a kihíváshoz tartozik.',
+      'daily.err.grade_mismatch': 'Az eredmény ellentmondásosnak tűnt, ezért elutasítottuk.',
+
+      'daily.rec.title': 'Rekordok',
+      'daily.rec.hint': 'A személyes legjobbjaid az összes Műsorból. A homokozó módú Műsorok nem számítanak.',
+      'daily.rec.score': 'Legjobb Műsor pontszám',
+      'daily.rec.viewers': 'Legtöbb néző',
+      'daily.rec.longest': 'Leghosszabb Műsor',
+      'daily.rec.quickest': 'Leggyorsabb befejezés',
+      'daily.rec.topKills': 'Legtöbb ölés egy versenyzőtől',
+      'daily.rec.betrayals': 'Legtöbb árulás egy Műsorban',
+      'daily.rec.cast': 'Legnagyobb befejezett szereplőgárda',
+      'daily.rec.none': 'Még nincs rekord',
+      'daily.mode.daily': 'Napi',
+      'daily.mode.career': 'Karrier',
+      'daily.mode.free': 'Szabad játék',
+      'daily.totals': 'Összesítés',
+      'daily.totals.shows': 'Befejezett Műsorok',
+      'daily.totals.daily': 'Napi Műsorok',
+      'daily.totals.streak': 'Leghosszabb sorozat',
+      'daily.totals.grades': 'Értékelések',
+      'daily.totals.wins': 'Győztesek típus szerint',
+      'daily.totals.winsNone': 'Még nincs győztes.',
+
+      'daily.res.kicker': 'Napi kihívás · {date}',
+      'daily.res.score': 'Műsor pontszám',
+      'daily.res.newBest': 'A nap új legjobbja!',
+      'daily.res.bestToday': 'Mai legjobb: {n}',
+      'daily.res.record': 'Új rekord: {name}',
+      'daily.res.streak': 'Sorozat: {n} nap',
+      'daily.res.streak_one': 'Sorozat: {n} nap',
+      'daily.res.submit': 'A nap legjobbjának beküldése',
+      'daily.res.sending': 'Küldés…',
+      'daily.res.sent': 'Beküldve! Ma a(z) {rank}. vagy a(z) {total} játékosból.',
+      'daily.res.again': 'Beküldés újra',
+      'daily.res.off': 'Az online ranglista ebben a verzióban nincs bekötve. A pontszámod ezen az eszközön mentődik.',
+      'daily.res.privacy': 'A neved, a pontszámod és a Műsor adatai mennek el. Semmi más.',
+      'daily.res.back': 'Vissza a napi kihíváshoz',
+    },
+  });
+
+  // ================================================================ helpers
+  const t = function (k, p) { return GM.t(k, p); };
+  function num(v, d) { return GM.i18n.num(v, d); }
+  function play(name) { try { if (GM.Audio && GM.Audio.play) GM.Audio.play(name); } catch (e) { /* optional */ } }
+  function setText(el, s) { if (el && el.textContent !== s) el.textContent = s; }
+
+  function h(tag, props, kids) {
+    const el = document.createElement(tag);
+    if (props) {
+      for (const k in props) {
+        const v = props[k];
+        if (v == null || v === false) continue;
+        if (k === 'class') el.className = v;
+        else if (k === 'text') el.textContent = v;
+        else if (k.slice(0, 2) === 'on' && typeof v === 'function') el.addEventListener(k.slice(2), v);
+        else el.setAttribute(k, v === true ? '' : v);
+      }
+    }
+    if (kids != null) {
+      const list = Array.isArray(kids) ? kids : [kids];
+      for (let i = 0; i < list.length; i++) {
+        const c = list[i];
+        if (c == null || c === false) continue;
+        el.appendChild(typeof c === 'string' || typeof c === 'number' ? document.createTextNode(String(c)) : c);
+      }
+    }
+    return el;
+  }
+  function gradeEl(g) { return h('span', { class: 'cr-grade g-' + g }, [g]); }
+
+  function dateLabel(date, short) {
+    const ms = D.dateMs(date);
+    if (!isFinite(ms)) return date;
+    try {
+      const o = short ? { day: 'numeric', month: 'short', timeZone: 'UTC' } : { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' };
+      return new Intl.DateTimeFormat(GM.i18n.lang === 'hu' ? 'hu-HU' : 'en-GB', o).format(ms);
+    } catch (e) { return date; }
+  }
+  function clock(ms) {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    const p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return p(Math.floor(s / 3600)) + ':' + p(Math.floor((s % 3600) / 60)) + ':' + p(s % 60);
+  }
+  function twistName(id) { return t('daily.twist.' + id); }
+  function streakText(n) { return t('daily.streak.days', { n: n }); }
+
+  // =================================================================== state
+  const TABS = ['today', 'board', 'records'];
+  const ui = {
+    built: false,
+    open: false,
+    tab: 'today',
+    board: 'today',            // 'today' | 'alltime'
+    load: { status: 'idle', kind: '', data: null, error: '' },
+    loadToken: 0,
+    nameMsg: null,             // { ok, text }
+    prevSeed: -1,
+    prevArena: 'verdant',
+    shownDate: '',
+    previewTimer: 0,
+    thumbVer: -1,
+    thumbSeed: -1,
+    tickAt: 0,
+    returnToDaily: false,
+    sub: null,                 // { ts, state: 'idle'|'sending'|'ok'|'err', rank, total, text }
+  };
+  const dom = {};
+
+  // ============================================================== the screen
+  function buildHub(root) {
+    dom.hub = h('section', { class: 'cr-hub dl-hub', id: 'daily-hub', hidden: true, role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Daily challenge' });
+    const sheet = h('div', { class: 'cr-sheet' });
+
+    dom.brand = h('div', { class: 'cr-brand' }, [h('span', { class: 'cr-brand-ico', 'aria-hidden': 'true' }, ['📅']), h('span', { class: 'cr-brand-name' })]);
+    dom.lang = h('div', { class: 'seg seg-lang', role: 'group' });
+    ['en', 'hu'].forEach(function (l) {
+      dom.lang.appendChild(h('button', { type: 'button', class: 'seg-btn', 'data-lang': l, onclick: function () { GM.i18n.setLang(l); } }));
+    });
+    dom.closeBtn = h('button', { type: 'button', class: 'btn btn-ghost cr-free', onclick: function () { play('click'); closeHub(); } });
+    dom.tabs = h('nav', { class: 'cr-tabs', role: 'tablist' });
+    TABS.forEach(function (id) {
+      dom.tabs.appendChild(h('button', {
+        type: 'button', class: 'cr-tab', role: 'tab', 'data-tab': id,
+        onclick: function () { if (ui.tab !== id) { ui.tab = id; play('click'); if (id === 'board') loadBoard(false); renderAll(); } },
+      }));
+    });
+    sheet.appendChild(h('header', { class: 'cr-head' }, [
+      h('div', { class: 'cr-head-top' }, [dom.brand, h('span', { class: 'cr-spacer' }), dom.lang, dom.closeBtn]),
+      dom.tabs,
+    ]));
+
+    dom.body = h('div', { class: 'cr-body' });
+    sheet.appendChild(dom.body);
+
+    dom.start = h('button', { type: 'button', class: 'start-btn cr-start', onclick: startToday }, [
+      h('span', { class: 'start-glow', 'aria-hidden': 'true' }),
+      h('span', { class: 'start-label' }),
+      h('span', { class: 'start-sub mono' }),
+    ]);
+    dom.foot = h('footer', { class: 'cr-foot' }, [dom.start]);
+    sheet.appendChild(dom.foot);
+    dom.hub.appendChild(sheet);
+    root.appendChild(dom.hub);
+  }
+
+  function startToday() {
+    if (dom.start.disabled) return;
+    play('click');
+    ui.prevSeed = -1;                     // the Show replaces the arena: nothing to restore
+    clearTimeout(ui.previewTimer);
+    dom.hub.hidden = true;
+    ui.open = false;
+    ui.returnToDaily = false;
+    D.start();
+  }
+
+  function openHub(tab) {
+    if (!ui.built || GM.state.phase !== 'setup') return;
+    ui.open = true;
+    ui.tab = tab || 'today';
+    ui.nameMsg = null;
+    ui.prevSeed = GM.state.seed >>> 0;
+    ui.prevArena = GM.Arenas.active();
+    dom.hub.hidden = false;
+    if (ui.tab === 'board') loadBoard(false);
+    renderAll();
+    schedulePreview(D.today().seed);
+    try { dom.start.focus({ preventScroll: true }); } catch (e) { /* hidden footer */ }
+  }
+  function closeHub() {
+    if (!ui.open) return;
+    ui.open = false;
+    dom.hub.hidden = true;
+    clearTimeout(ui.previewTimer);
+    const back = ui.prevSeed;
+    ui.prevSeed = -1;
+    // put the arena of the screen underneath back (setup / career hub)
+    if (back >= 0 && GM.state.phase === 'setup' && ((GM.state.seed >>> 0) !== back || GM.Arenas.active() !== ui.prevArena) && GM.Game && GM.Game.previewArena) {
+      try { GM.Game.previewArena(back, ui.prevArena); } catch (e) { GM.reportError('DailyUI.restore', e); }
+    }
+  }
+
+  /** Show today's arena behind the screen (deferred so the click paints first). */
+  function schedulePreview(seed) {
+    clearTimeout(ui.previewTimer);
+    if ((GM.state.seed >>> 0) === seed && GM.Arenas.active() === 'verdant') return;
+    ui.previewTimer = setTimeout(function () {
+      if (!ui.open || GM.state.phase !== 'setup') return;
+      try { GM.Game.previewArena(seed, 'verdant'); } catch (e) { GM.reportError('DailyUI.preview', e); }
+    }, 60);
+  }
+
+  // ----------------------------------------------------------------- render
+  function renderHead() {
+    setText(dom.brand.lastChild, t('daily.title'));
+    setText(dom.closeBtn, '← ' + t('daily.back'));
+    const lang = GM.i18n.lang;
+    Array.prototype.forEach.call(dom.lang.children, function (b) {
+      const l = b.getAttribute('data-lang');
+      setText(b, t('lang.' + l));
+      b.classList.toggle('on', l === lang);
+      b.setAttribute('aria-pressed', l === lang ? 'true' : 'false');
+    });
+    Array.prototype.forEach.call(dom.tabs.children, function (b) {
+      const id = b.getAttribute('data-tab');
+      setText(b, t('daily.tab.' + id));
+      b.classList.toggle('on', id === ui.tab);
+      b.setAttribute('aria-selected', id === ui.tab ? 'true' : 'false');
+    });
+  }
+
+  function renderAll() {
+    if (!ui.built) return;
+    renderHead();
+    dom.body.textContent = '';
+    dom.foot.hidden = true;
+    dom.thumb = null;
+    dom.countdown = null;
+    if (ui.tab === 'today') renderToday();
+    else if (ui.tab === 'board') renderBoard();
+    else renderRecords();
+  }
+
+  // ------------------------------------------------------------------ today
+  function renderToday() {
+    const c = D.today();
+    ui.shownDate = c.date;
+    const best = D.best(c.date);
+    const sk = D.streak();
+
+    dom.thumb = h('canvas', { class: 'cr-thumb', width: 160, height: 160, 'aria-hidden': 'true' });
+    ui.thumbVer = -1;
+    dom.countdown = h('span', { class: 'cr-chip mono' });
+    updateCountdown();
+
+    const challenge = h('section', { class: 'card cr-card cr-brief-card' }, [
+      h('div', { class: 'cr-kick mono', text: t('daily.kicker', { date: dateLabel(c.date) }) }),
+      h('h2', { class: 'cr-b-title', text: t('daily.arena', { n: c.seed }) }),
+      h('div', { class: 'cr-b-meta' }, [
+        dom.thumb,
+        h('div', { class: 'cr-chips' }, [
+          h('span', { class: 'cr-chip', text: '👥 ' + t('daily.cast', { n: c.count }) }),
+          h('span', { class: 'cr-chip', text: '🎭 ' + t('setup.mix.' + c.mix) }),
+          dom.countdown,
+        ]),
+      ]),
+      h('div', { class: 'dl-twist' }, [
+        h('span', { class: 'dl-twist-kick mono', text: t('daily.twist') }),
+        h('span', { class: 'dl-twist-name', text: twistName(c.twist) }),
+        h('span', { class: 'dl-twist-desc', text: t('daily.twist.' + c.twist + '.desc') }),
+      ]),
+      h('p', { class: 'hint', text: t('daily.rules') }),
+    ]);
+
+    const bestCard = h('section', { class: 'card cr-card dl-best' }, [
+      h('h2', { class: 'card-title', text: t('daily.best') }),
+      best
+        ? h('div', { class: 'dl-best-row' }, [gradeEl(best.grade), h('span', { class: 'dl-best-score mono', text: num(best.score, 1) }), h('span', { class: 'dl-best-pts', text: t('daily.points') })])
+        : h('p', { class: 'hint', text: t('daily.noBest') }),
+    ]);
+
+    const streakCard = h('section', { class: 'card cr-card dl-streak' }, [
+      h('h2', { class: 'card-title', text: t('daily.streak') }),
+      h('div', { class: 'dl-streak-row' }, [
+        h('span', { class: 'dl-flame' + (sk.cur > 0 ? ' on' : ''), 'aria-hidden': 'true' }, ['🔥']),
+        h('span', { class: 'dl-streak-n mono', text: streakText(sk.cur) }),
+        h('span', { class: 'dl-streak-max mono', text: t('daily.streak.longest', { n: sk.max }) }),
+      ]),
+      h('p', { class: 'hint', text: t('daily.streak.hint') }),
+    ]);
+
+    const rows = D.history(7);
+    const recent = h('section', { class: 'card cr-card' }, [
+      h('h2', { class: 'card-title', text: t('daily.recent') }),
+      rows.length ? localList(rows) : h('p', { class: 'hint', text: t('daily.recentEmpty') }),
+    ]);
+
+    dom.body.appendChild(h('div', { class: 'dl-today' }, [challenge, h('div', { class: 'dl-side' }, [bestCard, streakCard, recent])]));
+
+    dom.foot.hidden = false;
+    setText(dom.start.querySelector('.start-label'), best ? t('daily.playAgain') : t('daily.play'));
+    setText(dom.start.querySelector('.start-sub'), t('daily.playSub', { n: c.seed, twist: twistName(c.twist) }));
+  }
+
+  /** "Mon 26 Oct  A  74.2" rows for the player's own days. */
+  function localList(rows) {
+    const ul = h('ul', { class: 'cr-hist' });
+    rows.forEach(function (r) {
+      ul.appendChild(h('li', { class: 'cr-hrow' }, [
+        gradeEl(r.grade),
+        h('span', { class: 'cr-hrow-t', text: dateLabel(r.date, true) }),
+        h('span', { class: 'cr-hrow-s mono', text: num(r.score, 1) + ' · ' + GM.i18n.compact(r.viewers) }),
+      ]));
+    });
+    return ul;
+  }
+
+  function updateCountdown() {
+    if (dom.countdown && dom.countdown.isConnected) setText(dom.countdown, '⏳ ' + t('daily.resets', { t: clock(D.msToReset()) }));
+  }
+
+  /** Arena thumbnail from the minimap terrain image. */
+  function drawThumb() {
+    const cv = dom.thumb;
+    const M = GM.Minimap;
+    if (!cv || !cv.isConnected || !M || typeof M.terrainImage !== 'function') return;
+    const seed = D.today().seed;
+    if ((GM.state.seed >>> 0) !== seed) return;
+    const ver = M.version || 0;
+    if (ui.thumbVer === ver && ui.thumbSeed === seed) return;
+    const img = M.terrainImage();
+    if (!img) return;
+    ui.thumbVer = ver;
+    ui.thumbSeed = seed;
+    const size = cv.width;
+    const g = cv.getContext('2d');
+    if (!g) return;
+    g.clearRect(0, 0, size, size);
+    g.save();
+    g.beginPath();
+    g.arc(size / 2, size / 2, size / 2 - 1, 0, Math.PI * 2);
+    g.clip();
+    g.drawImage(img, 0, 0, size, size);
+    const k = size / ((M.viewHalf || GM.CFG.MAP_SIZE / 2) * 2);
+    g.strokeStyle = 'rgba(120,220,255,0.85)';
+    g.lineWidth = 1.4;
+    g.beginPath();
+    g.arc(size / 2, size / 2, GM.CFG.ARENA_RADIUS * k, 0, Math.PI * 2);
+    g.stroke();
+    g.fillStyle = '#f2c14e';
+    g.beginPath();
+    g.arc(size / 2, size / 2, 3, 0, Math.PI * 2);
+    g.fill();
+    g.restore();
+  }
+
+  // ------------------------------------------------------------ leaderboard
+  function errText(r) {
+    if (!r) return t('daily.err.bad');
+    if (r.error === 'http' && r.message && GM.i18n.has('daily.err.' + r.message)) return t('daily.err.' + r.message);
+    return t('daily.err.' + (GM.i18n.has('daily.err.' + r.error) ? r.error : 'bad'));
+  }
+
+  function loadBoard(force) {
+    ui.board = ui.board === 'alltime' ? 'alltime' : 'today';
+    if (!LB.enabled()) { ui.load = { status: 'off', kind: ui.board, data: null, error: '' }; return; }
+    const kind = ui.board;
+    const token = ++ui.loadToken;
+    ui.load = { status: 'loading', kind: kind, data: null, error: '' };
+    if (force) { /* the client cache is short-lived; a manual refresh just asks again after it expires */ }
+    const p = kind === 'alltime' ? LB.allTime(50) : LB.daily(D.dateKey(), 50);
+    p.then(function (r) {
+      if (token !== ui.loadToken) return;               // a newer request replaced this one
+      ui.load = r.ok ? { status: 'ok', kind: kind, data: r, error: '' } : { status: 'error', kind: kind, data: null, error: errText(r) };
+      if (ui.open && ui.tab === 'board') renderAll();
+    });
+  }
+
+  function nameRow() {
+    const inp = h('input', { type: 'text', class: 'inp dl-name-in', maxlength: String(D.NAME_MAX), value: D.name(), placeholder: t('daily.board.namePh'), autocomplete: 'off', spellcheck: 'false', 'aria-label': t('daily.board.name') });
+    const msg = h('span', { class: 'cr-msg' + (ui.nameMsg ? (ui.nameMsg.ok ? ' ok' : ' bad') : ''), 'aria-live': 'polite', text: ui.nameMsg ? ui.nameMsg.text : '' });
+    const save = function () {
+      const n = D.setName(inp.value);
+      inp.value = n;
+      ui.nameMsg = n ? { ok: true, text: t('daily.board.saved') } : { ok: false, text: t('daily.board.nameNeeded') };
+      msg.className = 'cr-msg ' + (n ? 'ok' : 'bad');
+      msg.textContent = ui.nameMsg.text;
+    };
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); save(); } });
+    return h('div', { class: 'dl-name' }, [
+      h('label', { class: 'vs-l' }, [t('daily.board.name')]),
+      h('div', { class: 'dl-name-row' }, [inp, h('button', { type: 'button', class: 'btn', text: t('daily.board.save'), onclick: save }), msg]),
+    ]);
+  }
+
+  function boardTable(entries, withDate) {
+    if (!entries.length) return h('p', { class: 'hint dl-empty', text: t('daily.board.empty') });
+    const ol = h('ol', { class: 'dl-rows' });
+    ol.appendChild(h('li', { class: 'dl-row dl-head mono' }, [
+      h('span', { class: 'dl-c-rank', text: t('daily.board.rank') }),
+      h('span', { class: 'dl-c-name', text: t('daily.board.player') }),
+      h('span', { class: 'dl-c-grade' }),
+      h('span', { class: 'dl-c-score', text: t('daily.board.score') }),
+      h('span', { class: 'dl-c-view', text: t('daily.board.viewers') }),
+    ]));
+    entries.forEach(function (e) {
+      ol.appendChild(h('li', { class: 'dl-row' + (e.mine ? ' mine' : '') + (e.rank <= 3 ? ' top top-' + e.rank : '') }, [
+        h('span', { class: 'dl-c-rank mono', text: String(e.rank) }),
+        h('span', { class: 'dl-c-name' }, [
+          h('span', { class: 'dl-nm', text: e.name || '—' }),
+          e.mine ? h('span', { class: 'dl-you mono', text: t('daily.board.you') }) : null,
+          withDate && e.date ? h('span', { class: 'dl-sub mono', text: dateLabel(e.date, true) }) : null,
+        ]),
+        h('span', { class: 'dl-c-grade' }, [e.grade ? gradeEl(e.grade) : null]),
+        h('span', { class: 'dl-c-score mono', text: num(e.score, 1) }),
+        h('span', { class: 'dl-c-view mono', text: e.viewers ? GM.i18n.compact(e.viewers) : '—' }),
+      ]));
+    });
+    return ol;
+  }
+
+  function renderBoard() {
+    const L = ui.load;
+    const pane = h('div', { class: 'cr-pane' });
+    pane.appendChild(nameRow());
+
+    if (L.status === 'off' || !LB.enabled()) {
+      const rows = D.history(14);
+      pane.appendChild(h('section', { class: 'card cr-card' }, [
+        h('h2', { class: 'card-title', text: t('daily.board.off.title') }),
+        h('p', { class: 'hint', text: t('daily.board.off.text') }),
+      ]));
+      pane.appendChild(h('section', { class: 'card cr-card' }, [
+        h('h2', { class: 'card-title', text: t('daily.board.local') }),
+        rows.length ? localList(rows) : h('p', { class: 'hint', text: t('daily.recentEmpty') }),
+      ]));
+      dom.body.appendChild(pane);
+      return;
+    }
+
+    const seg = h('div', { class: 'seg', role: 'group' });
+    ['today', 'alltime'].forEach(function (k) {
+      seg.appendChild(h('button', {
+        type: 'button', class: 'seg-btn' + (ui.board === k ? ' on' : ''), 'aria-pressed': ui.board === k ? 'true' : 'false', text: t('daily.board.' + k),
+        onclick: function () { if (ui.board !== k) { ui.board = k; play('click'); loadBoard(false); renderAll(); } },
+      }));
+    });
+    const meta = h('span', { class: 'summary mono' });
+    if (L.status === 'ok') {
+      if (L.kind === 'alltime') meta.textContent = t('daily.board.stats', { players: num(L.data.stats.players), runs: num(L.data.stats.runs) });
+      else meta.textContent = t('daily.board.total', { n: L.data.total });
+    }
+    const refresh = h('button', { type: 'button', class: 'btn btn-ghost', text: t('daily.board.refresh'), onclick: function () { play('click'); loadBoard(true); renderAll(); } });
+    const card = h('section', { class: 'card cr-card dl-board' }, [
+      h('div', { class: 'card-title-row' }, [seg, h('span', { class: 'cr-spacer' }), meta, refresh]),
+    ]);
+    if (L.status === 'loading') card.appendChild(h('p', { class: 'hint dl-empty' }, [h('span', { class: 'spinner' }), ' ' + t('daily.board.loading')]));
+    else if (L.status === 'error') card.appendChild(h('p', { class: 'cr-msg bad', text: L.error }));
+    else if (L.status === 'ok') card.appendChild(boardTable(L.data.entries, L.kind === 'alltime'));
+    pane.appendChild(card);
+    dom.body.appendChild(pane);
+  }
+
+  // ---------------------------------------------------------------- records
+  function recordValue(id, v) {
+    switch (id) {
+      case 'score': return num(v, 1);
+      case 'viewers': return GM.i18n.compact(v);
+      case 'longest': return t('common.day', { n: v });
+      case 'quickest': return U.formatDuration(v);
+      default: return num(v);
+    }
+  }
+
+  function renderRecords() {
+    const grid = h('div', { class: 'dl-recs' });
+    REC.list().forEach(function (r) {
+      const has = r.value != null;
+      grid.appendChild(h('article', { class: 'dl-rec' + (has ? ' got' : '') }, [
+        h('span', { class: 'dl-rec-ico', 'aria-hidden': 'true' }, [r.icon]),
+        h('span', { class: 'dl-rec-body' }, [
+          h('span', { class: 'dl-rec-name', text: t('daily.rec.' + r.id) }),
+          h('span', { class: 'dl-rec-sub mono', text: has ? t('daily.mode.' + r.mode) + ' · ' + dateLabel(new Date(r.ts).toISOString().slice(0, 10), true) : t('daily.rec.none') }),
+        ]),
+        h('span', { class: 'dl-rec-val mono', text: has ? recordValue(r.id, r.value) : '—' }),
+      ]));
+    });
+
+    const sk = D.streak();
+    const stat = function (lbl, val) {
+      return h('div', { class: 'vs' }, [h('span', { class: 'vs-l', text: lbl }), h('span', { class: 'vs-v mono', text: val })]);
+    };
+    const grades = h('div', { class: 'cr-grades' });
+    ['S', 'A', 'B', 'C', 'D'].forEach(function (g) {
+      grades.appendChild(h('span', { class: 'cr-gcount' }, [gradeEl(g), h('span', { class: 'mono', text: '×' + (REC.data.grades[g] || 0) })]));
+    });
+    const winners = Object.keys(REC.data.wins).sort(function (a, b) { return REC.data.wins[b] - REC.data.wins[a]; });
+    const wins = h('div', { class: 'cr-chips' }, winners.length
+      ? winners.map(function (id) { return h('span', { class: 'cr-chip', text: t('arch.' + id) + ' ×' + REC.data.wins[id] }); })
+      : [h('span', { class: 'hint', text: t('daily.totals.winsNone') })]);
+    const totals = h('section', { class: 'card cr-card' }, [
+      h('h2', { class: 'card-title', text: t('daily.totals') }),
+      h('div', { class: 'v-stats' }, [
+        stat(t('daily.totals.shows'), num(REC.data.shows)),
+        stat(t('daily.totals.daily'), num(D.data.played)),
+        stat(t('daily.streak'), streakText(sk.cur)),
+        stat(t('daily.totals.streak'), streakText(sk.max)),
+      ]),
+      h('div', { class: 'vs-l cr-gap', text: t('daily.totals.grades') }),
+      grades,
+      h('div', { class: 'vs-l cr-gap', text: t('daily.totals.wins') }),
+      wins,
+    ]);
+
+    dom.body.appendChild(h('div', { class: 'cr-pane' }, [
+      h('div', { class: 'card-title-row' }, [h('h2', { class: 'card-title', text: t('daily.rec.title') })]),
+      h('p', { class: 'hint', text: t('daily.rec.hint') }),
+      grid,
+      totals,
+    ]));
+  }
+
+  // ============================================================== result card
+  function submitBest(res) {
+    const best = D.best(res.date);
+    if (!best) return;
+    ui.sub = { ts: res.ts, state: 'sending' };
+    rerenderVictory();
+    LB.submit(res.date, D.payload({ score: best.score, grade: best.grade, viewers: best.viewers, day: best.day, cast: best.cast, winner: best.winner, twist: res.twist })).then(function (r) {
+      if (r.ok) {
+        D.markSent(res.date);
+        ui.sub = { ts: res.ts, state: 'ok', rank: r.rank, total: r.total };
+      } else {
+        ui.sub = { ts: res.ts, state: 'err', text: errText(r) };
+      }
+      rerenderVictory();
+    });
+  }
+
+  /** Repaint just our block (the rest of the victory card is the UI module's). */
+  function rerenderVictory() {
+    const card = document.querySelector('.victory-card');
+    const res = D.result();
+    if (!card || !res) return;
+    const old = card.querySelector('.dl-res');
+    const fresh = resultBlock(res);
+    if (old) old.replaceWith(fresh);
+  }
+
+  function resultBlock(res) {
+    const best = D.best(res.date);
+    const notes = [];
+    if (res.improved && res.previous != null) notes.push(h('div', { class: 'cr-note up', text: '🎉 ' + t('daily.res.newBest') }));
+    else if (!res.improved && best) notes.push(h('div', { class: 'cr-note', text: t('daily.res.bestToday', { n: num(best.score, 1) }) }));
+    res.broken.forEach(function (id) { notes.push(h('div', { class: 'cr-note trophy', text: '🏅 ' + t('daily.res.record', { name: t('daily.rec.' + id) }) })); });
+    if (res.streak > 1) notes.push(h('div', { class: 'cr-note season', text: '🔥 ' + t('daily.res.streak', { n: res.streak }) }));
+
+    const sub = ui.sub && ui.sub.ts === res.ts ? ui.sub : null;
+    let submit;
+    if (!LB.enabled()) {
+      submit = h('p', { class: 'hint', text: t('daily.res.off') });
+    } else {
+      const inp = h('input', { type: 'text', class: 'inp dl-name-in', maxlength: String(D.NAME_MAX), value: D.name(), placeholder: t('daily.board.namePh'), autocomplete: 'off', spellcheck: 'false', 'aria-label': t('daily.board.name') });
+      const sending = sub && sub.state === 'sending';
+      const btn = h('button', {
+        type: 'button', class: 'btn' + (sub && sub.state === 'ok' ? '' : ' ready'), disabled: sending ? true : null,
+        text: sending ? t('daily.res.sending') : sub && sub.state === 'ok' ? t('daily.res.again') : t('daily.res.submit'),
+        onclick: function () {
+          const n = D.setName(inp.value);
+          if (!n) { inp.focus(); ui.sub = { ts: res.ts, state: 'err', text: t('daily.board.nameNeeded') }; rerenderVictory(); return; }
+          play('click');
+          submitBest(res);
+        },
+      });
+      const status = sub && sub.state === 'ok' ? h('span', { class: 'cr-msg ok', text: t('daily.res.sent', { rank: sub.rank, total: sub.total }) })
+        : sub && sub.state === 'err' ? h('span', { class: 'cr-msg bad', text: sub.text })
+          : h('span', { class: 'dl-priv', text: t('daily.res.privacy') });
+      submit = h('div', { class: 'dl-submit' }, [h('div', { class: 'dl-name-row' }, [inp, btn]), status]);
+    }
+
+    return h('div', { class: 'cr-res dl-res' }, [
+      h('div', { class: 'cr-res-head' }, [
+        h('span', { class: 'cr-res-kick mono', text: t('daily.res.kicker', { date: dateLabel(res.date) }) }),
+        h('span', { class: 'cr-chip', text: twistName(res.twist) }),
+      ]),
+      h('div', { class: 'dl-res-main' }, [
+        gradeEl(res.grade),
+        h('span', { class: 'dl-res-score mono', text: num(res.score, 1) }),
+        h('span', { class: 'vs-l', text: t('daily.res.score') }),
+      ]),
+      notes.length ? h('div', { class: 'dl-res-notes' }, notes) : null,
+      submit,
+    ]);
+  }
+
+  function injectResult(e) {
+    const root = e && e.root;
+    if (!root || !D.active()) return;
+    const res = D.result();
+    const s = GM.state.settings;
+    if (!res || !s || !s.daily || res.date !== s.daily.date) return;
+    const card = root.querySelector('.victory-card');
+    if (!card || card.querySelector('.dl-res')) return;
+    const actions = card.querySelector('.v-actions');
+    const block = resultBlock(res);
+    if (actions) card.insertBefore(block, actions); else card.appendChild(block);
+    const lbl = card.querySelector('.v-new .start-label');
+    if (lbl) lbl.textContent = t('daily.res.back');
+  }
+
+  // ============================================================ entry buttons
+  function buildEntries() {
+    dom.entries = [];
+    const mk = function (cls) {
+      const b = h('button', { type: 'button', class: cls, onclick: function () { play('click'); openHub('today'); } });
+      dom.entries.push(b);
+      return b;
+    };
+    const head = document.querySelector('#career-hub .cr-head-top');
+    const free = head && head.querySelector('.cr-free');
+    if (head) head.insertBefore(mk('btn btn-ghost dl-open'), free || null);
+    const kicker = document.querySelector('#setup .setup-kicker');
+    if (kicker) kicker.appendChild(mk('btn btn-ghost cr-sw dl-sw'));
+  }
+  function renderEntries() {
+    (dom.entries || []).forEach(function (b) { setText(b, '📅 ' + t('daily.open')); });
+  }
+
+  // ================================================================== system
+  function onKey(e) {
+    if (ui.open && e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeHub(); }
+  }
+
+  GM.registerSystem({
+    name: 'DailyUI',
+    order: 113,
+    init() {
+      const root = document.getElementById('ui-root');
+      if (!root) return;
+      buildHub(root);
+      buildEntries();
+      renderEntries();
+      ui.built = true;
+      document.addEventListener('keydown', onKey, true);
+      GM.on('lang:changed', function () { renderEntries(); if (ui.open) renderAll(); });
+      GM.on('save:imported', function () { if (ui.open) renderAll(); });
+      GM.on('save:reset', function () { if (ui.open) renderAll(); });
+      GM.on('ui:victory', injectResult);
+      GM.on('daily:result', function () {
+        ui.returnToDaily = true;
+        // the victory card may already be on screen (it was built before the result existed)
+        const card = document.querySelector('.victory-card');
+        if (card) injectResult({ root: card.parentNode });
+      });
+      // the Show is over and we are back on the setup screen: go straight back to the daily screen
+      GM.on('game:setup', function () {
+        ui.open = false;
+        dom.hub.hidden = true;
+        if (ui.returnToDaily) { ui.returnToDaily = false; openHub('today'); }
+      });
+      GM.on('game:new', function () { ui.sub = null; if (ui.open) { ui.open = false; dom.hub.hidden = true; } });
+    },
+    frame() {
+      if (!ui.built || !ui.open) return;
+      if (GM.state.phase !== 'setup') { ui.open = false; dom.hub.hidden = true; return; }
+      const now = GM.state.realTime || 0;
+      if (now - ui.tickAt >= 0.5) {
+        ui.tickAt = now;
+        if (ui.tab === 'today') {
+          if (ui.shownDate && D.dateKey() !== ui.shownDate) { renderAll(); schedulePreview(D.today().seed); }   // midnight passed while open
+          updateCountdown();
+        }
+      }
+      if (ui.tab === 'today') drawThumb();
+    },
+  });
+})();
+
+</script>
+<script>/* js/arenaui.js */
+/* ==========================================================================
+ * arenaui.js — the arena type picker on the free-play setup screen.
+ *
+ * One card per arena theme (js/arenas.js). Arenas of a pack that is not installed show
+ * as locked cards that describe the pack and link to its store page (ARENA_CONFIG.packUrl).
+ * Career and daily Shows always use the classic arena; this picker is for free play.
+ * Strings live here (EN + HU). Owner: UI.
+ * ========================================================================== */
+(function () {
+  'use strict';
+  const GM = window.GM;
+  const A = GM.Arenas;
+
+  GM.i18n.add({
+    en: {
+      'arena.pick': 'Arena type',
+      'arena.pick.hint': 'The arena code still decides the layout; the type decides the land, the sky and the weather.',
+      'arena.locked': 'Locked',
+      'arena.inPack': 'Part of the {pack}',
+      'arena.packInfo': '{pack}: {text}',
+      'arena.get': 'Get the pack',
+    },
+    hu: {
+      'arena.pick': 'Aréna típusa',
+      'arena.pick.hint': 'Az aréna kódja továbbra is a felépítést adja; a típus a tájat, az eget és az időjárást.',
+      'arena.locked': 'Zárolva',
+      'arena.inPack': 'A(z) {pack} része',
+      'arena.packInfo': '{pack}: {text}',
+      'arena.get': 'A csomag megszerzése',
+    },
+  });
+
+  const t = function (k, p) { return GM.t(k, p); };
+  function play(name) { try { if (GM.Audio && GM.Audio.play) GM.Audio.play(name); } catch (e) { /* optional */ } }
+
+  function h(tag, props, kids) {
+    const el = document.createElement(tag);
+    if (props) {
+      for (const k in props) {
+        const v = props[k];
+        if (v == null || v === false) continue;
+        if (k === 'class') el.className = v;
+        else if (k === 'text') el.textContent = v;
+        else if (k.slice(0, 2) === 'on' && typeof v === 'function') el.addEventListener(k.slice(2), v);
+        else el.setAttribute(k, v === true ? '' : v);
+      }
+    }
+    if (kids != null) {
+      (Array.isArray(kids) ? kids : [kids]).forEach(function (c) {
+        if (c == null || c === false) return;
+        el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+      });
+    }
+    return el;
+  }
+
+  const ui = { built: false, note: '', syncAt: 0 };
+  const dom = {};
+
+  function packUrl() {
+    const c = window.ARENA_CONFIG;
+    const u = c && typeof c.packUrl === 'string' ? c.packUrl.trim() : '';
+    return /^https?:\/\//i.test(u) ? u : '';
+  }
+
+  function pick(item) {
+    if (item.owned) {
+      if (!A.select(item.id)) return;
+      play('click');
+      ui.note = '';
+      // show the new arena type behind the setup sheet right away
+      if (GM.state.phase === 'setup' && GM.Game && GM.Game.previewArena) {
+        try { GM.Game.previewArena(GM.state.seed, item.id); } catch (e) { GM.reportError('ArenaUI.preview', e); }
+      }
+      render();
+      return;
+    }
+    play('click');
+    const url = packUrl();
+    if (url) { try { window.open(url, '_blank', 'noopener'); } catch (e) { /* popup blocked */ } }
+    ui.note = t('arena.packInfo', { pack: '@pack.' + item.pack, text: '@pack.' + item.pack + '.desc' });
+    render();
+  }
+
+  function render() {
+    if (!ui.built) return;
+    dom.title.textContent = t('arena.pick');
+    dom.hint.textContent = t('arena.pick.hint');
+    dom.grid.textContent = '';
+    const sel = A.selected();
+    A.list().forEach(function (item) {
+      const on = item.owned && item.id === sel;
+      const card = h('button', {
+        type: 'button', class: 'ar-card' + (on ? ' on' : '') + (item.owned ? '' : ' locked'),
+        'aria-pressed': item.owned ? (on ? 'true' : 'false') : null, 'data-arena': item.id,
+        onclick: function () { pick(item); },
+      }, [
+        h('span', { class: 'ar-ico', 'aria-hidden': 'true' }, [item.owned ? item.icon : '🔒']),
+        h('span', { class: 'ar-body' }, [
+          h('span', { class: 'ar-name', text: t('arena.' + item.id) }),
+          h('span', { class: 'ar-desc', text: item.owned ? t('arena.' + item.id + '.desc') : t('arena.inPack', { pack: '@pack.' + item.pack }) }),
+        ]),
+      ]);
+      dom.grid.appendChild(card);
+    });
+    dom.note.textContent = ui.note;
+    dom.note.hidden = !ui.note;
+  }
+
+  function build() {
+    const host = document.querySelector('#setup .s-arena');
+    if (!host) return false;
+    dom.title = h('div', { class: 'lbl ar-title' });
+    dom.hint = h('p', { class: 'hint' });
+    dom.grid = h('div', { class: 'ar-grid', role: 'group' });
+    dom.note = h('p', { class: 'ar-note', 'aria-live': 'polite', hidden: true });
+    host.appendChild(h('div', { class: 'ar-pick' }, [dom.title, dom.hint, dom.grid, dom.note]));
+    ui.built = true;
+    return true;
+  }
+
+  GM.registerSystem({
+    name: 'ArenaUI',
+    order: 114,
+    init() {
+      if (!build()) return;
+      render();
+      GM.on('lang:changed', render);
+      GM.on('arenas:changed', render);
+    },
+    frame() {
+      if (!ui.built || GM.state.phase !== 'setup') return;
+      const now = GM.state.realTime || 0;
+      if (now - ui.syncAt < 0.5) return;
+      ui.syncAt = now;
+      // free-play setup visible and showing another arena type (e.g. after a career / daily Show): show the picked one
+      const setupEl = document.getElementById('setup');
+      const daily = document.getElementById('daily-hub');
+      if (!setupEl || setupEl.hidden || (daily && !daily.hidden)) return;
+      const want = A.selected();
+      if (A.active() !== want && GM.Game && GM.Game.previewArena) {
+        try { GM.Game.previewArena(GM.state.seed, want); } catch (e) { GM.reportError('ArenaUI.sync', e); }
+      }
+    },
+  });
+})();
+
+</script>
 <script>/* js/main.js */
 /* ==========================================================================
  * main.js — boot, game flow and the main loop.
@@ -38240,8 +40220,10 @@ button.chip-i:active { transform: translateY(1px); }
 
   // ------------------------------------------------------------ game flow
   /** Generate terrain for a seed and let World/Minimap rebuild (setup preview). */
-  Game.previewArena = function (seed) {
+  Game.previewArena = function (seed, arena) {
     seed = seed >>> 0;
+    // no arena given: the free-play pick; career and daily screens pass the classic arena explicitly
+    const arenaId = GM.Arenas.use(arena === undefined ? GM.Arenas.selected() : arena);
     GM.state.seed = seed;
     GM.R.seed(seed);
     if (GM.Terrain && GM.Terrain.generate) {
@@ -38251,7 +40233,7 @@ button.chip-i:active { transform: translateY(1px); }
         GM.reportError('Terrain.generate', e);
       }
     }
-    GM.emit('arena:generated', { seed });
+    GM.emit('arena:generated', { seed, arena: arenaId });
   };
 
   /** Return to the setup screen (clears all game entities). */
@@ -38282,9 +40264,11 @@ button.chip-i:active { transform: translateY(1px); }
         feeds: true,
         nameTags: true,
         startSpeed: 1,
+        arena: GM.Arenas.DEFAULT_ID,
       },
       s || {}
     );
+    s.arena = GM.Arenas.has(s.arena) ? s.arena : GM.Arenas.DEFAULT_ID;     // a missing pack falls back to the classic arena
     s.seed = s.seed >>> 0;
     s.contestantCount = GM.U.clamp(s.contestantCount | 0, CFG.MIN_CONTESTANTS, CFG.MAX_CONTESTANTS);
     if (!Array.isArray(s.roster) || s.roster.length < CFG.MIN_CONTESTANTS) {
@@ -38301,6 +40285,7 @@ button.chip-i:active { transform: translateY(1px); }
     const s = Game.normalizeSettings(settings);
     callAll('clear');
     GM.resetState(s);
+    GM.Arenas.use(s.arena);
     GM.R.seed(s.seed);
     if (GM.Terrain && GM.Terrain.generate) {
       try {
@@ -38309,7 +40294,7 @@ button.chip-i:active { transform: translateY(1px); }
         GM.reportError('Terrain.generate', e);
       }
     }
-    GM.emit('arena:generated', { seed: s.seed });
+    GM.emit('arena:generated', { seed: s.seed, arena: s.arena });
     GM.R.seed((s.seed ^ 0x5bd1e995) >>> 0); // separate stream for gameplay
     callAll('reset', s);
     GM.state.phase = 'countdown';

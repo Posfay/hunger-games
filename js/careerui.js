@@ -651,7 +651,7 @@
       if (GM.state.phase !== 'setup' || C.mode() !== 'career') return;
       ui.previewSeed = seed;
       if ((GM.state.seed >>> 0) !== seed && GM.Game && GM.Game.previewArena) {
-        try { GM.Game.previewArena(seed); } catch (e) { GM.reportError('CareerUI.preview', e); }
+        try { GM.Game.previewArena(seed, 'verdant'); } catch (e) { GM.reportError('CareerUI.preview', e); }
       }
     }, 60);
   }

@@ -657,6 +657,7 @@
   function buildBackdrop(seed) {
     backdrop = removeMesh(backdrop, true);
     const noise = GM.Noise.create((seed ^ 0x51ed27) >>> 0);
+    const BD = GM.Arenas.params().backdrop;      // arena theme: far mountain colours
     const A = 160;
     const RADII = [150, 172, 200, 236, 282, 340, 412, 500, 610, 740];
     const PROF = [-12, 10, 36, 70, 104, 124, 110, 80, 44, 8];
@@ -674,9 +675,9 @@
         pos[o] = x; pos[o + 1] = h; pos[o + 2] = z;
         const k = hash(ai, ri, 7);
         let cr, cg, cb;
-        if (h > 88 + k * 16) { cr = 228; cg = 232; cb = 238; }
-        else if (h > 34 + k * 10) { cr = 118 + k * 16; cg = 114 + k * 14; cb = 108 + k * 12; }
-        else { cr = 62 + k * 14; cg = 84 + k * 14; cb = 52 + k * 8; }
+        if (h > BD.snowH + k * 16) { cr = BD.snow[0] + k * BD.snow[3]; cg = BD.snow[1] + k * BD.snow[4]; cb = BD.snow[2] + k * BD.snow[5]; }
+        else if (h > BD.rockH + k * 10) { cr = BD.rock[0] + k * BD.rock[3]; cg = BD.rock[1] + k * BD.rock[4]; cb = BD.rock[2] + k * BD.rock[5]; }
+        else { cr = BD.lo[0] + k * BD.lo[3]; cg = BD.lo[1] + k * BD.lo[4]; cb = BD.lo[2] + k * BD.lo[5]; }
         col[o] = Gfx.lin255(cr); col[o + 1] = Gfx.lin255(cg); col[o + 2] = Gfx.lin255(cb);
       }
     }
@@ -1544,6 +1545,7 @@
     const half = T.half - 3;
     const n = Math.floor((2 * half) / TREE_STEP);
     const wl = CFG.BASE_WATER_LEVEL;
+    const TP = GM.Arenas.params().trees;         // arena theme: density, species mix, colours
     for (let gz = 0; gz < n; gz++) {
       for (let gx = 0; gx < n; gx++) {
         const x = -half + (gx + 0.15 + 0.7 * hash(gx, gz + sd, 102)) * TREE_STEP;
@@ -1551,21 +1553,21 @@
         const cover = T.forestAt(x, z);
         const r = Math.sqrt(x * x + z * z);
         const lone = cover <= 0.04;
-        const p = lone ? (r > 40 && r < ARENA_R - 4 ? 0.01 : 0) : U.smoothstep(0.04, 0.6, cover) * 0.9;
+        const p = lone ? (r > 40 && r < ARENA_R - 4 ? TP.lone : 0) : U.smoothstep(0.04, 0.6, cover) * 0.9 * TP.density;
         if (hash(gx + sd, gz, 101) >= p * keep) continue;
         const biome = T.biomeAt(x, z);
-        if (biome === 'water' || biome === 'plaza' || biome === 'sand' || biome === 'snow') continue;
-        if (lone && biome !== 'grass') continue;
+        if (biome === 'water' || biome === 'plaza' || (biome === 'sand' && !TP.onSand) || (biome === 'snow' && !TP.onSnow)) continue;
+        if (lone && biome !== 'grass' && !(biome === 'sand' && TP.onSand) && !(biome === 'snow' && TP.onSnow)) continue;
         const y = groundY(x, z);
         if (y < wl + 0.35) continue;
         const slope = T.slopeAt(x, z);
         if (slope > 0.55) continue;
         const patch = hash((gx >> 3) + sd, gz >> 3, 104);
-        const pine = patch * 0.7 + U.clamp01((y - 5) / 18) * 0.8 + (biome === 'rock' ? 0.4 : 0) - (biome === 'swamp' ? 0.5 : 0) > 0.55;
+        const pine = patch * 0.7 + U.clamp01((y - 5) / 18) * 0.8 + (biome === 'rock' ? 0.4 : 0) - (biome === 'swamp' ? 0.5 : 0) + TP.pine > 0.55;
         const h1 = hash(gx, gz, 105 + sd), h2 = hash(gx, gz, 106), h3 = hash(gx, gz, 107), h4 = hash(gx, gz, 109);
         const tr = {
           x, z, y: 0,
-          scale: (0.72 + h1 * 0.5) * (0.85 + 0.3 * cover) * (r > ARENA_R ? 1.15 : 1),
+          scale: (0.72 + h1 * 0.5) * (0.85 + 0.3 * cover) * (r > ARENA_R ? 1.15 : 1) * TP.scale,
           type: pine ? 'pine' : 'broad',
           burnt: false,
           hidden: false,
@@ -1580,11 +1582,11 @@
           tcol: 0,
         };
         tr.y = y - tr.sink;
-        if (pine) _c.setHSL(0.37 + (h4 - 0.5) * 0.06, 0.42 + h2 * 0.16, 0.2 + h3 * 0.07);
-        else if (h4 < 0.05) _c.setHSL(0.07 + h1 * 0.05, 0.66, 0.42);            // a few autumn trees
-        else _c.setHSL(0.24 + (h4 - 0.5) * 0.09, 0.5 + h2 * 0.16, 0.28 + h3 * 0.08);
+        if (pine) _c.setHSL(TP.pineCol[0] + (h4 - 0.5) * 0.06, TP.pineCol[1] + h2 * 0.16, TP.pineCol[2] + h3 * 0.07);
+        else if (h4 < TP.autumn) _c.setHSL(TP.autumnCol[0] + h1 * 0.05, TP.autumnCol[1], TP.autumnCol[2]);   // a few off-colour trees
+        else _c.setHSL(TP.broadCol[0] + (h4 - 0.5) * 0.09, TP.broadCol[1] + h2 * 0.16, TP.broadCol[2] + h3 * 0.08);
         tr.col = pack(_c);
-        _c.setHSL(0.07 + h1 * 0.03, 0.3, 0.2 + h2 * 0.07);
+        _c.setHSL(TP.trunkCol[0] + h1 * 0.03, TP.trunkCol[1], TP.trunkCol[2] + h2 * 0.07);
         tr.tcol = pack(_c);
         trees.push(tr);
       }
@@ -2015,16 +2017,13 @@
   /** Grass density + tint per terrain vertex. */
   function writeGrassMap(T, ix0, iz0, ix1, iz1) {
     const R = T.res, C = T.colors, F = T.forestData, B = T.burntData, H = T.heights;
+    const GP = GM.Arenas.params().grass;          // arena theme: density per biome, tint
     for (let iz = iz0; iz <= iz1; iz++) {
       for (let ix = ix0; ix <= ix1; ix++) {
         const i = iz * R + ix;
         const x = -T.half + ix * T.cellSize, z = -T.half + iz * T.cellSize;
         const biome = T.biomeAt(x, z);
-        let d = 0;
-        if (biome === 'grass') d = 1;
-        else if (biome === 'swamp') d = 0.85;
-        else if (biome === 'forest') d = 0.55;
-        else if (biome === 'rock') d = 0.12;
+        let d = GP.byBiome[biome] || 0;
         const f = F ? F[i] : 0;
         d *= 1 - f * 0.55;
         const sl = T.slopeAt(x, z);
@@ -2036,7 +2035,7 @@
         if (H[i] < CFG.BASE_WATER_LEVEL + 0.2) d = 0;
         let cr = C ? C[i * 3] : 90, cg = C ? C[i * 3 + 1] : 140, cb = C ? C[i * 3 + 2] : 60;
         if (B && B[i]) { d *= 0.25; }
-        else { cr *= 1.02; cg *= 1.12; cb *= 0.9; }
+        else { cr *= GP.tint[0]; cg *= GP.tint[1]; cb *= GP.tint[2]; }
         const o = i * 4;
         grassData[o] = U.clamp(cr, 0, 255); grassData[o + 1] = U.clamp(cg, 0, 255); grassData[o + 2] = U.clamp(cb, 0, 255);
         grassData[o + 3] = U.clamp(d * 255, 0, 255);
@@ -2242,6 +2241,11 @@
     const T = Tr();
     buildTerrain();
     buildBackdrop(T ? (T.seed >>> 0) : 1);
+    if (waterMat) {                       // arena theme: water colour
+      const WP = GM.Arenas.params().water;
+      waterMat.uniforms.uShallow.value.setHex(WP.shallow);
+      waterMat.uniforms.uDeep.value.setHex(WP.deep);
+    }
     buildWater();
     buildProps(T);
     placeNexus();

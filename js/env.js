@@ -66,6 +66,9 @@
   });
 
   // ------------------------------------------------------------ state
+  // arena theme (js/arenas.js): natural weather odds, minimum snow cover / wetness (set by applyArena)
+  let themeWeather = { rain: 1, fog: 1, storm: 1, snow: 1, heat: 1 };
+  let snowFloor = 0, wetFloor = 0;
   let weatherLeft = 0;          // sim s until the current non-clear weather ends
   let weatherNatural = false;   // current weather came from the natural cycle
   let nextNatural = 200;        // sim s of clear sky before the next natural change
@@ -194,12 +197,13 @@
   function pickNatural() {
     const night = Env.isNight();
     const R = rng();
+    const tw = themeWeather;
     const w = {
-      rain: 4,
-      fog: night || Math.abs(GM.state.timeOfDay - CFG.DAWN) < 0.06 ? 3 : 1.4,
-      storm: 1.1,
-      snow: night ? 0.7 : 0.25,
-      heat: night ? 0 : 0.6,
+      rain: 4 * tw.rain,
+      fog: (night || Math.abs(GM.state.timeOfDay - CFG.DAWN) < 0.06 ? 3 : 1.4) * tw.fog,
+      storm: 1.1 * tw.storm,
+      snow: (night ? 0.7 : 0.25) * tw.snow,
+      heat: (night ? 0 : 0.6) * tw.heat,
     };
     if (R && typeof R.weighted === 'function') {
       try { const k = R.weighted(w); if (NATURAL_DUR[k]) return k; } catch (e) { /* fall through */ }
@@ -357,6 +361,8 @@
       shadeD: C(0x7d8aa0), shadeN: C(0x0c1222), shadeTwi: C(0x5a4a6a),
       rainD: C(0xb4c4d6), rainN: C(0x56657e), snowD: C(0xf4f7ff), snowN: C(0x9aa8c6),
     };
+    V.baseCol = {};                                  // the classic palette, restored whenever an arena theme leaves
+    for (const k in V.col) V.baseCol[k] = V.col[k].clone();
     V.zen = C(0); V.hor = C(0); V.over = C(0); V.tmp = C(0); V.fog = C(0); V.cloud = C(0); V.shade = C(0); V.disc = C(0);
     V.gnd = C(0); V.sunC = C(0);
     V.sunDir = new THREE.Vector3(); V.moonDir = new THREE.Vector3(); V.lightDir = new THREE.Vector3();
@@ -779,6 +785,8 @@
     else wetness = Math.max(0, wetness - simDt / (wh > 0.5 ? 40 : 110));
     if (wn > 0.3) snowCover = Math.min(1, snowCover + simDt / 55 * wn);
     else snowCover = Math.max(0, snowCover - simDt / (wh > 0.5 ? 30 : 140));
+    if (snowCover < snowFloor) snowCover = snowFloor;           // frozen arenas stay white
+    if (wetness < wetFloor) wetness = wetFloor;                 // marshes stay wet
 
     // flashes
     if (flash2At > 0) { flash2At -= realDt; if (flash2At <= 0) { flash = Math.max(flash, flash2S); flash2At = -1; } }
@@ -1018,8 +1026,8 @@
     stormNext = 5;
     flash = 0; flash2At = -1; flickerT = 6;
     precipT = 0;
-    wetness = 0;
-    snowCover = 0;
+    wetness = wetFloor;
+    snowCover = snowFloor;
     if (emit && prev !== 'clear') GM.emit('weather:changed', { type: 'clear', prev: prev });
     wActive = false;
     Env.waterLevel = CFG.BASE_WATER_LEVEL;
@@ -1030,11 +1038,29 @@
     snapWeights();
   }
 
+  /** Take the sky palette, weather odds and surface floors from the active arena theme. */
+  function applyArena() {
+    const E = GM.Arenas && GM.Arenas.params().env;
+    if (!E) return;
+    if (V.col && V.baseCol) {
+      for (const k in V.baseCol) V.col[k].copy(V.baseCol[k]);
+      for (const k in E.sky) if (V.col[k]) V.col[k].setHex(E.sky[k]);
+    }
+    themeWeather = Object.assign({ rain: 1, fog: 1, storm: 1, snow: 1, heat: 1 }, E.weather);
+    snowFloor = U.clamp01(E.snowFloor || 0);
+    wetFloor = U.clamp01(E.wetFloor || 0);
+    // a new arena starts from its own surface state (arena:generated only fires for a preview or a new Show)
+    snowCover = snowFloor;
+    wetness = wetFloor;
+    envForce = true;
+  }
+
   GM.registerSystem({
     name: 'Env',
     order: 25,
     init: function () {
       buildVisuals();
+      GM.on('arena:generated', applyArena);
       GM.on('hazard:lightning', function (ev) { skyFlash(ev && ev.natural ? 1.1 : 0.9); });
       GM.on('weather:changed', function () { envForce = true; });
       snapWeights();

@@ -1807,6 +1807,7 @@
       feeds: !!o.feeds,
       nameTags: !!o.nameTags,
       startSpeed: 1,
+      arena: GM.Arenas ? GM.Arenas.selected() : 'verdant',
     };
     savePrefs();
     const A = GM.Audio;
